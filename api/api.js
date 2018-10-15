@@ -1,6 +1,24 @@
 const raspi = require('raspi');
 const Serial = require('raspi-serial').Serial;
 const readline = require('readline');
+const fs = require('fs');
+const wav = require('wav');
+const Speaker = require('speaker');
+const PassThrough = require('stream').PassThrough;
+
+
+
+
+const wavFormat = {
+    audioFormat: 1,
+    endianness: 'LE',
+    channels: 2,
+    sampleRate: 22050,
+    byteRate: 88200,
+    blockAlign: 4,
+    bitDepth: 16,
+    signed: true
+};
 
 
 
@@ -52,6 +70,12 @@ var pxltblApi = new function() {
     this.lastStatsTime = this.startTime;
 
 
+    //sound stuff
+
+
+
+
+
     this.construct = function (fpsLimit, cbLoop, cbButton) {
 
         //setup callbacks
@@ -68,6 +92,10 @@ var pxltblApi = new function() {
         process.stdin.setRawMode(true);
 
         process.stdin.on('keypress', this.keyPress);
+
+
+        //setup sounds
+
 
         //start serial
         this.serial = new Serial({
@@ -176,11 +204,14 @@ var pxltblApi = new function() {
             //todo add RGB => GRB conversion
         }
 
+        try {
+            this.serial.write(Buffer.concat([frameStart, serpantineBuffer]), function () {
+                pxltblApi.loop();
 
-        this.serial.write(Buffer.concat([frameStart, serpantineBuffer]), function () {
-            pxltblApi.loop();
-
-        });
+            });
+        } catch (err) {
+            //TODO - do something useful.  We only usually get errors when we are quitting anyway.
+        }
     };
 
     this.test = function () {
@@ -214,13 +245,31 @@ var pxltblApi = new function() {
     };
 
 
-    this.setPixel = function (x, y, r, g, b) {
+    this.setPixel = function (x, y, r, g, b, a) {
         //set an individual pixel
+
+        if(a === undefined) a = 1.0;
+
         var pixel = y * this.pxlW + x;
 
-        this.buffer[pixel * 3] = r;
-        this.buffer[pixel * 3 + 1] = g;
-        this.buffer[pixel * 3 + 2] = b;
+        this.buffer[pixel * 3] = this.buffer[pixel * 3] * (1-a) + a*r;
+        this.buffer[pixel * 3 + 1] = this.buffer[pixel * 3 + 1] * (1-a) + a*g;
+        this.buffer[pixel * 3 + 2] = this.buffer[pixel * 3 + 2] * (1-a) + a*b;
+
+    };
+
+    this.fillBox = function (x,y,w,h,r,g,b,a) {
+      if(a === undefined) a = 1;
+
+      for (var i = 0; i < h; i++) {
+          for (var j = 0; j < w && j+x < this.pxlW; j++) {
+              var pixel = (y+i)*this.pxlW + x+j;
+              this.buffer[pixel * 3] = this.buffer[pixel * 3] * (1-a) + a*r;
+              this.buffer[pixel * 3 + 1] = this.buffer[pixel * 3 + 1] * (1-a) + a*g;
+              this.buffer[pixel * 3 + 2] = this.buffer[pixel * 3 + 2] * (1-a) + a*b;
+          }
+      }
+
 
     };
 
@@ -230,7 +279,22 @@ var pxltblApi = new function() {
     //TODO - to reduce latency, these sounds need to be created during initialisation and stored in memory as buffers. For now lets just try doing it all on the fly.
 
     this.playWav = function () {
-        //plays a wav file
+        var file = fs.createReadStream('wav/sqr-400-100.wav');
+        var reader = new wav.Reader();
+
+        // the "format" event gets emitted at the end of the WAVE header
+        reader.on('format', function (format) {
+
+            // the WAVE header is stripped from the output of the reader
+            reader.pipe(new Speaker(format));
+        });
+
+        // pipe the WAVE file to the Reader instance
+        file.pipe(reader);
+
+
+
+
 
     };
 
@@ -303,6 +367,10 @@ var pxltblApi = new function() {
 
         console.log(str);
     };
+
+    this.limit = function(val,min,max) {
+        return Math.max(Math.min(val,max),min);
+    }
 
 };
 
