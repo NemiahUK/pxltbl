@@ -1,48 +1,49 @@
-const raspi = require('raspi');
 
-//TODO - the the moment this just creates a variable 'pxltblApi' with al lthe properties and methods etc, it needs turning into a proper Node class.
+
 const api = require('./api.js');
 
 
-//TODO - the raspi.init event could probably be moved to the pxltable class
-raspi.init(() => {
 
 
 
 
 
-    api.construct(60,loop,buttonPress);
-
-    //TODO - Options:  fps, pxlW, pxlH, stripStart, stripZigZag, stripType, whiteBalance
-
-    //TODO - Add SPI to firmware, get SPI to send setup values to arduino before serial starts. Also use SPI for input back
-
-
-
-
-});
+    api.start({
+        callbackLoop: loop,
+        callbackButton: buttonPress,
+        fpsLimit: 60
+    });
 
 
 
 
 
+
+
+
+
+
+//these are used to make the pixel pulse
 var t = 0;
 var forward = true;
-var x = 12;
-var y = 5;
-var vX = 0.3;
-var vY = 0.3;
-
 var flashSpeed = 16;
 
+//pixel location and speed
+var x = 12;
+var y = 5;
+var vX = 0.2;
+var vY = 0.2;
+
+//have we had a bump?
 var bump = 0;
 
 function loop() {
 
-    //console.log('loop');
+    //move the pixel by the current speed
     x+=vX;
     y+=vY;
 
+    //if pixel at edges then reverse direction, play sound and set border yellow for 5 frames
     if(x >= api.pxlW-2 || x < 1) {
         vX = 0-vX;
         bump = 5;
@@ -54,19 +55,27 @@ function loop() {
         api.playWav();
     }
 
+    //if there has been an impact then flash border yellow
     if(bump) {
         api.blank(100,100,0);
         bump--;
     } else {
         api.blank(100,0,0);
     }
-    api.fillBox(1, 1, 21, 9, 0, 0, 0, 1);
 
-    api.setPixel(Math.round(x),Math.round(y),0,t,255,0.9);
+    //draw the black playing area
+    api.setColor(0,0,0,1);
+    api.fillBox(1, 1, 21, 9);
+
+    //draw the pixel
+    api.setColor(0,t,255,0.9);
+    api.setPixel(Math.round(x),Math.round(y));
+
+    //update the pulsating colour
     if(forward) {
-        t+=10;
+        t+=flashSpeed;
     } else {
-        t-=10;
+        t-=flashSpeed;
     }
     if (t > 255 - flashSpeed) forward = false;
     if (t < flashSpeed) forward = true;
@@ -80,16 +89,19 @@ function buttonPress(button){
     //console.log(button);
     switch(button) {
         case 'up':
-            y--;
+
             break;
         case 'down':
-            y++;
+
             break;
         case 'left':
-            x--;
+            vX=vX*0.9;
+            vY=vY*0.9;
+
             break;
         case 'right':
-            x++;
+            vX=vX*1.1;
+            vY=vY*1.1;
             break;
         case 'space':
 
