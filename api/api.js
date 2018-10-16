@@ -48,7 +48,6 @@ var pxltblApi = new function() {
 
     //callback functions
     this.cbLoop;
-    this.cbButton;
 
     //these should probably be private
     this.serial;
@@ -73,6 +72,8 @@ var pxltblApi = new function() {
     };
 
     this.touch = new Array(this.pxlCount);
+
+    this.goHome = false;
 
 
 
@@ -128,6 +129,11 @@ var pxltblApi = new function() {
     this.quit = function () {
         console.log('Closing...');
         this.serial.close(function(){process.exit();});
+    };
+
+    this.exit = function () {
+        //go to home screen
+        this.goHome = true;
     };
 
     this.reboot = function () {
@@ -228,7 +234,7 @@ var pxltblApi = new function() {
             });
         });
         this.webServer.listen(3000);
-    }
+    };
 
     this.buttonDown = function(button) {
         switch (button) {
@@ -249,7 +255,7 @@ var pxltblApi = new function() {
                 break;
 
         }
-    }
+    };
 
     this.buttonUp = function(button) {
         switch (button) {
@@ -294,7 +300,21 @@ var pxltblApi = new function() {
         }
 
         return touches;
-    }
+    };
+
+    this.clearInputs = function() {
+        //stops button presses persisting between apps.
+        for (var i = 0; i < this.pxlCount; i++) {
+            this.touch[i] = false;
+        }
+
+        this.buttons.up = false;
+        this.buttons.down = false;
+        this.buttons.left = false;
+        this.buttons.right = false;
+        this.buttons.fire = false;
+
+    };
 
     this.keyPress = function (str, key) {
         //this logs console keyboard input for debugging

@@ -1,5 +1,4 @@
-
-
+const fs = require('fs');
 const api = require('./api.js');
 
 
@@ -10,8 +9,7 @@ const api = require('./api.js');
 
     api.start({
         callbackLoop: loop,
-        callbackButton: buttonPress,
-        fpsLimit: 60
+        fpsLimit: 30
     });
 
 
@@ -20,93 +18,104 @@ const api = require('./api.js');
 
 
 
+var screen = 'home';
 
-
-
-//these are used to make the pixel pulse
-var t = 0;
-var forward = true;
-var flashSpeed = 16;
-
-//pixel location and speed
-var x = 12;
-var y = 5;
-var vX = 0.2;
-var vY = 0.2;
-
-//have we had a bump?
-var bump = 0;
 
 function loop() {
 
-    //move the pixel by the current speed
-    x+=vX;
-    y+=vY;
-
-    //if pixel at edges then reverse direction, play sound and set border yellow for 5 frames
-    if(x >= api.pxlW-2 || x < 1) {
-        vX = 0-vX;
-        bump = 5;
-        api.playWav();
-    }
-    if(y >= api.pxlH-2 || y < 1) {
-        vY = 0-vY;
-        bump = 5;
-        api.playWav();
+    if(api.goHome) {
+        screen = 'home';
+        api.goHome = false;
+        api.clearInputs();
     }
 
-    //if there has been an impact then flash border yellow
-    if(bump) {
-        api.blank(100,100,0);
-        bump--;
-    } else {
-        api.blank(100,0,0);
+    switch(screen) {
+        case 'home':
+            home();
+            break;
+        case 'prog':
+            try {
+                prog.loop(api);
+            } catch (err) {
+                screen = 'home';
+            }
+            break;
     }
-
-    //draw the black playing area
-    api.setColor(0,0,0,1);
-    api.fillBox(1, 1, 21, 9);
-
-    //draw the pixel
-    api.setColor(0,t,255,0.9);
-    api.setPixel(Math.round(x),Math.round(y));
-
-    //update the pulsating colour
-    if(forward) {
-        t+=flashSpeed;
-    } else {
-        t-=flashSpeed;
-    }
-    if (t > 255 - flashSpeed) forward = false;
-    if (t < flashSpeed) forward = true;
 
 }
 
 
+var path = './progs'
+var progs = [];
+var gotProgs = false;
+var curProg = 0;
+var scroll = 0.0;
 
-function buttonPress(button){
+var btnDownPressed;
+var btnFirePressed;
 
-    //console.log(button);
-    switch(button) {
-        case 'up':
+var prog;
 
-            break;
-        case 'down':
+function home() {
 
-            break;
-        case 'left':
-            vX=vX*0.9;
-            vY=vY*0.9;
 
-            break;
-        case 'right':
-            vX=vX*1.1;
-            vY=vY*1.1;
-            break;
-        case 'space':
 
-            break;
+    if(!gotProgs) {
+        gotProgs = true;
+        fs.readdir(path, function(err, items) {
+
+            for (var i=0; i<items.length; i++) {
+                progs.push(items[i].substr(0,items[i].length-3));
+
+            }
+            scroll = 23;
+        });
     }
 
 
+    if(api.buttons.down && !btnDownPressed) {
+        curProg++;
+        scroll = 23;
+        if(curProg >= progs.length) curProg = 0;
+        btnDownPressed = true;
+    }
+
+    if(api.buttons.fire && !btnFirePressed) {
+        loadProg(progs[curProg]);
+        api.clearInputs();
+        screen = 'prog';
+        return;
+    }
+
+    if(!api.buttons.down) btnDownPressed = false;
+    if(!api.buttons.fire) btnFirePressed = false;
+
+
+
+
+
+
+    api.setColor(100,100,0);
+    api.fillBox(1,1,3,4);
+    api.setPixel(2,0);
+    api.setPixel(0,2);
+    api.setPixel(4,2);
+    api.setColor(0,0,0);
+    api.setPixel(2,4);
+
+    api.setColor(100,100,100);
+
+    if(progs.length) {
+        api.blank(0,0,0);
+        api.text(progs[curProg],Math.round(scroll),1);
+        scroll = scroll - 0.7;
+        if (scroll < -60) scroll = 23; //TODO add text bounds to api then use that to calc length
+    }
+
+
+}
+
+function loadProg(file) {
+    //console.log(file);
+    prog = require(path+'/'+file+'.js');
 }
