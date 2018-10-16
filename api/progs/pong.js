@@ -11,8 +11,8 @@ var flashSpeed = 16;
 //pixel location and speed
 var x = 12;
 var y = 5;
-var vX = 0.2;
-var vY = 0.2;
+var vX = 0.5;
+var vY = 0.5;
 
 //have we had a bump?
 var bump = 0;

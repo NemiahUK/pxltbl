@@ -44,7 +44,7 @@ var pxltblApi = new function() {
     this.pxlCount = this.pxlW*this.pxlH;
     this.baud = 1000000;
     this.frameStart = new Buffer([0x01]);
-    this.brightness = 100;
+    this.brightness = 50;
 
 
     //callback functions
@@ -419,7 +419,7 @@ var pxltblApi = new function() {
         this.colorB = b;
         this.colorA = a;
 
-    }
+    };
 
     this.setPixel = function (x, y) {
         //set an individual pixel
@@ -571,6 +571,7 @@ var pxltblApi = new function() {
 
 
         var cursor = 0;
+        var biggestY = 0;
 
         for (var i = 0; i < text.length; i++) {
 
@@ -583,7 +584,7 @@ var pxltblApi = new function() {
 
             for (var col = 0;  col < len; col++) {
                 var column = character[col];
-                //for now lets reverse the bits
+
 
                 var bit = 0;
                 var lower = 0;
@@ -594,8 +595,8 @@ var pxltblApi = new function() {
                     } else {
 
                         if (column & 0x01) {
-
-                            this.setPixel(x + cursor, (bit - 1 + y) +  lower);
+                            if(bit + lower > biggestY) biggestY = bit + lower;
+                            this.setPixel(x + cursor, (bit - 1 + y) + lower);
                         }
                     }
 
@@ -607,7 +608,7 @@ var pxltblApi = new function() {
             cursor++;
         }
 
-
+        return {w: cursor-1, h:biggestY};
     };
 
 

@@ -75,6 +75,57 @@
             });
 
 
+            $('body').keydown(function(e) {
+                e.preventDefault();
+                switch (e.which) {
+                    case 32:
+                        socket.emit('buttonDown','fire');
+                        break;
+                    case 37:
+                        socket.emit('buttonDown','left');
+                        break;
+                    case 38:
+                        socket.emit('buttonDown','up');
+                        break;
+                    case 39:
+                        socket.emit('buttonDown','right');
+                        break;
+                    case 40:
+                        socket.emit('buttonDown','down');
+                        break;
+                    case 27:
+                        socket.emit('buttonDown','home');
+                        break;
+                }
+
+            });
+
+            $('body').keyup(function(e) {
+                e.preventDefault();
+                switch (e.which) {
+                    case 32:
+                        socket.emit('buttonUp','fire');
+                        break;
+                    case 37:
+                        socket.emit('buttonUp','left');
+                        break;
+                    case 38:
+                        socket.emit('buttonUp','up');
+                        break;
+                    case 39:
+                        socket.emit('buttonUp','right');
+                        break;
+                    case 40:
+                        socket.emit('buttonUp','down');
+                        break;
+                    case 27:
+                        socket.emit('buttonUp','home');
+                        break;
+                }
+
+            });
+
+
         });
     </script>
 
@@ -82,10 +133,15 @@
 
         body {
             background-color: #333;
-            color:#bbb;
+            color:#eee;
+            font-family: sans-serif;
         }
 
-        ul {
+        #display {
+            width:100%;
+        }
+
+        #display ul {
             list-style:none;
             margin:0;
             padding:0;
@@ -94,33 +150,39 @@
 
         }
 
-        li {
+        #display li {
             list-style:none;
             margin:1px;
             padding:0;
             float:left;
-            width:40px;
-            height:40px;
+            width:4vw;
+            height:4vw;
             background-color:#fff;
 
         }
+
+        button {
+            padding: 20px;
+        }
+
+
 
 
 
     </style>
 </head>
 <body>
-<h1>Data</h1>
+
 <div id="display"></div>
 <br style="clear:left;"/>
 <div id="buttons">
-    <button data-cmd="left">&lt;</button>
-    <button data-cmd="right">&gt;</button>
-    <button data-cmd="up">^</button>
-    <button data-cmd="down">v</button>
-    <button data-cmd="fire">Fire</button>
-    <button data-cmd="home">Home</button>
+    <button data-cmd="left">Left</button>
+    <button data-cmd="right">Right</button>
+    <button data-cmd="up">Up</button>
+    <button data-cmd="down">Down</button>
+    <button data-cmd="fire">Fire / Select (Space)</button>
+    <button data-cmd="home">Home (Esc)</button>
 </div>
-<textarea id="log" style="width:600px; height:100px;">Waiting...</textarea>
+<div id="log">Waiting...</div>
 </body>
 </html>

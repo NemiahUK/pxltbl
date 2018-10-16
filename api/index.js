@@ -51,7 +51,7 @@ function loop() {
 }
 
 
-var path = './progs'
+var path = './progs';
 var progs = [];
 var gotProgs = false;
 var gettingProgs = false;
@@ -77,7 +77,7 @@ function home() {
 
             }
             progs.push('Settings');
-            scroll = 23;
+            scroll = api.pxlW;
             curProg=0;
             gettingProgs = false;
             gotProgs = true;
@@ -87,14 +87,14 @@ function home() {
     if(gotProgs) {
         if (api.buttons.down && !btnDownPressed) {
             curProg++;
-            scroll = 23;
+            scroll = api.pxlW;
             if (curProg >= progs.length) curProg = 0;
             btnDownPressed = true;
         }
 
         if (api.buttons.up && !btnUpPressed) {
             curProg--;
-            scroll = 23;
+            scroll = api.pxlW;
             if (curProg < 0) curProg = progs.length - 1;
             btnUpPressed = true;
         }
@@ -106,6 +106,7 @@ function home() {
         if (api.buttons.fire) {
             if (curProg == progs.length - 1) {
                 api.clearInputs();
+                scroll = api.pxlW;
                 gotProgs = false;
                 screen = 'settings';
                 return;
@@ -119,7 +120,7 @@ function home() {
         }
 
 
-        api.setColor(100, 100, 0);
+        api.setColor(255, 255, 0);
         api.fillBox(1, 1, 3, 4);
         api.setPixel(2, 0);
         api.setPixel(0, 2);
@@ -127,14 +128,14 @@ function home() {
         api.setColor(0, 0, 0);
         api.setPixel(2, 4);
 
-        api.setColor(100, 100, 100);
+        api.setColor(255, 255, 255);
 
         if (progs.length) {
             api.blank(0, 0, 0);
             if (curProg == progs.length - 1) api.setColor(50, 0, 255);
-            api.text(progs[curProg], Math.round(scroll), 1);
+            var txtSize = api.text(progs[curProg], Math.round(scroll), 1);
             scroll = scroll - 0.7;
-            if (scroll < -60) scroll = 23; //TODO add text bounds to api then use that to calc length
+            if (scroll < -txtSize.w) scroll = api.pxlW; //TODO add text bounds to api then use that to calc length
         }
     }
 
@@ -153,7 +154,6 @@ function settings() {
         //only one thing to do
         api.clearInputs();
         screen = 'brightness';
-        scroll = 23;
         return;
     }
 
@@ -162,9 +162,9 @@ function settings() {
 
     api.blank(0,0,0);
     api.setColor(50,0,255);
-    api.text('Brightness',Math.round(scroll),1);
+    var txtSize=api.text('Brightness',Math.round(scroll),1);
     scroll = scroll - 0.7;
-    if (scroll < -40) scroll = 23;
+    if (scroll < -txtSize.w) scroll = api.pxlW;
 
 }
 
@@ -180,7 +180,6 @@ function brightness() {
 }
 
 function loadProg(file) {
-    //console.log(file);
     purgeCache(path+'/'+file+'.js');
     prog = require(path+'/'+file+'.js');
 }
