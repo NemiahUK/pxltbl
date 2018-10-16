@@ -44,6 +44,7 @@ var pxltblApi = new function() {
     this.pxlCount = this.pxlW*this.pxlH;
     this.baud = 1000000;
     this.frameStart = new Buffer([0x01]);
+    this.brightness = 100;
 
 
     //callback functions
@@ -253,6 +254,9 @@ var pxltblApi = new function() {
             case 'fire':
                 this.buttons.fire = true;
                 break;
+            case 'home':
+                this.goHome = true;
+                break;
 
         }
     };
@@ -313,6 +317,7 @@ var pxltblApi = new function() {
         this.buttons.left = false;
         this.buttons.right = false;
         this.buttons.fire = false;
+        this.buttons.home = false;
 
     };
 
@@ -339,23 +344,23 @@ var pxltblApi = new function() {
                     for (var x = 0; x < this.pxlW; x++) {
                         var i = y * this.pxlW + x;
                         var iReverse = y * this.pxlW + (this.pxlW - x) - 1;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3];
-                        serpantineBuffer[i * 3] = this.buffer[iReverse * 3 + 1];
-                        serpantineBuffer[i * 3 + 2] = this.buffer[iReverse * 3 + 2];
+                        serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3] * this.brightness / 255;
+                        serpantineBuffer[i * 3] = this.buffer[iReverse * 3 + 1] * this.brightness / 255;
+                        serpantineBuffer[i * 3 + 2] = this.buffer[iReverse * 3 + 2] * this.brightness / 255;
                     }
                 } else { //even row
                     for (var x = 0; x < this.pxlW; x++) {
                         var i = y * this.pxlW + x;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[i * 3];
-                        serpantineBuffer[i * 3] = this.buffer[i * 3 + 1];
-                        serpantineBuffer[i * 3 + 2] = this.buffer[i * 3 + 2];
+                        serpantineBuffer[i * 3 + 1] = this.buffer[i * 3] * this.brightness / 255;
+                        serpantineBuffer[i * 3] = this.buffer[i * 3 + 1] * this.brightness / 255;
+                        serpantineBuffer[i * 3 + 2] = this.buffer[i * 3 + 2] * this.brightness / 255;
                     }
 
                 }
             }
         } else {
             serpantineBuffer = this.buffer;
-            //todo add RGB => GRB conversion
+            //todo add RGB => GRB conversion, brightness etc
         }
 
         //send to web
@@ -671,7 +676,7 @@ var pxltblApi = new function() {
             console.log('Min frame time: ' + 1000 / this.fpsLimit);
             console.log('Num of pixels: ' + this.buffer.length);
 
-            this.dump();
+            //this.dump();
 
 
         }
