@@ -10,7 +10,6 @@ const api = require('./api.js');
 
     api.start({
         callbackLoop: loop,
-        callbackButton: buttonPress,
         fpsLimit: 30
     });
 
@@ -23,41 +22,29 @@ const api = require('./api.js');
 
 
 
-t = 23;
+var t = 0;
+var v = 0.3;
+var offset = 23.0;
 
 function loop() {
 
-    api.setColor(60,0,100);
+    api.setColor(60,0,150+offset);
     api.blank(0,0,0);
-    api.text('Hey guys, how\'s it going? £300  {code}  "oh yeah"',t,0,0,100,0,1);
+    api.text('Scrolling text demo! ;)',Math.round(offset),1,0,100,0,1);
 
+    if(api.buttons.up) v=v+0.1;
+    if(api.buttons.down) v=v-0.1;
 
-
-}
-
-
-
-function buttonPress(button){
-
-    //console.log(button);
-    switch(button) {
-        case 'up':
-
-            break;
-        case 'down':
-
-            break;
-        case 'left':
-            t--;
-
-            break;
-        case 'right':
-            t++;
-            break;
-        case 'space':
-
-            break;
+    var touches = api.getTouch();
+    if(touches.length > 0) {
+        api.setPixel(touches[0].x,touches[0].y);
     }
 
 
+    offset = offset - v;
+    if(offset < -120) offset = 23;
+
+
+
 }
+

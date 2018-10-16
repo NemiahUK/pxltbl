@@ -5,8 +5,8 @@ const fs = require('fs');
 const wav = require('wav');
 const Speaker = require('speaker');
 
-
-
+const path = require('path');
+const http = require('http');
 
 
 //these consts need moving to the api class
@@ -59,17 +59,29 @@ var pxltblApi = new function() {
     this.lastLoopTime = this.startTime;
     this.lastStatsTime = this.startTime;
 
+    this.webServer;
+    this.webIo;
+    this.webRoot = './web';
+    this.webClients = 0;
 
+    this.buttons = {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        fire: false
+    };
 
+    this.touch = new Array(this.pxlCount);
 
 
 
 
     this.start = function (options) {
 
+
         //setup callbacks
         this.cbLoop = options.callbackLoop;
-        this.cbButton = options.callbackButton;
 
         //setup options
 
@@ -78,6 +90,9 @@ var pxltblApi = new function() {
 
         //wait for RasPi to be ready
         raspi.init(() => {
+
+            //start web server
+            this.startWeb();
 
 
 
@@ -131,34 +146,160 @@ var pxltblApi = new function() {
 
     };
 
+    this.startWeb = function () {
+
+        this.webServer = http.createServer(function (request, response) {
+
+
+            var filePath = pxltblApi.webRoot + request.url;
+            if (filePath == pxltblApi.webRoot + '/')
+                filePath = pxltblApi.webRoot + '/index.html';
+
+
+
+            var extname = path.extname(filePath);
+            var contentType = 'text/html';
+            switch (extname) {
+                case '.js':
+                    contentType = 'text/javascript';
+                    break;
+                case '.css':
+                    contentType = 'text/css';
+                    break;
+                case '.json':
+                    contentType = 'application/json';
+                    break;
+                case '.png':
+                    contentType = 'image/png';
+                    break;
+                case '.jpg':
+                    contentType = 'image/jpg';
+                    break;
+                case '.wav':
+                    contentType = 'audio/wav';
+                    break;
+            }
+
+            fs.readFile(filePath, function(error, content) {
+                if (error) {
+                    if(error.code == 'ENOENT'){
+                        fs.readFile('./404.html', function(error, content) {
+                            response.writeHead(200, { 'Content-Type': contentType });
+                            response.end(content, 'utf-8');
+                        });
+                    }
+                    else {
+                        response.writeHead(500);
+                        response.end('Sorry, check with the site admin for error: '+error.code+' ..\n');
+                        response.end();
+                    }
+                }
+                else {
+                    response.writeHead(200, { 'Content-Type': contentType });
+                    response.end(content, 'utf-8');
+                }
+            });
+
+        });
+
+
+
+        this.webIo = require('socket.io')(this.webServer);
+        this.webIo.on('connection', function(client){
+            pxltblApi.webClients++;
+            client.on('buttonDown', function(data){
+                pxltblApi.buttonDown(data);
+            });
+
+            client.on('buttonUp', function(data){
+                pxltblApi.buttonUp(data);
+            });
+
+            client.on('touchDown', function(data){
+                pxltblApi.touchDown(data);
+            });
+
+            client.on('touchUp', function(data){
+                pxltblApi.touchUp(data);
+            });
+
+            client.on('disconnect', function(){
+                pxltblApi.webClients--;
+            });
+        });
+        this.webServer.listen(3000);
+    }
+
+    this.buttonDown = function(button) {
+        switch (button) {
+            case 'up':
+                this.buttons.up = true;
+                break;
+            case 'down':
+                this.buttons.down = true;
+                break;
+            case 'left':
+                this.buttons.left = true;
+                break;
+            case 'right':
+                this.buttons.right = true;
+                break;
+            case 'fire':
+                this.buttons.fire = true;
+                break;
+
+        }
+    }
+
+    this.buttonUp = function(button) {
+        switch (button) {
+            case 'up':
+                this.buttons.up = false;
+                break;
+            case 'down':
+                this.buttons.down = false;
+                break;
+            case 'left':
+                this.buttons.left = false;
+                break;
+            case 'right':
+                this.buttons.right = false;
+                break;
+            case 'fire':
+                this.buttons.fire = false;
+                break;
+
+        }
+    };
+
+
+    //TODO - make these work with arrays (multi touch)
+    this.touchDown = function(location) {
+        this.touch[location] = true;
+    };
+
+    this.touchUp = function(location) {
+        this.touch[location] = false;
+
+    };
+
+    this.getTouch = function() {
+        var touches = [];
+        for (var i = 0; i < this.pxlCount; i++) {
+            if(this.touch[i]) {
+                var x = i % this.pxlW;
+                var y = Math.floor(i / this.pxlW);
+                touches.push({ x: x, y: y });
+            }
+        }
+
+        return touches;
+    }
+
     this.keyPress = function (str, key) {
         //this logs console keyboard input for debugging
         if (key.ctrl && key.name === 'c') {
             pxltblApi.quit();
-
-        } else {
-            //console.log(key);
-            switch (key.name) {
-                case 'p':
-                    pxltblApi.paused = true;
-                    break;
-                case 'up':
-                    pxltblApi.cbButton('up');
-                    break;
-                case 'down':
-                    pxltblApi.cbButton('down');
-                    break;
-                case 'left':
-                    pxltblApi.cbButton('left');
-                    break;
-                case 'right':
-                    pxltblApi.cbButton('right');
-                    break;
-                case 'space':
-                    pxltblApi.cbButton('fire');
-                    break;
-
-            }
         }
     };
 
@@ -197,11 +338,20 @@ var pxltblApi = new function() {
             //todo add RGB => GRB conversion
         }
 
+        //send to web
+        if(this.webClients) {
+            this.webIo.volatile.emit('leds', this.buffer);
+
+        }
+
         try {
+            //sent to serial
             this.serial.write(Buffer.concat([this.frameStart, serpantineBuffer]), function () {
                 pxltblApi.loop();
 
             });
+
+
         } catch (err) {
             //TODO - do something useful.  We only usually get errors when we are quitting anyway.
         }
@@ -492,6 +642,7 @@ var pxltblApi = new function() {
             this.frames = 0;
 
             console.clear();
+            console.log('Web Clients: ' + this.webClients);
             console.log('Status: ' + this.paused);
             console.log('Millis: ' + this.millis);
             console.log('Game FPS: ' + this.fps);

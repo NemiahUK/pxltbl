@@ -1,0 +1,125 @@
+<html>
+<head>
+    <script
+            src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
+            crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+
+        var socket = io(document.location.href);
+        socket.on('connect', function(){
+            $('#log').text('Connected: ');
+        });
+        socket.on('leds', function(data){
+
+            var int8View = new Uint8Array(data);
+            var pixels = $('#display li').toArray();
+
+            $('#display li').each(function(index, pixel){
+                $(pixel).css('background-color','rgba('+int8View[index*3]+','+int8View[index*3+1]+','+int8View[index*3+2]+',1)');
+            });
+
+        });
+
+
+        socket.on('disconnect', function(){
+            $('#log').text('Disconnected');
+
+        });
+
+        var pxlW = 23;
+        var pxlH = 11;
+
+        $(function() {
+
+            //init LEDs
+            for (var y = 0; y < pxlH; y++) {
+                $('#display').append($('<ul>'));
+                for (var x = 0; x < pxlW; x++) {
+                    $('#display ul').last().append($('<li data-x="'+x+'" data-y="'+y+'" data-i="'+ ((y*pxlW)+x) +'">'));
+                }
+
+            }
+
+            $('#buttons button').mousedown(function(){
+                socket.emit('buttonDown',$(this).data('cmd'));
+            });
+
+            $('#buttons button').mouseup(function(){
+                socket.emit('buttonUp',$(this).data('cmd'));
+            });
+
+            $('#display li').mouseenter(function(e){
+
+                if(e.which == 1) {
+                    var data = $(this).data('i');
+                    socket.emit('touchDown', data);
+                }
+            });
+            $('#display li').mousedown(function(e){
+
+                var data = $(this).data('i');
+                socket.emit('touchDown',data);
+            });
+
+            $('#display li').mouseleave(function(e){
+
+                var data = $(this).data('i');
+                socket.emit('touchUp',data);
+            });
+            $('#display li').mouseup(function(e){
+
+                var data = $(this).data('i');
+                socket.emit('touchUp',data);
+            });
+
+
+        });
+    </script>
+
+    <style type="text/css">
+
+        body {
+            background-color: #333;
+            color:#bbb;
+        }
+
+        ul {
+            list-style:none;
+            margin:0;
+            padding:0;
+            width:100%;
+            clear:left;
+
+        }
+
+        li {
+            list-style:none;
+            margin:1px;
+            padding:0;
+            float:left;
+            width:40px;
+            height:40px;
+            background-color:#fff;
+
+        }
+
+
+
+    </style>
+</head>
+<body>
+<h1>Data</h1>
+<div id="display"></div>
+<br style="clear:left;"/>
+<div id="buttons">
+    <button data-cmd="left">&lt;</button>
+    <button data-cmd="right">&gt;</button>
+    <button data-cmd="up">^</button>
+    <button data-cmd="down">v</button>
+    <button data-cmd="fire">Fire</button>
+</div>
+<textarea id="log" style="width:600px; height:100px;">Waiting...</textarea>
+</body>
+</html>
