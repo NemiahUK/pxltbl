@@ -1,3 +1,4 @@
+#RasPi Setup
 ##Enable audio over GPIO
 
 add the following to /boot/config.txt: 
