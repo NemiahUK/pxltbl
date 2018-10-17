@@ -1,9 +1,8 @@
 const raspi = require('raspi');
-const Serial = require('raspi-serial').Serial;
 const readline = require('readline');
 const fs = require('fs');
-const wav = require('wav');
-const Speaker = require('speaker');
+//const wav = require('wav');
+//const Speaker = require('speaker');
 
 const path = require('path');
 const http = require('http');
@@ -93,11 +92,26 @@ var pxltblApi = new function() {
         //wait for RasPi to be ready
         raspi.init(() => {
 
+            console.log('Booting');
+
+
             //start web server
             this.startWeb();
 
 
-
+            try {
+                //start raspi serial
+                this.startSerial(() => {
+                    console.log('done');
+                    pxltblApi.blank(0, 0, 0);
+                    pxltblApi.show();
+                });
+            } catch (err) {
+                //if we are not on a RasPi or there's no serial interface then carry on with web only.
+                console.log('couldn\'t open serial');
+                pxltblApi.blank(0, 0, 0);
+                pxltblApi.show();
+            }
 
             //start keyboard input
             readline.emitKeypressEvents(process.stdin);
@@ -106,17 +120,7 @@ var pxltblApi = new function() {
             process.stdin.on('keypress', pxltblApi.keyPress);
 
 
-            //start serial
-            pxltblApi.serial = new Serial({
-                portId: '/dev/ttyS0',
-                baudRate: pxltblApi.baud
-            });
 
-            pxltblApi.serial.open(() => {
-                console.log('pxltbl booting...DONE');
-                pxltblApi.blank(0, 0, 0);
-                pxltblApi.show();
-            })
 
             //setup SPI Rx events
             //TODO - here we need functions to handle SPI commands recieved form the arduino, such as 'booted', 'button press', 'etc'
@@ -153,7 +157,25 @@ var pxltblApi = new function() {
 
     };
 
+    this.startSerial = function (callback) {
+
+        //start serial
+        console.log('Starting serial...');
+
+
+        this.serial = require('raspi-serial').serial({
+            portId: '/dev/ttyS0',
+            baudRate: pxltblApi.baud
+        });
+
+        this.serial.open(callback);
+
+    };
+
     this.startWeb = function () {
+
+        console.log('Starting web server...');
+
 
         this.webServer = http.createServer(function (request, response) {
 
@@ -360,7 +382,7 @@ var pxltblApi = new function() {
             }
         } else {
             serpantineBuffer = this.buffer;
-            //todo add RGB => GRB conversion, brightness etc
+            //TODO add RGB => GRB conversion, brightness etc
         }
 
         //send to web
@@ -378,7 +400,8 @@ var pxltblApi = new function() {
 
 
         } catch (err) {
-            //TODO - do something useful.  We only usually get errors when we are quitting anyway.
+            //couldn't send to serial, but lets continue anyway
+            this.loop();
         }
     };
 
