@@ -2,3 +2,4 @@
 node_modules
 .vagrant
 ubuntu-*.log
+npm-debug.log
