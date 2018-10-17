@@ -1,6 +1,11 @@
 var color = 0;
 var cleared = false;
 
+exports.setup = function(api) {
+
+};
+
+
 exports.loop = function(api) {
 
     if(!cleared) {

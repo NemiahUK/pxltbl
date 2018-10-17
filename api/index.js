@@ -27,11 +27,15 @@ function loop() {
         screen = 'home';
         api.goHome = false;
         api.clearInputs();
+        api.fpsLimit = 30;
     }
 
     switch(screen) {
         case 'home':
             home();
+            break;
+        case 'err':
+            err();
             break;
         case 'settings':
             settings();
@@ -43,7 +47,7 @@ function loop() {
             try {
                 prog.loop(api);
             } catch (err) {
-                screen = 'home';
+                screen = 'err';
             }
             break;
     }
@@ -111,10 +115,10 @@ function home() {
                 screen = 'settings';
                 return;
             } else {
+                screen = 'prog';
                 loadProg(progs[curProg]);
                 api.clearInputs();
                 gotProgs = false;
-                screen = 'prog';
                 return;
             }
         }
@@ -134,13 +138,24 @@ function home() {
             api.blank(0, 0, 0);
             if (curProg == progs.length - 1) api.setColor(50, 0, 255);
             var txtSize = api.text(progs[curProg], Math.round(scroll), 1);
-            scroll = scroll - 0.7;
+            scroll = scroll - 1;
             if (scroll < -txtSize.w) scroll = api.pxlW; //TODO add text bounds to api then use that to calc length
         }
     }
 
 }
 
+var errStart = false;
+function err() {
+    if(errStart === false) errStart = api.millis;
+    if(api.millis - errStart > 3000) {
+        errStart = false;
+        api.goHome = true;
+    }
+    api.blank(50,0,0);
+    api.setColor(255,0,0);
+    api.text('Err',3,2);
+}
 
 function settings() {
 
@@ -182,6 +197,12 @@ function brightness() {
 function loadProg(file) {
     purgeCache(path+'/'+file+'.js');
     prog = require(path+'/'+file+'.js');
+    try {
+        prog.setup(api);
+    } catch (err) {
+        screen = 'err';
+    }
+
 }
 
 

@@ -11,13 +11,24 @@ var flashSpeed = 16;
 //pixel location and speed
 var x = 12;
 var y = 5;
-var vX = 0.5;
-var vY = 0.5;
+var vX = 0.3;
+var vY = 0.3;
 
 //have we had a bump?
 var bump = 0;
 
+
+
+
+exports.setup = function(api) {
+    api.fpsLimit = 60;
+};
+
+
+
 exports.loop = function(api) {
+
+
 
     //move the pixel by the current speed
     x+=vX;
