@@ -1,2 +1,5 @@
 .idea
 node_modules
+.vagrant
+npm-debug.log
+ubuntu-*.log

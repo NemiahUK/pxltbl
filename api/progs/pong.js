@@ -38,12 +38,12 @@ exports.loop = function(api) {
     if(x >= api.pxlW-2 || x < 1) {
         vX = 0-vX;
         bump = 5;
-        api.playWav();
+        api.playWav('beep');
     }
     if(y >= api.pxlH-2 || y < 1) {
         vY = 0-vY;
         bump = 5;
-        api.playWav();
+        api.playWav('beep');
     }
 
     //if there has been an impact then flash border yellow

@@ -147,7 +147,10 @@ function home() {
 
 var errStart = false;
 function err() {
-    if(errStart === false) errStart = api.millis;
+    if(errStart === false) {
+        errStart = api.millis;
+        api.playWav('looser');
+    }
     if(api.millis - errStart > 3000) {
         errStart = false;
         api.goHome = true;

@@ -1,9 +1,15 @@
 const raspi = require('raspi');
 const Serial = require('raspi-serial').Serial;
+var gpio = require('rpi-gpio');
 const readline = require('readline');
 const fs = require('fs');
+
+
 const wav = require('wav');
 const Speaker = require('speaker');
+
+const player = require('node-wav-player');
+
 
 const path = require('path');
 const http = require('http');
@@ -69,10 +75,13 @@ var pxltblApi = new function() {
         down: false,
         left: false,
         right: false,
-        fire: false
+        fire: false,
+        home: false
     };
 
     this.touch = new Array(this.pxlCount);
+
+    this.playing = false;
 
     this.goHome = false;
 
@@ -104,6 +113,44 @@ var pxltblApi = new function() {
             process.stdin.setRawMode(true);
 
             process.stdin.on('keypress', pxltblApi.keyPress);
+
+
+            //start button input
+            gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //B3 Up
+            gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //B4 Down
+            gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //B5 Left
+            gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH); //B6 Right
+            gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH); //B2 Fire
+            gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //B1 Home
+            gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //B7
+            gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //B8
+
+            gpio.on('change', function(channel, value) {
+                //TODO add debounce - add GPIO => button map
+
+                switch (channel) {
+                    case 13:
+                        pxltblApi.buttons.up = value;
+                        break;
+                    case 15:
+                        pxltblApi.buttons.down = value;
+                        break;
+                    case 16:
+                        pxltblApi.buttons.left = value;
+                        break;
+                    case 18:
+                        pxltblApi.buttons.right = value;
+                        break;
+                    case 22:
+                        pxltblApi.buttons.fire = value;
+                        break;
+                    case 37:
+                        if(value) pxltblApi.exit();
+                        break;
+
+                }
+
+            });
 
 
             //start serial
@@ -237,6 +284,7 @@ var pxltblApi = new function() {
         this.webServer.listen(3000);
     };
 
+
     this.buttonDown = function(button) {
         switch (button) {
             case 'up':
@@ -255,7 +303,7 @@ var pxltblApi = new function() {
                 this.buttons.fire = true;
                 break;
             case 'home':
-                this.goHome = true;
+                this.exit();
                 break;
 
         }
@@ -616,8 +664,23 @@ var pxltblApi = new function() {
 
     //TODO - to reduce latency, these sounds need to be created during initialisation and stored in memory as buffers. For now lets just try doing it all on the fly.
 
-    this.playWav = function () {
-        var file = fs.createReadStream('wav/sqr-400-100.wav');
+    this.playWav = function (fileName) {
+
+        //if (this.playing) return false;
+
+        this.playing = true;
+
+        player.play({
+            path: './wav/'+fileName+'.wav',
+        }).then(() => {
+            this.playing = false;
+        }).catch((error) => {
+
+        });
+
+        /*
+
+        var file = fs.createReadStream('wav/'+fileName+'.wav');
         var reader = new wav.Reader();
 
         // the "format" event gets emitted at the end of the WAVE header
@@ -631,7 +694,7 @@ var pxltblApi = new function() {
         file.pipe(reader);
 
 
-
+        */
 
 
     };
