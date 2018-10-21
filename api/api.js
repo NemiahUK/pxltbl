@@ -200,6 +200,22 @@ var pxltblApi = new function() {
 
     };
 
+    this.debug = function (data) {
+        if(this.webClients) {
+            this.webIo.emit('debug', data);
+
+        }
+
+    };
+
+    this.error = function (data) {
+        if(this.webClients) {
+            this.webIo.emit('error', data);
+
+        }
+
+    };
+
     this.startWeb = function () {
 
         this.webServer = http.createServer(function (request, response) {
@@ -706,7 +722,7 @@ var pxltblApi = new function() {
         }).then(() => {
 
         }).catch((error) => {
-
+            api.error('Could not load '+fileName);
         });
 
         return player;

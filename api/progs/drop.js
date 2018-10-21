@@ -11,6 +11,7 @@ Drop Game by Steven Tomlinson https://github.com/TmpR
 exports.setup = function(api) {
     // Code here get's executed once at program startup.
 
+    api.debug('Starting game...');
     api.fpsLimit = 60;
     // Blank the screen
     api.blank(0, 0, 0);
@@ -59,6 +60,8 @@ exports.loop = function(api) {
 };
 
 function gameStart(api) {
+
+
     level = 1;
     width = 9;
 
