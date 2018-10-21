@@ -24,13 +24,29 @@
 
         socket.on('debug', function(data){
 
+            if(typeof data == 'object') {
+                data = 'Debug: '+JSON.stringify(data);
+            }
             $('#console').append('<p class="debug">'+data+'</p>');
+            $('#console').scrollTop($('#console')[0].scrollHeight);
+
+        });
+
+        socket.on('frameData', function(data){
+
+            $('#log').text(JSON.stringify(data));
+
 
         });
 
         socket.on('error', function(data){
 
+            if(typeof data == 'object') {
+                data = 'Error: '+JSON.stringify(data);
+            }
             $('#console').append('<p class="error">'+data+'</p>');
+
+            $('#console').scrollTop($('#console')[0].scrollHeight);
 
         });
 

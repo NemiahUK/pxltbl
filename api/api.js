@@ -722,7 +722,7 @@ var pxltblApi = new function() {
         }).then(() => {
 
         }).catch((error) => {
-            api.error('Could not load '+fileName);
+            pxltblApi.error('Could not load wav: '+fileName);
         });
 
         return player;
@@ -781,7 +781,6 @@ var pxltblApi = new function() {
 
             console.clear();
             console.log('Web Clients: ' + this.webClients);
-            console.log('Status: ' + this.paused);
             console.log('Millis: ' + this.millis);
             console.log('Game FPS: ' + this.fps);
             console.log('FPS limit: ' + this.fpsLimit);
@@ -790,6 +789,19 @@ var pxltblApi = new function() {
             console.log('Num of pixels: ' + this.buffer.length);
 
             //this.dump();
+
+            //send to web
+            if(this.webClients) {
+                this.webIo.volatile.emit('frameData', {
+                    webClients: this.webClients,
+                    millis: this.millis,
+                    fps: + this.fps,
+                    fpsLimit: this.fpsLimit,
+                    frameTime: this.frameTime,
+                    minFrameTime: 1000 / this.fpsLimit,
+                    length: this.buffer.length
+                });
+            }
 
 
         }

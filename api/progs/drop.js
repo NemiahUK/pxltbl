@@ -15,7 +15,7 @@ exports.setup = function(api) {
     api.fpsLimit = 60;
     // Blank the screen
     api.blank(0, 0, 0);
-    api.playWav('General Sounds/Weird Sounds/sfx_sound_poweron');
+    api.playWav('sfx_sound_poweron');
 
 };
 
@@ -160,7 +160,7 @@ function gamePlay(api) {
                 fallXSpeed = flyInSpeed;
                 flyInStatus++;
 
-                api.playWav('Movement/Opening Doors/sfx_movement_dooropen1');
+                api.playWav('sfx_movement_dooropen1');
 
             }
 
@@ -198,7 +198,7 @@ function gamePlay(api) {
                 var oldWidth = width;
                 width = flyInX+width - towerLeft;
                 flyInX+=oldWidth-width;
-                api.playWav('Explosions/Short/sfx_exp_short_hard15');
+                api.playWav('sfx_exp_short_hard15');
 
 
 
@@ -214,19 +214,20 @@ function gamePlay(api) {
 
                 width = towerLeft + width - flyInX;
                 towerLeft = flyInX;
-                api.playWav('Explosions/Short/sfx_exp_short_hard15');
+                api.playWav('sfx_exp_short_hard15');
 
             } else {
                 //bang on!
 
                 //play sound
-                api.playWav('General Sounds/Impacts/sfx_sounds_impact1');
+                api.playWav('sfx_sounds_impact1');
 
             }
 
             if(width < 1) {
-                api.playWav('General Sounds/Weird Sounds/sfx_sound_shutdown2');
+                api.playWav('sfx_sound_shutdown2');
                 gameOverTicks=0;
+                level--;
                 gameStatus++;
 
             }
@@ -279,10 +280,13 @@ function gamePlay(api) {
             flyInColor.g=rgb[1];
             flyInColor.b=rgb[2];
 
+            api.debug(flyInColor);
+
             flyInHeight=Math.ceil(Math.random() * Math.floor(3));
 
-            level++;
 
+            api.debug('Level '+level+' complete.');
+            level++;
 
 
             break;
@@ -319,7 +323,7 @@ function gameOver(api) {
         if (api.buttons.fire) {
             gameStatus = 0;
             fireLockout = true;
-            api.playWav('General Sounds/Weird Sounds/sfx_sound_poweron');
+            api.playWav('sfx_sound_poweron');
 
         }
     }

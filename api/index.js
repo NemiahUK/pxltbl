@@ -49,6 +49,7 @@ function loop() {
                 prog.loop(api);
             } catch (err) {
                 screen = 'err';
+                api.error(err);
             }
             break;
     }
