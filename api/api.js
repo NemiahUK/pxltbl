@@ -8,7 +8,7 @@ const fs = require('fs');
 const wav = require('wav');
 const Speaker = require('speaker');
 
-const player = require('node-wav-player');
+
 
 
 const path = require('path');
@@ -515,6 +515,11 @@ var pxltblApi = new function() {
 
     };
 
+    this.textBounds = function(text) {
+        //TODO - instead of calling text, do something more efficient!
+        return this.text(text,100,100);
+    };
+
     this.text = function (text,x,y) {
 
         text = ''+text;
@@ -687,19 +692,24 @@ var pxltblApi = new function() {
 
     //TODO - to reduce latency, these sounds need to be created during initialisation and stored in memory as buffers. For now lets just try doing it all on the fly.
 
+
+
+
     this.playWav = function (fileName) {
 
-        //if (this.playing) return false;
 
-        this.playing = true;
+        var player = require('node-wav-player');
+
 
         player.play({
             path: './wav/'+fileName+'.wav',
         }).then(() => {
-            this.playing = false;
+
         }).catch((error) => {
-            return false;
+
         });
+
+        return player;
 
         /*
 

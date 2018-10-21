@@ -1,6 +1,7 @@
+var player;
 
 exports.setup = function(api) {
-
+    player = api.playWav('Movement/Vehicles/sfx_vehicle_helicopterloop1',true);
 };
 
 exports.loop = function(api) {
@@ -13,7 +14,12 @@ exports.loop = function(api) {
     api.setColor(0, 0, 0);
 
     api.text('nemiah', 1,1);
-    if(api.buttons.fire) api.exit();
+
+
+    if(api.buttons.fire) {
+        player.stop();
+        api.exit();
+    }
 
 
 };

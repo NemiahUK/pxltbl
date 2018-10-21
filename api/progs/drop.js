@@ -1,4 +1,9 @@
+/*
 
+Drop Game by Steven Tomlinson https://github.com/TmpR
+
+
+ */
 
 
 
@@ -9,6 +14,8 @@ exports.setup = function(api) {
     api.fpsLimit = 60;
     // Blank the screen
     api.blank(0, 0, 0);
+    api.playWav('General Sounds/Weird Sounds/sfx_sound_poweron');
+
 };
 
 var hasRun = false;
@@ -18,7 +25,7 @@ var gravity = 0.5;
 var level,width, towerTop, towerHeight, towerLeft ,scroll;
 var flyInX, flyInY, flyInSpeed,  flyInStatus, flyInHeight, flyInColor, fallXSpeed;
 
-var fireLockout;
+var fireLockout, gameOverTicks;
 
 var stack = [];
 var gibs = [];
@@ -91,9 +98,10 @@ function gameStart(api) {
     if(fireLockout) api.buttons.fire=false;
 
 
+
     api.blank(0,0,0);
     api.setColor(0,255,255);
-    api.text('Rdy?',1,1);
+    api.text('Rdy?',0,1);
 
 
 
@@ -122,38 +130,15 @@ function gamePlay(api) {
 
 
     //scroll tower/gibs if needed..
-    if(scroll - towerHeight < 5) scroll++;
+    if(scroll - towerHeight < 6) scroll++;
 
 
 
     // Draw tower
-    towerHeight = 0;
-    for (var i=0; i<stack.length; i++) {
-        towerHeight+= stack[i].height;
-
-        api.setColor(stack[i].color.r, stack[i].color.g, stack[i].color.b);
-        api.fillBox(stack[i].left, scroll-towerHeight, stack[i].width, stack[i].height);
-    }
+    animateTower(api);
 
     //draw gibs
-
-
-    if(gibs.length && gibs[0].y > api.pxlH) gibs.shift();
-
-    for (var i=0; i<gibs.length; i++) {
-
-        api.setColor(gibs[i].r,gibs[i].g,gibs[i].b,gibs[i].a);
-        api.setPixel(gibs[i].x, gibs[i].y+scroll);
-
-        //movement
-        gibs[i].x+=gibs[i].vX;
-        gibs[i].y+=gibs[i].vY;
-        //gravity
-        gibs[i].vY+=gravity;
-        //fade
-        //gibs[i].a-=16;
-
-    }
+    animateGibs(api);
 
 
     switch (flyInStatus) {
@@ -171,6 +156,9 @@ function gamePlay(api) {
             if(api.buttons.fire) {
                 fallXSpeed = flyInSpeed;
                 flyInStatus++;
+
+                api.playWav('Movement/Opening Doors/sfx_movement_dooropen1');
+
             }
 
             break;
@@ -207,6 +195,7 @@ function gamePlay(api) {
                 var oldWidth = width;
                 width = flyInX+width - towerLeft;
                 flyInX+=oldWidth-width;
+                api.playWav('Explosions/Short/sfx_exp_short_hard15');
 
 
 
@@ -222,18 +211,19 @@ function gamePlay(api) {
 
                 width = towerLeft + width - flyInX;
                 towerLeft = flyInX;
-
+                api.playWav('Explosions/Short/sfx_exp_short_hard15');
 
             } else {
                 //bang on!
 
                 //play sound
-                api.playWav('beep');
+                api.playWav('General Sounds/Impacts/sfx_sounds_impact1');
 
             }
 
             if(width < 1) {
-                if (level > 2) api.playWav('looser');
+                api.playWav('General Sounds/Weird Sounds/sfx_sound_shutdown2');
+                gameOverTicks=0;
                 gameStatus++;
 
             }
@@ -280,6 +270,7 @@ function gamePlay(api) {
             }
 
             flyInColor.h+=0.03;
+            if (flyInColor > 1) flyInColor = 0;
             var rgb = api.hslToRgb(flyInColor.h,1,0.5);
             flyInColor.r=rgb[0];
             flyInColor.g=rgb[1];
@@ -306,19 +297,60 @@ function gameOver(api) {
     if(fireLockout) api.buttons.fire=false;
 
 
+
+    gameOverTicks++;
+
     api.blank(0,0,0);
-    api.setColor(0,255,255);
-    api.text(''+level,1,1);
+    animateTower(api);
+    animateGibs(api);
+
+    if(gameOverTicks > 120) {
 
 
-    if(api.buttons.fire) {
-        gameStatus=0;
-        fireLockout=true;
+        api.blank(0, 0, 0);
+        api.setColor(0, 255, 255);
+        var bounds = api.textBounds(level);
+        api.text(level, 11-(bounds.w/2), 2);
+
+
+        if (api.buttons.fire) {
+            gameStatus = 0;
+            fireLockout = true;
+            api.playWav('General Sounds/Weird Sounds/sfx_sound_poweron');
+
+        }
     }
 };
 
+function animateTower(api) {
+    towerHeight = 0;
+    for (var i=0; i<stack.length; i++) {
+        towerHeight+= stack[i].height;
 
+        api.setColor(stack[i].color.r, stack[i].color.g, stack[i].color.b);
+        api.fillBox(stack[i].left, scroll-towerHeight, stack[i].width, stack[i].height);
+    }
 
+}
+
+function animateGibs(api) {
+    if(gibs.length && gibs[0].y > api.pxlH) gibs.shift();
+
+    for (var i=0; i<gibs.length; i++) {
+
+        api.setColor(gibs[i].r,gibs[i].g,gibs[i].b,gibs[i].a);
+        api.setPixel(gibs[i].x, gibs[i].y+scroll);
+
+        //movement
+        gibs[i].x+=gibs[i].vX;
+        gibs[i].y+=gibs[i].vY;
+        //gravity
+        gibs[i].vY+=gravity;
+        //fade
+        //gibs[i].a-=16;
+
+    }
+}
 
 function spawnGib(x,y,left,r,g,b) {
 
