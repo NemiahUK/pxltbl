@@ -23,6 +23,7 @@ var screen = 'home';
 
 function loop() {
 
+
     if(api.goHome) {
         screen = 'home';
         api.goHome = false;

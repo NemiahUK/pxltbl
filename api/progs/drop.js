@@ -68,6 +68,9 @@ function gameStart(api) {
     flyInHeight = 2;
 
     flyInColor = {
+        h: 0,
+        s: 1,
+        l: 1,
         r: 255,
         g: 0,
         b: 0
@@ -117,11 +120,6 @@ function gamePlay(api) {
     if(fireLockout) api.buttons.fire=false;
 
 
-    if(api.buttons.fire) {
-        api.setPixel(2,10);
-
-    }
-
 
     //scroll tower/gibs if needed..
     if(scroll - towerHeight < 5) scroll++;
@@ -144,8 +142,8 @@ function gamePlay(api) {
 
     for (var i=0; i<gibs.length; i++) {
 
-        api.setColor(Math.round(gibs[i].r),Math.round(gibs[i].g),Math.round(gibs[i].b),Math.round(gibs[i].a));
-        api.setPixel(Math.round(gibs[i].x), Math.round(gibs[i].y+scroll));
+        api.setColor(gibs[i].r,gibs[i].g,gibs[i].b,gibs[i].a);
+        api.setPixel(gibs[i].x, gibs[i].y+scroll);
 
         //movement
         gibs[i].x+=gibs[i].vX;
@@ -168,7 +166,7 @@ function gamePlay(api) {
 
             //draw flyin
             api.setColor(flyInColor.r, flyInColor.g, flyInColor.b);
-            api.fillBox(Math.round(flyInX),Math.round(flyInY),width,flyInHeight);
+            api.fillBox(flyInX,flyInY,width,flyInHeight);
 
             if(api.buttons.fire) {
                 fallXSpeed = flyInSpeed;
@@ -185,7 +183,7 @@ function gamePlay(api) {
 
             //draw flyin
             api.setColor(flyInColor.r, flyInColor.g, flyInColor.b);
-            api.fillBox(Math.round(flyInX),Math.round(flyInY),width,flyInHeight);
+            api.fillBox(flyInX,flyInY,width,flyInHeight);
 
             if(flyInY+flyInHeight >= scroll-towerHeight) flyInStatus++;
 
@@ -274,14 +272,19 @@ function gamePlay(api) {
             flyInStatus=1;
             flyInSpeed*= -1;
             if(flyInSpeed > 0) {
-                flyInSpeed+=0.01;
+                flyInSpeed+=0.005;
                 flyInX=0-width;
             } else {
-                flyInSpeed-=0.01;
+                flyInSpeed-=0.005;
                 flyInX=api.pxlW;
             }
 
-            flyInColor.g+=100;
+            flyInColor.h+=0.03;
+            var rgb = api.hslToRgb(flyInColor.h,1,0.5);
+            flyInColor.r=rgb[0];
+            flyInColor.g=rgb[1];
+            flyInColor.b=rgb[2];
+
             flyInHeight=Math.ceil(Math.random() * Math.floor(3));
 
             level++;
