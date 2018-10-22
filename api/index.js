@@ -84,7 +84,7 @@ function home() {
             }
             progs.push('Settings');
             scroll = api.pxlW;
-            curProg=0;
+            if (curProg >= progs.length) curProg = 0;
             gettingProgs = false;
             gotProgs = true;
         });

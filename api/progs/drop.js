@@ -23,6 +23,8 @@ var hasRun = false;
 var gameStatus = 0;
 var gravity = 0.5;
 
+var introStatus, introTicks;
+
 var level,width, towerTop, towerHeight, towerLeft ,scroll;
 var flyInX, flyInY, flyInSpeed,  flyInStatus, flyInHeight, flyInColor, fallXSpeed;
 
@@ -33,14 +35,7 @@ var gibs = [];
 
 exports.loop = function(api) {
 
-    if (!hasRun) {
-        hasRun = true;
 
-        //one time only start stuff
-        //api.playWav('logon');
-
-
-    }
     switch (gameStatus) {
         case 0:
             gameStart(api);
@@ -61,57 +56,93 @@ exports.loop = function(api) {
 
 function gameStart(api) {
 
+    if (!hasRun) {
+        hasRun = true;
 
-    level = 1;
-    width = 9;
+        //reset game vars
+        introStatus = 0;
+        introTicks = 0;
+        level = 1;
+        width = 9;
 
-    towerTop = 0;
-    towerHeight = 0;
-    towerLeft = 7;
+        towerTop = 0;
+        towerHeight = 0;
+        towerLeft = 7;
 
-    scroll = 11;
+        scroll = 0;
 
-    flyInX = 0.0-width;
-    flyInY = 0.0;
-    flyInSpeed = 0.1;
-    flyInStatus = 1;       //0 - waiting   1 - flying in  2 - falling  3 - Landing
-    flyInHeight = 2;
+        flyInX = 0.0-width;
+        flyInY = 0.0;
+        flyInSpeed = 0.1;
+        flyInStatus = 1;       //0 - waiting   1 - flying in  2 - falling  3 - Landing
+        flyInHeight = 2;
 
-    flyInColor = {
-        h: 0,
-        s: 1,
-        l: 1,
-        r: 255,
-        g: 0,
-        b: 0
-    };
+        flyInColor = {
+            h: 0,
+            s: 128,
+            l: 255,
+            r: 255,
+            g: 0,
+            b: 0
+        };
 
-    stack=[];
-    stack.push({
-        width: width,
-        left: towerLeft,
-        height: 1,
-        color: { r:255, g:255, b:255}
-    });
+        stack=[];
+        stack.push({
+            width: width,
+            left: towerLeft,
+            height: 1,
+            color: { r:128, g:128, b:128}
+        });
 
-    gibs=[];
+        gibs=[];
+
+
+
+
+    }
+
 
     //stop fire from being passed to this stage of the game
     if(api.buttons.fire === false) fireLockout = false;
     if(fireLockout) api.buttons.fire=false;
 
 
+    introTicks++;
 
-    api.blank(0,0,0);
-    api.setColor(0,255,255);
-    api.text('Rdy?',0,1);
-
-
-
-    if(api.buttons.fire) {
-        gameStatus=1;
-        fireLockout=true;
+    switch (introStatus) {
+        case 0:
+            api.blank(0,0,0);
+            api.setColor(0,255,255);
+            api.text('Rdy?',0,1);
+            if(api.buttons.fire) introStatus = 1;
+            break;
+        case 1:
+            //explode screen
+            api.playWav('sfx_exp_short_hard15');
+            screenToGibs(api);
+            introStatus++;
+            introTicks=0;
+            break;
+        case 2:
+            api.blank(0,0,0);
+            animateGibs(api);
+            if(introTicks == 60) {
+                gibs = [];
+                introStatus++;
+            }
+            break;
+        case 3:
+            scroll = 11;
+            gameStatus=1;
+            fireLockout=true;
     }
+
+
+
+
+
+
+
 
 
 
@@ -153,7 +184,7 @@ function gamePlay(api) {
             flyInX+=flyInSpeed;
 
             //draw flyin
-            api.setColor(flyInColor.r, flyInColor.g, flyInColor.b);
+            api.setColor(flyInColor);
             api.fillBox(flyInX,flyInY,width,flyInHeight);
 
             if(api.buttons.fire) {
@@ -173,7 +204,7 @@ function gamePlay(api) {
 
 
             //draw flyin
-            api.setColor(flyInColor.r, flyInColor.g, flyInColor.b);
+            api.setColor(flyInColor);
             api.fillBox(flyInX,flyInY,width,flyInHeight);
 
             if(flyInY+flyInHeight >= scroll-towerHeight) flyInStatus++;
@@ -234,7 +265,7 @@ function gamePlay(api) {
 
 
             //draw flyin
-            api.setColor(flyInColor.r, flyInColor.g, flyInColor.b);
+            api.setColor(flyInColor);
             api.fillBox(flyInX,flyInY,width,flyInHeight);
 
             api.setColor(255, 255, 255,0.7);
@@ -273,9 +304,9 @@ function gamePlay(api) {
                 flyInX=api.pxlW;
             }
 
-            flyInColor.h+=0.03;
-            if (flyInColor > 1) flyInColor = 0;
-            var rgb = api.hslToRgb(flyInColor.h,1,0.5);
+            flyInColor.h+=10;
+            if (flyInColor.h > 360) flyInColor = 0;
+            var rgb = api.hslToRgb(flyInColor.h,255,128);
             flyInColor.r=rgb[0];
             flyInColor.g=rgb[1];
             flyInColor.b=rgb[2];
@@ -315,13 +346,14 @@ function gameOver(api) {
 
 
         api.blank(0, 0, 0);
-        api.setColor(0, 255, 255);
+        api.setColor(flyInColor);
         var bounds = api.textBounds(level);
         api.text(level, 11-(bounds.w/2), 2);
 
 
         if (api.buttons.fire) {
             gameStatus = 0;
+            hasRun = false;
             fireLockout = true;
             api.playWav('sfx_sound_poweron');
 
@@ -334,18 +366,18 @@ function animateTower(api) {
     for (var i=0; i<stack.length; i++) {
         towerHeight+= stack[i].height;
 
-        api.setColor(stack[i].color.r, stack[i].color.g, stack[i].color.b);
+        api.setColor(stack[i].color);
         api.fillBox(stack[i].left, scroll-towerHeight, stack[i].width, stack[i].height);
     }
 
 }
 
 function animateGibs(api) {
-    if(gibs.length && gibs[0].y > api.pxlH) gibs.shift();
+    if(gibs.length && gibs[0].y+scroll > api.pxlH) gibs.shift();
 
     for (var i=0; i<gibs.length; i++) {
 
-        api.setColor(gibs[i].r,gibs[i].g,gibs[i].b,gibs[i].a);
+        api.setColor(gibs[i]);
         api.setPixel(gibs[i].x, gibs[i].y+scroll);
 
         //movement
@@ -358,6 +390,21 @@ function animateGibs(api) {
 
     }
 }
+
+function screenToGibs(api) {
+    for (var y = 0; y < api.pxlH; y++) {
+        for (var x = 0; x < api.pxlW; x++) {
+            var i = y * api.pxlW + x;
+            var r = api.buffer[i*3];
+            var g = api.buffer[i*3 + 1];
+            var b = api.buffer[i*3 + 2];
+            spawnGib(x,y,Math.round(Math.random()),r,g,b);
+        }
+
+    }
+
+
+};
 
 function spawnGib(x,y,left,r,g,b) {
 

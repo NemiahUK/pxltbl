@@ -477,7 +477,46 @@ var pxltblApi = new function() {
     };
 
     this.setColor = function (r, g, b, a) {
+
+
+        if(typeof r === 'object' && r.r !== undefined && r.g !== undefined && r.b !== undefined) {
+            //have we been passed an object of RGB?
+            a = r.a;
+            b = r.b;
+            g = r.g;
+            r = r.r;
+        } else if(typeof r === 'object' && r.h !== undefined && r.s !== undefined && r.l !== undefined) {
+            //have we been passed an object of HSL?
+            a = r.a;
+
+            var hsl = this.hslToRgb(r.h,r.s,r.l);
+
+            r = hsl[0];
+            g = hsl[1];
+            b = hsl[2];
+
+        } else if(typeof r === 'object' && r.h !== undefined && r.s !== undefined && r.v !== undefined) {
+            //have we been passed an object of HSV?
+            a = r.a;
+
+            var hsv = this.hsvToRgb(r.h,r.s,r.v);
+
+            r = hsv[0];
+            g = hsv[1];
+            b = hsv[2];
+        } else if(Array.isArray(r) && r[0] !== undefined && r[1] !== undefined && r[2] !== undefined) {
+            //have we been passed an array?
+            a = r[3];
+            b = r[2];
+            g = r[1];
+            r = r[0];
+        } else if(typeof r === 'string') {
+            //have we been passed a hex string?
+            //TODO - convert string to values
+        }
+
         if(a === undefined) a = 1.0;
+
         this.colorR = Math.round(r);
         this.colorG = Math.round(g);
         this.colorB = Math.round(b);
@@ -492,8 +531,25 @@ var pxltblApi = new function() {
 
     this.setColorHsl = function (h, s, l, a) {
 
-        var rgb = this.hslToRgb(h,s,l);
-        this.setColor(rgb[0],rgb[1],rgb[3],a);
+        var hsl = {
+            h: h,
+            s: s,
+            l: l,
+            a: a
+        };
+        this.setColor(hsl);
+
+    };
+
+    this.setColorHsv = function (h, s, v, a) {
+
+        var hsv = {
+            h: h,
+            s: s,
+            l: v,
+            a: a
+        };
+        this.setColor(hsv);
 
     };
 
@@ -779,13 +835,15 @@ var pxltblApi = new function() {
             this.lastStatsTime = curTime;
             this.frames = 0;
 
+            var minFrameTime = Math.round(1000 / this.fpsLimit);
+
             console.clear();
             console.log('Web Clients: ' + this.webClients);
             console.log('Millis: ' + this.millis);
             console.log('Game FPS: ' + this.fps);
             console.log('FPS limit: ' + this.fpsLimit);
             console.log('Frame time: ' + this.frameTime);
-            console.log('Min frame time: ' + 1000 / this.fpsLimit);
+            console.log('Min frame time: ' + minFrameTime);
             console.log('Num of pixels: ' + this.buffer.length);
 
             //this.dump();
@@ -798,7 +856,7 @@ var pxltblApi = new function() {
                     fps: + this.fps,
                     fpsLimit: this.fpsLimit,
                     frameTime: this.frameTime,
-                    minFrameTime: 1000 / this.fpsLimit,
+                    minFrameTime: minFrameTime,
                     length: this.buffer.length
                 });
             }
@@ -851,7 +909,7 @@ var pxltblApi = new function() {
             h /= 6;
         }
 
-        return [ h, s, l ];
+        return [ Math.round(360*h), Math.round(255*s), Math.round(255*l) ];
     };
 
     /**
@@ -867,6 +925,10 @@ var pxltblApi = new function() {
      */
     this.hslToRgb = function(h, s, l) {
         var r, g, b;
+
+        h/=360;
+        s/=255;
+        l/=255;
 
         if (s == 0) {
             r = g = b = l; // achromatic
@@ -888,7 +950,7 @@ var pxltblApi = new function() {
             b = hue2rgb(p, q, h - 1/3);
         }
 
-        return [ r * 255, g * 255, b * 255 ];
+        return [ Math.round(r * 255), Math.round(g * 255), Math.round(b * 255) ];
     };
 
     /**
@@ -923,7 +985,7 @@ var pxltblApi = new function() {
             h /= 6;
         }
 
-        return [ h, s, v ];
+        return [ Math.round(360*h), Math.round(255*s), Math.round(255*v) ];
     };
 
     /**
@@ -940,6 +1002,10 @@ var pxltblApi = new function() {
     this.hsvToRgb = function(h, s, v) {
         var r, g, b;
 
+        h/=360;
+        s/=255;
+        v/=255;
+
         var i = Math.floor(h * 6);
         var f = h * 6 - i;
         var p = v * (1 - s);
@@ -955,7 +1021,7 @@ var pxltblApi = new function() {
             case 5: r = v, g = p, b = q; break;
         }
 
-        return [ r * 255, g * 255, b * 255 ];
+        return [ Math.round(r * 255), Math.round(g * 255), Math.round(b * 255) ];
     };
 
     //====================== Helper methods ======================
