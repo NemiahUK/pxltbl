@@ -5,8 +5,6 @@ const readline = require('readline');
 const fs = require('fs');
 
 
-const wav = require('wav');
-const Speaker = require('speaker');
 
 
 
@@ -50,7 +48,12 @@ var pxltblApi = new function() {
     this.pxlCount = this.pxlW*this.pxlH;
     this.baud = 1000000;
     this.frameStart = new Buffer([0x01]);
-    this.brightness = 50;
+    this.brightness = 128;
+    this.whiteBalance = {
+        r: 1.0,
+        g: 0.9,
+        b: 0.5
+    };
 
 
     //callback functions
@@ -71,12 +74,14 @@ var pxltblApi = new function() {
     this.webClients = 0;
 
     this.buttons = {
-        up: false,
-        down: false,
-        left: false,
-        right: false,
-        fire: false,
-        home: false
+        topLeft: false,
+        leftTop: false,
+        topRight: false,
+        rightTop: false,
+        rightBottom: false,
+        bottomRight: false,
+        bottomLeft: false,
+        leftBottom: false
     };
 
     this.touch = new Array(this.pxlCount);
@@ -129,22 +134,31 @@ var pxltblApi = new function() {
                 //TODO add debounce - add GPIO => button map
 
                 switch (channel) {
-                    case 13:
-                        pxltblApi.buttons.up = value;
-                        break;
-                    case 15:
-                        pxltblApi.buttons.down = value;
-                        break;
-                    case 16:
-                        pxltblApi.buttons.left = value;
-                        break;
-                    case 18:
-                        pxltblApi.buttons.right = value;
-                        break;
                     case 22:
-                        pxltblApi.buttons.fire = value;
+                        pxltblApi.buttons.leftTop = value;
                         break;
                     case 37:
+                        pxltblApi.buttons.topLeft = value;
+                        break;
+                    case 15:
+                        pxltblApi.buttons.topRight = value;
+                        break;
+                    case 13:
+                        pxltblApi.buttons.rightTop = value;
+                        break;
+                    case 36:
+                        pxltblApi.buttons.rightBottom = value;
+                        break;
+                    case 32:
+                        pxltblApi.buttons.bottomRight = value;
+                        break;
+                    case 18:
+                        pxltblApi.buttons.bottomLeft = value;
+                        break;
+                    case 16:
+                        pxltblApi.buttons.leftBottom = value;
+                        break;
+                    case 31:
                         if(value) pxltblApi.exit();
                         break;
 
@@ -303,20 +317,29 @@ var pxltblApi = new function() {
 
     this.buttonDown = function(button) {
         switch (button) {
-            case 'up':
-                this.buttons.up = true;
+            case 'leftTop':
+                this.buttons.leftTop = true;
                 break;
-            case 'down':
-                this.buttons.down = true;
+            case 'topLeft':
+                this.buttons.topLeft = true;
                 break;
-            case 'left':
-                this.buttons.left = true;
+            case 'topRight':
+                this.buttons.topRight = true;
                 break;
-            case 'right':
-                this.buttons.right = true;
+            case 'rightTop':
+                this.buttons.rightTop = true;
                 break;
-            case 'fire':
-                this.buttons.fire = true;
+            case 'rightBottom':
+                this.buttons.rightBottom = true;
+                break;
+            case 'bottomRight':
+                this.buttons.bottomRight = true;
+                break;
+            case 'bottomLeft':
+                this.buttons.bottomLeft = true;
+                break;
+            case 'leftBottom':
+                this.buttons.leftBottom = true;
                 break;
             case 'home':
                 this.exit();
@@ -327,20 +350,32 @@ var pxltblApi = new function() {
 
     this.buttonUp = function(button) {
         switch (button) {
-            case 'up':
-                this.buttons.up = false;
+            case 'leftTop':
+                this.buttons.leftTop = false;
                 break;
-            case 'down':
-                this.buttons.down = false;
+            case 'topLeft':
+                this.buttons.topLeft = false;
                 break;
-            case 'left':
-                this.buttons.left = false;
+            case 'topRight':
+                this.buttons.topRight = false;
                 break;
-            case 'right':
-                this.buttons.right = false;
+            case 'rightTop':
+                this.buttons.rightTop = false;
                 break;
-            case 'fire':
-                this.buttons.fire = false;
+            case 'rightBottom':
+                this.buttons.rightBottom = false;
+                break;
+            case 'bottomRight':
+                this.buttons.bottomRight = false;
+                break;
+            case 'bottomLeft':
+                this.buttons.bottomLeft = false;
+                break;
+            case 'leftBottom':
+                this.buttons.leftBottom = false;
+                break;
+            case 'home':
+                this.exit();
                 break;
 
         }
@@ -408,16 +443,16 @@ var pxltblApi = new function() {
                     for (var x = 0; x < this.pxlW; x++) {
                         var i = y * this.pxlW + x;
                         var iReverse = y * this.pxlW + (this.pxlW - x) - 1;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3] * this.brightness / 255;
-                        serpantineBuffer[i * 3] = this.buffer[iReverse * 3 + 1] * this.brightness / 255;
-                        serpantineBuffer[i * 3 + 2] = this.buffer[iReverse * 3 + 2] * this.brightness / 255;
+                        serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r;
+                        serpantineBuffer[i * 3] = this.buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
+                        serpantineBuffer[i * 3 + 2] = this.buffer[iReverse * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
                     }
                 } else { //even row
                     for (var x = 0; x < this.pxlW; x++) {
                         var i = y * this.pxlW + x;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[i * 3] * this.brightness / 255;
-                        serpantineBuffer[i * 3] = this.buffer[i * 3 + 1] * this.brightness / 255;
-                        serpantineBuffer[i * 3 + 2] = this.buffer[i * 3 + 2] * this.brightness / 255;
+                        serpantineBuffer[i * 3 + 1] = this.buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r;
+                        serpantineBuffer[i * 3] = this.buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
+                        serpantineBuffer[i * 3 + 2] = this.buffer[i * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
                     }
 
                 }
@@ -767,14 +802,17 @@ var pxltblApi = new function() {
 
 
 
-    this.playWav = function (fileName) {
+    this.playWav = function (fileName,loop) {
 
 
         var player = require('node-wav-player');
 
+        if(loop === undefined) loop = false;
+
 
         player.play({
             path: './wav/'+fileName+'.wav',
+            loop: loop
         }).then(() => {
 
         }).catch((error) => {

@@ -3,6 +3,7 @@ var player;
 exports.setup = function(api) {
     api.fpsLimit = 60;
 
+
 };
 
 var rainbow = [0,45,65,135,210,260,270];
@@ -45,7 +46,18 @@ exports.loop = function(api) {
     if(api.buttons.fire) {
         animState++;
 
+
     }
+
+    api.setColor(0,255,255);
+    if(api.buttons.leftTop) api.setPixel(0,1);
+    if(api.buttons.topLeft) api.setPixel(1,0);
+    if(api.buttons.topRight) api.setPixel(21,0);
+    if(api.buttons.rightTop) api.setPixel(22,1);
+    if(api.buttons.rightBottom) api.setPixel(22,9);
+    if(api.buttons.bottomRight) api.setPixel(21,10);
+    if(api.buttons.bottomLeft) api.setPixel(1,10);
+    if(api.buttons.leftBottom) api.setPixel(0,9);
 
     //prevent overflow
     if(xPos > 24 && animState === 0) {
