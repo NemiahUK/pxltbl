@@ -4,7 +4,19 @@ const api = require('./api.js');
 
 
 
+var screen = 'home';
 
+var path = './progs';
+var progs = [];
+var gotProgs = false;
+var gettingProgs = false;
+var curProg = 0;
+var scroll = 0.0;
+
+var btnDownPressed;
+var btnUpPressed;
+
+var prog;
 
 
     api.start({
@@ -18,10 +30,10 @@ const api = require('./api.js');
 
 
 
-var screen = 'home';
-
 
 function loop() {
+
+
 
 
     if(api.goHome) {
@@ -58,26 +70,15 @@ function loop() {
 }
 
 
-var path = './progs';
-var progs = [];
-var gotProgs = false;
-var gettingProgs = false;
-var curProg = 0;
-var scroll = 0.0;
 
-var btnDownPressed;
-var btnUpPressed;
-
-var prog;
 
 function home() {
-
-
 
     if(!gotProgs && !gettingProgs) {
         gettingProgs = true;
         progs = [];
         fs.readdir(path, function(err, items) {
+
 
             for (var i=0; i<items.length; i++) {
                 progs.push(items[i].substr(0,items[i].length-3));

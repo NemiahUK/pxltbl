@@ -1,13 +1,6 @@
-const raspi = require('raspi');
-const Serial = require('raspi-serial').Serial;
-var gpio = require('rpi-gpio');
+
 const readline = require('readline');
 const fs = require('fs');
-
-
-
-
-
 
 const path = require('path');
 const http = require('http');
@@ -24,7 +17,7 @@ const http = require('http');
 var pxltblApi = new function() {
 
 
-
+   this.isRasPi = false;
 
     //these should probably be public
     this.frameTime = 0;
@@ -108,86 +101,100 @@ var pxltblApi = new function() {
 
         if(options.fpsLimit !== undefined) this.fpsLimit = parseInt(options.fpsLimit);
 
+        try {
+            const raspi = require('raspi');
+
+            raspi.init(() => {
+
+                console.log('Raspberry Pi detected, booting...');
+
+                const Serial = require('raspi-serial').Serial;
+                var gpio = require('rpi-gpio');
+
+
+                //start keyboard input
+                readline.emitKeypressEvents(process.stdin);
+                process.stdin.setRawMode(true);
+
+                process.stdin.on('keypress', pxltblApi.keyPress);
+
+
+                //start button input
+                gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //B3 Up
+                gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //B4 Down
+                gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //B5 Left
+                gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH); //B6 Right
+                gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH); //B2 Fire
+                gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //B1 Home
+                gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //B7
+                gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //B8
+
+                gpio.on('change', function(channel, value) {
+                    //TODO add debounce - add GPIO => button map
+
+                    switch (channel) {
+                        case 22:
+                            pxltblApi.buttons.leftTop = value;
+                            break;
+                        case 37:
+                            pxltblApi.buttons.topLeft = value;
+                            break;
+                        case 15:
+                            pxltblApi.buttons.topRight = value;
+                            break;
+                        case 13:
+                            pxltblApi.buttons.rightTop = value;
+                            break;
+                        case 36:
+                            pxltblApi.buttons.rightBottom = value;
+                            break;
+                        case 32:
+                            pxltblApi.buttons.bottomRight = value;
+                            break;
+                        case 18:
+                            pxltblApi.buttons.bottomLeft = value;
+                            break;
+                        case 16:
+                            pxltblApi.buttons.leftBottom = value;
+                            break;
+                        case 31:
+                            if(value) pxltblApi.exit();
+                            break;
+
+                    }
+
+                });
+
+
+                //start serial
+                pxltblApi.serial = new Serial({
+                    portId: '/dev/ttyS0',
+                    baudRate: pxltblApi.baud
+                });
+
+                pxltblApi.serial.open(() => {
+                    console.log('pxltbl booting...DONE');
+                    pxltblApi.blank(0, 0, 0);
+                    pxltblApi.show();
+                })
+
+                //setup SPI Rx events
+                //TODO - here we need functions to handle SPI commands recieved form the arduino, such as 'booted', 'button press', 'etc'
+
+            });
+
+
+        } catch (err) {
+            console.log('This isn\'t a Raspberry Pi!?? That\'s OK though, I\'ll carry on...');
+            this.show();
+        }
+
+        //start web server
+        this.startWeb();
+
 
         //wait for RasPi to be ready
-        raspi.init(() => {
 
-            //start web server
-            this.startWeb();
-
-
-
-
-            //start keyboard input
-            readline.emitKeypressEvents(process.stdin);
-            process.stdin.setRawMode(true);
-
-            process.stdin.on('keypress', pxltblApi.keyPress);
-
-
-            //start button input
-            gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //B3 Up
-            gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //B4 Down
-            gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //B5 Left
-            gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH); //B6 Right
-            gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH); //B2 Fire
-            gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //B1 Home
-            gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //B7
-            gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //B8
-
-            gpio.on('change', function(channel, value) {
-                //TODO add debounce - add GPIO => button map
-
-                switch (channel) {
-                    case 22:
-                        pxltblApi.buttons.leftTop = value;
-                        break;
-                    case 37:
-                        pxltblApi.buttons.topLeft = value;
-                        break;
-                    case 15:
-                        pxltblApi.buttons.topRight = value;
-                        break;
-                    case 13:
-                        pxltblApi.buttons.rightTop = value;
-                        break;
-                    case 36:
-                        pxltblApi.buttons.rightBottom = value;
-                        break;
-                    case 32:
-                        pxltblApi.buttons.bottomRight = value;
-                        break;
-                    case 18:
-                        pxltblApi.buttons.bottomLeft = value;
-                        break;
-                    case 16:
-                        pxltblApi.buttons.leftBottom = value;
-                        break;
-                    case 31:
-                        if(value) pxltblApi.exit();
-                        break;
-
-                }
-
-            });
-
-
-            //start serial
-            pxltblApi.serial = new Serial({
-                portId: '/dev/ttyS0',
-                baudRate: pxltblApi.baud
-            });
-
-            pxltblApi.serial.open(() => {
-                console.log('pxltbl booting...DONE');
-                pxltblApi.blank(0, 0, 0);
-                pxltblApi.show();
-            })
-
-            //setup SPI Rx events
-            //TODO - here we need functions to handle SPI commands recieved form the arduino, such as 'booted', 'button press', 'etc'
-
-        });
 
     };
 
@@ -475,10 +482,18 @@ var pxltblApi = new function() {
 
         try {
             //sent to serial
-            this.serial.write(Buffer.concat([this.frameStart, serpantineBuffer]), function () {
-                pxltblApi.loop();
+            if(this.isRasPi) {
+                this.serial.write(Buffer.concat([this.frameStart, serpantineBuffer]), function () {
+                    pxltblApi.loop();
 
-            });
+                });
+            } else {
+                //TODO - for some reason you have to call the loop as a callback of some random function (fs). I've not figured out why yet :S
+                fs.readdir('.', function(err, items) {
+                    pxltblApi.loop();
+                });
+
+            }
 
 
         } catch (err) {
@@ -882,6 +897,8 @@ var pxltblApi = new function() {
     //====================== Loop ======================
 
     this.loop = function () {
+
+
         //the main loop
 
         var curTime = new Date().getTime();
@@ -940,7 +957,6 @@ var pxltblApi = new function() {
 
         //update display and start again
         if (!this.paused) this.show();
-
 
     };
 
