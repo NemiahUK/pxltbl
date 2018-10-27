@@ -2,6 +2,7 @@ var player;
 
 exports.setup = function(api) {
     api.fpsLimit = 60;
+    api.setRotation(90);
 
 
 };

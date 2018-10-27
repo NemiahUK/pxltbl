@@ -29,6 +29,7 @@ function loop() {
         api.goHome = false;
         api.clearInputs();
         api.fpsLimit = 30;
+        api.setRotation(0);
     }
 
     switch(screen) {

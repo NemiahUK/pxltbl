@@ -41,8 +41,13 @@ var pxltblApi = new function() {
 
     //options - these are the defaults, ovverridden by options object
     this.fpsLimit = 30;
-    this.pxlW = 23;
-    this.pxlH = 11;
+
+    this.originalPxlW = 23;
+    this.originalPxlH = 11;
+    this.pxlW = this.originalPxlW;
+    this.pxlH = this.originalPxlH;
+    this.rotation = 0;
+
     this.stripSerpantine = true;
     this.stripStart = 'TL';  //can be TL, TR, BL, BR
     this.pxlCount = this.pxlW*this.pxlH;
@@ -438,18 +443,18 @@ var pxltblApi = new function() {
 
 
         if (this.stripSerpantine === true) {
-            for (var y = 0; y < this.pxlH; y++) {
+            for (var y = 0; y < this.originalPxlH; y++) {
                 if (y % 2) { //odd row
-                    for (var x = 0; x < this.pxlW; x++) {
-                        var i = y * this.pxlW + x;
-                        var iReverse = y * this.pxlW + (this.pxlW - x) - 1;
+                    for (var x = 0; x < this.originalPxlW; x++) {
+                        var i = y * this.originalPxlW + x;
+                        var iReverse = y * this.originalPxlW + (this.originalPxlW - x) - 1;
                         serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r;
                         serpantineBuffer[i * 3] = this.buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
                         serpantineBuffer[i * 3 + 2] = this.buffer[iReverse * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
                     }
                 } else { //even row
-                    for (var x = 0; x < this.pxlW; x++) {
-                        var i = y * this.pxlW + x;
+                    for (var x = 0; x < this.originalPxlW; x++) {
+                        var i = y * this.originalPxlW + x;
                         serpantineBuffer[i * 3 + 1] = this.buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r;
                         serpantineBuffer[i * 3] = this.buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
                         serpantineBuffer[i * 3 + 2] = this.buffer[i * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
@@ -500,6 +505,23 @@ var pxltblApi = new function() {
 
 
     //====================== Pixel methods ======================
+
+    this.setRotation = function(angle) {
+       if(angle === 0 || angle === 180) {
+           this.rotation = angle;
+           this.pxlW = this.originalPxlW;
+           this.pxlH = this.originalPxlH;
+       }
+
+        if(angle === 90 || angle === 270) {
+            this.rotation = angle;
+            this.pxlW = this.originalPxlH;
+            this.pxlH = this.originalPxlW;
+        }
+
+        this.blank();
+    };
+
 
     this.blank = function (r, g, b) {
         //fills the entire screen with r,g,b
@@ -589,15 +611,24 @@ var pxltblApi = new function() {
     };
 
 
-    this.setPixel = function (x, y) {
+    this.setPixel = function (inX, inY) {
         //set an individual pixel
 
-        x = Math.round(x);
-        y = Math.round(y);
+        inX = Math.round(inX);
+        inY = Math.round(inY);
 
-        if(x < 0 || y < 0 || x >= this.pxlW || y >= this.pxlH) return false;
+        if(this.rotation === 0) {
+            var x = inX;
+            var y = inY;
+        }
+        if(this.rotation === 90) {
+            var x = this.pxlH-inY-1;
+            var y = inX;
+        }
 
-        var pixel = y * this.pxlW + x;
+        if(x < 0 || y < 0 || x >= this.originalPxlW || y >= this.originalPxlH) return false;
+
+        var pixel = y * this.originalPxlW + x;
 
         this.buffer[pixel * 3] = this.buffer[pixel * 3] * (1-this.colorA) + this.colorA*this.colorR;
         this.buffer[pixel * 3 + 1] = this.buffer[pixel * 3 + 1] * (1-this.colorA) + this.colorA*this.colorG;
@@ -613,7 +644,7 @@ var pxltblApi = new function() {
         h = Math.round(h);
 
         for (var i = 0; i < h; i++) {
-            for (var j = 0; j < w && j+x < this.pxlW; j++) {
+            for (var j = 0; j < w && j+x < this.originalPxlW; j++) {
 
                 this.setPixel(x+j,y+i);
             }
