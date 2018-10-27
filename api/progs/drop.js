@@ -1,16 +1,9 @@
 /*
-
-Drop Game by Steven Tomlinson https://github.com/TmpR
-
-
+Drop Game by Steven Tomlinson https://github.com/phyushin
  */
-
-
-
 
 exports.setup = function(api) {
     // Code here get's executed once at program startup.
-
     api.debug('Starting game...');
     api.fpsLimit = 60;
     // Blank the screen
@@ -35,11 +28,9 @@ var gibs = [];
 
 exports.loop = function(api) {
 
-
     switch (gameStatus) {
         case 0:
             gameStart(api);
-
             break;
         case 1:
             gamePlay(api);
@@ -47,15 +38,10 @@ exports.loop = function(api) {
         case 2:
             gameOver(api);
             break;
-
-
     }
-
-
 };
 
 function gameStart(api) {
-
     if (!hasRun) {
         hasRun = true;
 
@@ -95,17 +81,11 @@ function gameStart(api) {
         });
 
         gibs=[];
-
-
-
-
     }
-
 
     //stop fire from being passed to this stage of the game
     if(api.buttons.fire === false) fireLockout = false;
     if(fireLockout) api.buttons.fire=false;
-
 
     introTicks++;
 
@@ -136,44 +116,24 @@ function gameStart(api) {
             gameStatus=1;
             fireLockout=true;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 function gamePlay(api) {
-
     //playing game
     api.blank(0, 0, 0);
-
 
     //stop fire from being passed to this stage of the game
     if(api.buttons.fire === false) fireLockout = false;
     if(fireLockout) api.buttons.fire=false;
 
-
-
     //scroll tower/gibs if needed..
     if(scroll - towerHeight < 6) scroll++;
-
-
 
     // Draw tower
     animateTower(api);
 
     //draw gibs
     animateGibs(api);
-
 
     switch (flyInStatus) {
         case 0:
@@ -190,9 +150,7 @@ function gamePlay(api) {
             if(api.buttons.fire) {
                 fallXSpeed = flyInSpeed;
                 flyInStatus++;
-
                 api.playWav('sfx_movement_dooropen1');
-
             }
 
             break;
@@ -201,7 +159,6 @@ function gamePlay(api) {
             //fallXSpeed*=0.9;
             flyInY+=gravity;
             flyInX+=fallXSpeed;
-
 
             //draw flyin
             api.setColor(flyInColor);
@@ -226,13 +183,10 @@ function gamePlay(api) {
                     }
                 }
 
-                var oldWidth = width;
-                width = flyInX+width - towerLeft;
-                flyInX+=oldWidth-width;
-                api.playWav('sfx_exp_short_hard15');
-
-
-
+            var oldWidth = width;
+            width = flyInX+width - towerLeft;
+            flyInX+=oldWidth-width;
+            api.playWav('sfx_exp_short_hard15');
             } else if(flyInX > towerLeft) {
                 //too far right
 
@@ -246,13 +200,10 @@ function gamePlay(api) {
                 width = towerLeft + width - flyInX;
                 towerLeft = flyInX;
                 api.playWav('sfx_exp_short_hard15');
-
             } else {
                 //bang on!
-
                 //play sound
                 api.playWav('sfx_sounds_impact1');
-
             }
 
             if(width < 1) {
@@ -260,24 +211,20 @@ function gamePlay(api) {
                 gameOverTicks=0;
                 level--;
                 gameStatus++;
-
             }
-
 
             //draw flyin
             api.setColor(flyInColor);
             api.fillBox(flyInX,flyInY,width,flyInHeight);
-
             api.setColor(255, 255, 255,0.7);
             api.fillBox(flyInX,flyInY,width,flyInHeight);
-
+            
             fireLockout = true;
-
             flyInStatus++;
+            
             break;
         case 4:
             //add to stack
-
             stack.push({
                 width: width,
                 left: flyInX,
@@ -289,11 +236,7 @@ function gamePlay(api) {
                 }
             });
 
-
-
-
             flyInY=0;
-
             flyInStatus=1;
             flyInSpeed*= -1;
             if(flyInSpeed > 0) {
@@ -312,18 +255,11 @@ function gamePlay(api) {
             flyInColor.b=rgb[2];
 
             api.debug(flyInColor);
-
             flyInHeight=Math.ceil(Math.random() * Math.floor(3));
-
 
             api.debug('Level '+level+' complete.');
             level++;
-
-
             break;
-
-
-
     }
 
 };
@@ -333,30 +269,21 @@ function gameOver(api) {
     //stop fire from being passed to this stage of the game
     if(api.buttons.fire === false) fireLockout = false;
     if(fireLockout) api.buttons.fire=false;
-
-
-
     gameOverTicks++;
-
     api.blank(0,0,0);
     animateTower(api);
     animateGibs(api);
-
     if(gameOverTicks > 120) {
-
-
         api.blank(0, 0, 0);
         api.setColor(flyInColor);
         var bounds = api.textBounds(level);
         api.text(level, 11-(bounds.w/2), 2);
-
 
         if (api.buttons.fire) {
             gameStatus = 0;
             hasRun = false;
             fireLockout = true;
             api.playWav('sfx_sound_poweron');
-
         }
     }
 };
@@ -365,7 +292,6 @@ function animateTower(api) {
     towerHeight = 0;
     for (var i=0; i<stack.length; i++) {
         towerHeight+= stack[i].height;
-
         api.setColor(stack[i].color);
         api.fillBox(stack[i].left, scroll-towerHeight, stack[i].width, stack[i].height);
     }
@@ -374,12 +300,9 @@ function animateTower(api) {
 
 function animateGibs(api) {
     if(gibs.length && gibs[0].y+scroll > api.pxlH) gibs.shift();
-
     for (var i=0; i<gibs.length; i++) {
-
         api.setColor(gibs[i]);
         api.setPixel(gibs[i].x, gibs[i].y+scroll);
-
         //movement
         gibs[i].x+=gibs[i].vX;
         gibs[i].y+=gibs[i].vY;
@@ -387,7 +310,6 @@ function animateGibs(api) {
         gibs[i].vY+=gravity;
         //fade
         //gibs[i].a-=16;
-
     }
 }
 
@@ -400,19 +322,16 @@ function screenToGibs(api) {
             var b = api.buffer[i*3 + 2];
             spawnGib(x,y,Math.round(Math.random()),r,g,b);
         }
-
     }
-
-
 };
 
 function spawnGib(x,y,left,r,g,b) {
-
-
     var vX = -0.8 + (Math.random()*0.5);
     var vY =  -2 + (Math.random()*1);
 
-    if(!left) vX*= -1;
+    if(!left) {
+        vX*= -1;
+    }
 
     gibs.push({
         x: x,
@@ -425,4 +344,3 @@ function spawnGib(x,y,left,r,g,b) {
         a: 1
     });
 };
-
