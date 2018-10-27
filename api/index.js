@@ -23,11 +23,13 @@ var screen = 'home';
 
 function loop() {
 
+
     if(api.goHome) {
         screen = 'home';
         api.goHome = false;
         api.clearInputs();
         api.fpsLimit = 30;
+        api.setRotation(0);
     }
 
     switch(screen) {
@@ -48,6 +50,7 @@ function loop() {
                 prog.loop(api);
             } catch (err) {
                 screen = 'err';
+                api.error(err);
             }
             break;
     }
@@ -82,32 +85,32 @@ function home() {
             }
             progs.push('Settings');
             scroll = api.pxlW;
-            curProg=0;
+            if (curProg >= progs.length) curProg = 0;
             gettingProgs = false;
             gotProgs = true;
         });
     }
 
     if(gotProgs) {
-        if (api.buttons.down && !btnDownPressed) {
+        if (api.buttons.bottomLeft && !btnDownPressed) {
             curProg++;
             scroll = api.pxlW;
             if (curProg >= progs.length) curProg = 0;
             btnDownPressed = true;
         }
 
-        if (api.buttons.up && !btnUpPressed) {
+        if (api.buttons.topLeft && !btnUpPressed) {
             curProg--;
             scroll = api.pxlW;
             if (curProg < 0) curProg = progs.length - 1;
             btnUpPressed = true;
         }
 
-        if (!api.buttons.down) btnDownPressed = false;
-        if (!api.buttons.up) btnUpPressed = false;
+        if (!api.buttons.bottomLeft) btnDownPressed = false;
+        if (!api.buttons.topLeft) btnUpPressed = false;
 
 
-        if (api.buttons.fire) {
+        if (api.buttons.rightTop) {
             if (curProg == progs.length - 1) {
                 api.clearInputs();
                 scroll = api.pxlW;
@@ -147,7 +150,10 @@ function home() {
 
 var errStart = false;
 function err() {
-    if(errStart === false) errStart = api.millis;
+    if(errStart === false) {
+        errStart = api.millis;
+        api.playWav('looser');
+    }
     if(api.millis - errStart > 3000) {
         errStart = false;
         api.goHome = true;
@@ -159,20 +165,20 @@ function err() {
 
 function settings() {
 
-    if(api.buttons.down && !btnDownPressed) {
+    if(api.buttons.bottomLeft && !btnDownPressed) {
         //no other menu items yet
 
         btnDownPressed = true;
     }
 
-    if(api.buttons.fire) {
+    if(api.buttons.rightBottom) {
         //only one thing to do
         api.clearInputs();
         screen = 'brightness';
         return;
     }
 
-    if(!api.buttons.down) btnDownPressed = false;
+    if(!api.buttons.bottomLeft) btnDownPressed = false;
 
 
     api.blank(0,0,0);
@@ -185,8 +191,8 @@ function settings() {
 
 function brightness() {
     var step = 4;
-    if(api.buttons.down && api.brightness > 1+step) api.brightness-=step;
-    if(api.buttons.up && api.brightness < 255-step ) api.brightness+=step;
+    if(api.buttons.leftBottom && api.brightness > 1+step) api.brightness-=step;
+    if(api.buttons.rightBottom && api.brightness < 255-step ) api.brightness+=step;
 
     api.blank(255,255,255);
     api.setColor(50,0,255);

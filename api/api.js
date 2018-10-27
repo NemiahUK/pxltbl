@@ -1,8 +1,13 @@
 const raspi = require('raspi');
+const Serial = require('raspi-serial').Serial;
+var gpio = require('rpi-gpio');
 const readline = require('readline');
 const fs = require('fs');
-//const wav = require('wav');
-//const Speaker = require('speaker');
+
+
+
+
+
 
 const path = require('path');
 const http = require('http');
@@ -36,14 +41,24 @@ var pxltblApi = new function() {
 
     //options - these are the defaults, ovverridden by options object
     this.fpsLimit = 30;
-    this.pxlW = 23;
-    this.pxlH = 11;
+
+    this.originalPxlW = 23;
+    this.originalPxlH = 11;
+    this.pxlW = this.originalPxlW;
+    this.pxlH = this.originalPxlH;
+    this.rotation = 0;
+
     this.stripSerpantine = true;
     this.stripStart = 'TL';  //can be TL, TR, BL, BR
     this.pxlCount = this.pxlW*this.pxlH;
     this.baud = 1000000;
     this.frameStart = new Buffer([0x01]);
-    this.brightness = 50;
+    this.brightness = 128;
+    this.whiteBalance = {
+        r: 1.0,
+        g: 0.9,
+        b: 0.5
+    };
 
 
     //callback functions
@@ -64,14 +79,19 @@ var pxltblApi = new function() {
     this.webClients = 0;
 
     this.buttons = {
-        up: false,
-        down: false,
-        left: false,
-        right: false,
-        fire: false
+        topLeft: false,
+        leftTop: false,
+        topRight: false,
+        rightTop: false,
+        rightBottom: false,
+        bottomRight: false,
+        bottomLeft: false,
+        leftBottom: false
     };
 
     this.touch = new Array(this.pxlCount);
+
+    this.playing = false;
 
     this.goHome = false;
 
@@ -92,26 +112,11 @@ var pxltblApi = new function() {
         //wait for RasPi to be ready
         raspi.init(() => {
 
-            console.log('Booting');
-
-
             //start web server
             this.startWeb();
 
 
-            try {
-                //start raspi serial
-                this.startSerial(() => {
-                    console.log('done');
-                    pxltblApi.blank(0, 0, 0);
-                    pxltblApi.show();
-                });
-            } catch (err) {
-                //if we are not on a RasPi or there's no serial interface then carry on with web only.
-                console.log('couldn\'t open serial');
-                pxltblApi.blank(0, 0, 0);
-                pxltblApi.show();
-            }
+
 
             //start keyboard input
             readline.emitKeypressEvents(process.stdin);
@@ -120,7 +125,64 @@ var pxltblApi = new function() {
             process.stdin.on('keypress', pxltblApi.keyPress);
 
 
+            //start button input
+            gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //B3 Up
+            gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //B4 Down
+            gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //B5 Left
+            gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH); //B6 Right
+            gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH); //B2 Fire
+            gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //B1 Home
+            gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //B7
+            gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //B8
 
+            gpio.on('change', function(channel, value) {
+                //TODO add debounce - add GPIO => button map
+
+                switch (channel) {
+                    case 22:
+                        pxltblApi.buttons.leftTop = value;
+                        break;
+                    case 37:
+                        pxltblApi.buttons.topLeft = value;
+                        break;
+                    case 15:
+                        pxltblApi.buttons.topRight = value;
+                        break;
+                    case 13:
+                        pxltblApi.buttons.rightTop = value;
+                        break;
+                    case 36:
+                        pxltblApi.buttons.rightBottom = value;
+                        break;
+                    case 32:
+                        pxltblApi.buttons.bottomRight = value;
+                        break;
+                    case 18:
+                        pxltblApi.buttons.bottomLeft = value;
+                        break;
+                    case 16:
+                        pxltblApi.buttons.leftBottom = value;
+                        break;
+                    case 31:
+                        if(value) pxltblApi.exit();
+                        break;
+
+                }
+
+            });
+
+
+            //start serial
+            pxltblApi.serial = new Serial({
+                portId: '/dev/ttyS0',
+                baudRate: pxltblApi.baud
+            });
+
+            pxltblApi.serial.open(() => {
+                console.log('pxltbl booting...DONE');
+                pxltblApi.blank(0, 0, 0);
+                pxltblApi.show();
+            })
 
             //setup SPI Rx events
             //TODO - here we need functions to handle SPI commands recieved form the arduino, such as 'booted', 'button press', 'etc'
@@ -157,25 +219,23 @@ var pxltblApi = new function() {
 
     };
 
-    this.startSerial = function (callback) {
+    this.debug = function (data) {
+        if(this.webClients) {
+            this.webIo.emit('debug', data);
 
-        //start serial
-        console.log('Starting serial...');
+        }
 
+    };
 
-        this.serial = require('raspi-serial').serial({
-            portId: '/dev/ttyS0',
-            baudRate: pxltblApi.baud
-        });
+    this.error = function (data) {
+        if(this.webClients) {
+            this.webIo.emit('error', data);
 
-        this.serial.open(callback);
+        }
 
     };
 
     this.startWeb = function () {
-
-        console.log('Starting web server...');
-
 
         this.webServer = http.createServer(function (request, response) {
 
@@ -259,25 +319,35 @@ var pxltblApi = new function() {
         this.webServer.listen(3000);
     };
 
+
     this.buttonDown = function(button) {
         switch (button) {
-            case 'up':
-                this.buttons.up = true;
+            case 'leftTop':
+                this.buttons.leftTop = true;
                 break;
-            case 'down':
-                this.buttons.down = true;
+            case 'topLeft':
+                this.buttons.topLeft = true;
                 break;
-            case 'left':
-                this.buttons.left = true;
+            case 'topRight':
+                this.buttons.topRight = true;
                 break;
-            case 'right':
-                this.buttons.right = true;
+            case 'rightTop':
+                this.buttons.rightTop = true;
                 break;
-            case 'fire':
-                this.buttons.fire = true;
+            case 'rightBottom':
+                this.buttons.rightBottom = true;
+                break;
+            case 'bottomRight':
+                this.buttons.bottomRight = true;
+                break;
+            case 'bottomLeft':
+                this.buttons.bottomLeft = true;
+                break;
+            case 'leftBottom':
+                this.buttons.leftBottom = true;
                 break;
             case 'home':
-                this.goHome = true;
+                this.exit();
                 break;
 
         }
@@ -285,20 +355,32 @@ var pxltblApi = new function() {
 
     this.buttonUp = function(button) {
         switch (button) {
-            case 'up':
-                this.buttons.up = false;
+            case 'leftTop':
+                this.buttons.leftTop = false;
                 break;
-            case 'down':
-                this.buttons.down = false;
+            case 'topLeft':
+                this.buttons.topLeft = false;
                 break;
-            case 'left':
-                this.buttons.left = false;
+            case 'topRight':
+                this.buttons.topRight = false;
                 break;
-            case 'right':
-                this.buttons.right = false;
+            case 'rightTop':
+                this.buttons.rightTop = false;
                 break;
-            case 'fire':
-                this.buttons.fire = false;
+            case 'rightBottom':
+                this.buttons.rightBottom = false;
+                break;
+            case 'bottomRight':
+                this.buttons.bottomRight = false;
+                break;
+            case 'bottomLeft':
+                this.buttons.bottomLeft = false;
+                break;
+            case 'leftBottom':
+                this.buttons.leftBottom = false;
+                break;
+            case 'home':
+                this.exit();
                 break;
 
         }
@@ -361,28 +443,28 @@ var pxltblApi = new function() {
 
 
         if (this.stripSerpantine === true) {
-            for (var y = 0; y < this.pxlH; y++) {
+            for (var y = 0; y < this.originalPxlH; y++) {
                 if (y % 2) { //odd row
-                    for (var x = 0; x < this.pxlW; x++) {
-                        var i = y * this.pxlW + x;
-                        var iReverse = y * this.pxlW + (this.pxlW - x) - 1;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3] * this.brightness / 255;
-                        serpantineBuffer[i * 3] = this.buffer[iReverse * 3 + 1] * this.brightness / 255;
-                        serpantineBuffer[i * 3 + 2] = this.buffer[iReverse * 3 + 2] * this.brightness / 255;
+                    for (var x = 0; x < this.originalPxlW; x++) {
+                        var i = y * this.originalPxlW + x;
+                        var iReverse = y * this.originalPxlW + (this.originalPxlW - x) - 1;
+                        serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r;
+                        serpantineBuffer[i * 3] = this.buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
+                        serpantineBuffer[i * 3 + 2] = this.buffer[iReverse * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
                     }
                 } else { //even row
-                    for (var x = 0; x < this.pxlW; x++) {
-                        var i = y * this.pxlW + x;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[i * 3] * this.brightness / 255;
-                        serpantineBuffer[i * 3] = this.buffer[i * 3 + 1] * this.brightness / 255;
-                        serpantineBuffer[i * 3 + 2] = this.buffer[i * 3 + 2] * this.brightness / 255;
+                    for (var x = 0; x < this.originalPxlW; x++) {
+                        var i = y * this.originalPxlW + x;
+                        serpantineBuffer[i * 3 + 1] = this.buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r;
+                        serpantineBuffer[i * 3] = this.buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
+                        serpantineBuffer[i * 3 + 2] = this.buffer[i * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
                     }
 
                 }
             }
         } else {
             serpantineBuffer = this.buffer;
-            //TODO add RGB => GRB conversion, brightness etc
+            //todo add RGB => GRB conversion, brightness etc
         }
 
         //send to web
@@ -400,8 +482,7 @@ var pxltblApi = new function() {
 
 
         } catch (err) {
-            //couldn't send to serial, but lets continue anyway
-            this.loop();
+            //TODO - do something useful.  We only usually get errors when we are quitting anyway.
         }
     };
 
@@ -425,6 +506,23 @@ var pxltblApi = new function() {
 
     //====================== Pixel methods ======================
 
+    this.setRotation = function(angle) {
+       if(angle === 0 || angle === 180) {
+           this.rotation = angle;
+           this.pxlW = this.originalPxlW;
+           this.pxlH = this.originalPxlH;
+       }
+
+        if(angle === 90 || angle === 270) {
+            this.rotation = angle;
+            this.pxlW = this.originalPxlH;
+            this.pxlH = this.originalPxlW;
+        }
+
+        this.blank();
+    };
+
+
     this.blank = function (r, g, b) {
         //fills the entire screen with r,g,b
         for (var i = 0; i < this.pxlCount; i++) {
@@ -436,19 +534,101 @@ var pxltblApi = new function() {
     };
 
     this.setColor = function (r, g, b, a) {
+
+
+        if(typeof r === 'object' && r.r !== undefined && r.g !== undefined && r.b !== undefined) {
+            //have we been passed an object of RGB?
+            a = r.a;
+            b = r.b;
+            g = r.g;
+            r = r.r;
+        } else if(typeof r === 'object' && r.h !== undefined && r.s !== undefined && r.l !== undefined) {
+            //have we been passed an object of HSL?
+            a = r.a;
+
+            var hsl = this.hslToRgb(r.h,r.s,r.l);
+
+            r = hsl[0];
+            g = hsl[1];
+            b = hsl[2];
+
+        } else if(typeof r === 'object' && r.h !== undefined && r.s !== undefined && r.v !== undefined) {
+            //have we been passed an object of HSV?
+            a = r.a;
+
+            var hsv = this.hsvToRgb(r.h,r.s,r.v);
+
+            r = hsv[0];
+            g = hsv[1];
+            b = hsv[2];
+        } else if(Array.isArray(r) && r[0] !== undefined && r[1] !== undefined && r[2] !== undefined) {
+            //have we been passed an array?
+            a = r[3];
+            b = r[2];
+            g = r[1];
+            r = r[0];
+        } else if(typeof r === 'string') {
+            //have we been passed a hex string?
+            //TODO - convert string to values
+        }
+
         if(a === undefined) a = 1.0;
-        this.colorR = r;
-        this.colorG = g;
-        this.colorB = b;
+
+        this.colorR = Math.round(r);
+        this.colorG = Math.round(g);
+        this.colorB = Math.round(b);
         this.colorA = a;
 
     };
 
-    this.setPixel = function (x, y) {
-        //set an individual pixel
-        if(x < 0 || y < 0 || x >= this.pxlW || y >= this.pxlH) return false;
+    this.setColorRgb = function (r, g, b, a) {
+        this.setColor(r,g,b,a);
 
-        var pixel = y * this.pxlW + x;
+    };
+
+    this.setColorHsl = function (h, s, l, a) {
+
+        var hsl = {
+            h: h,
+            s: s,
+            l: l,
+            a: a
+        };
+        this.setColor(hsl);
+
+    };
+
+    this.setColorHsv = function (h, s, v, a) {
+
+        var hsv = {
+            h: h,
+            s: s,
+            l: v,
+            a: a
+        };
+        this.setColor(hsv);
+
+    };
+
+
+    this.setPixel = function (inX, inY) {
+        //set an individual pixel
+
+        inX = Math.round(inX);
+        inY = Math.round(inY);
+
+        if(this.rotation === 0) {
+            var x = inX;
+            var y = inY;
+        }
+        if(this.rotation === 90) {
+            var x = this.pxlH-inY-1;
+            var y = inX;
+        }
+
+        if(x < 0 || y < 0 || x >= this.originalPxlW || y >= this.originalPxlH) return false;
+
+        var pixel = y * this.originalPxlW + x;
 
         this.buffer[pixel * 3] = this.buffer[pixel * 3] * (1-this.colorA) + this.colorA*this.colorR;
         this.buffer[pixel * 3 + 1] = this.buffer[pixel * 3 + 1] * (1-this.colorA) + this.colorA*this.colorG;
@@ -458,20 +638,31 @@ var pxltblApi = new function() {
 
     this.fillBox = function (x,y,w,h) {
 
+        x = Math.round(x);
+        y = Math.round(y);
+        w = Math.round(w);
+        h = Math.round(h);
 
-      for (var i = 0; i < h; i++) {
-          for (var j = 0; j < w && j+x < this.pxlW; j++) {
+        for (var i = 0; i < h; i++) {
+            for (var j = 0; j < w && j+x < this.originalPxlW; j++) {
 
-              this.setPixel(x+j,y+i);
-          }
-      }
+                this.setPixel(x+j,y+i);
+            }
+        }
 
 
     };
 
+    this.textBounds = function(text) {
+        //TODO - instead of calling text, do something more efficient!
+        return this.text(text,100,100);
+    };
+
     this.text = function (text,x,y) {
 
-
+        text = ''+text;
+        x = Math.round(x);
+        y = Math.round(y);
 
         var fontNemiah = [];
 
@@ -500,7 +691,7 @@ var pxltblApi = new function() {
         fontNemiah[0x35] = [0x9E,0x92,0x92,0x92,0xF2];  // 5
         fontNemiah[0x36] = [0xFE,0x92,0x92,0x92,0xF2];  // 6
         fontNemiah[0x37] = [0x2,0x2,0x2,0x2,0xFE];  // 7
-        fontNemiah[0x38] = [0xFF,0x93,0x93,0x93,0xFF];  // 8
+        fontNemiah[0x38] = [0xFE,0x92,0x92,0x92,0xFE];  // 8
         fontNemiah[0x39] = [0x1E,0x12,0x12,0x12,0xFE];  // 9
         fontNemiah[0x3A] = [0x50];  // :
         fontNemiah[0x3B] = [0xD0];  // ;
@@ -639,8 +830,31 @@ var pxltblApi = new function() {
 
     //TODO - to reduce latency, these sounds need to be created during initialisation and stored in memory as buffers. For now lets just try doing it all on the fly.
 
-    this.playWav = function () {
-        var file = fs.createReadStream('wav/sqr-400-100.wav');
+
+
+
+    this.playWav = function (fileName,loop) {
+
+
+        var player = require('node-wav-player');
+
+        if(loop === undefined) loop = false;
+
+
+        player.play({
+            path: './wav/'+fileName+'.wav',
+            loop: loop
+        }).then(() => {
+
+        }).catch((error) => {
+            pxltblApi.error('Could not load wav: '+fileName);
+        });
+
+        return player;
+
+        /*
+
+        var file = fs.createReadStream('wav/'+fileName+'.wav');
         var reader = new wav.Reader();
 
         // the "format" event gets emitted at the end of the WAVE header
@@ -654,7 +868,7 @@ var pxltblApi = new function() {
         file.pipe(reader);
 
 
-
+        */
 
 
     };
@@ -690,17 +904,31 @@ var pxltblApi = new function() {
             this.lastStatsTime = curTime;
             this.frames = 0;
 
+            var minFrameTime = Math.round(1000 / this.fpsLimit);
+
             console.clear();
             console.log('Web Clients: ' + this.webClients);
-            console.log('Status: ' + this.paused);
             console.log('Millis: ' + this.millis);
             console.log('Game FPS: ' + this.fps);
             console.log('FPS limit: ' + this.fpsLimit);
             console.log('Frame time: ' + this.frameTime);
-            console.log('Min frame time: ' + 1000 / this.fpsLimit);
+            console.log('Min frame time: ' + minFrameTime);
             console.log('Num of pixels: ' + this.buffer.length);
 
             //this.dump();
+
+            //send to web
+            if(this.webClients) {
+                this.webIo.volatile.emit('frameData', {
+                    webClients: this.webClients,
+                    millis: this.millis,
+                    fps: + this.fps,
+                    fpsLimit: this.fpsLimit,
+                    frameTime: this.frameTime,
+                    minFrameTime: minFrameTime,
+                    length: this.buffer.length
+                });
+            }
 
 
         }
@@ -714,6 +942,155 @@ var pxltblApi = new function() {
         if (!this.paused) this.show();
 
 
+    };
+
+    //====================== Color conversion ====================
+
+    /**
+     * Converts an RGB color value to HSL. Conversion formula
+     * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+     * Assumes r, g, and b are contained in the set [0, 255] and
+     * returns h, s, and l in the set [0, 1].
+     *
+     * @param   Number  r       The red color value
+     * @param   Number  g       The green color value
+     * @param   Number  b       The blue color value
+     * @return  Array           The HSL representation
+     */
+    this.rgbToHsl = function(r, g, b) {
+        r /= 255, g /= 255, b /= 255;
+
+        var max = Math.max(r, g, b), min = Math.min(r, g, b);
+        var h, s, l = (max + min) / 2;
+
+        if (max == min) {
+            h = s = 0; // achromatic
+        } else {
+            var d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+
+            h /= 6;
+        }
+
+        return [ Math.round(360*h), Math.round(255*s), Math.round(255*l) ];
+    };
+
+    /**
+     * Converts an HSL color value to RGB. Conversion formula
+     * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+     * Assumes h, s, and l are contained in the set [0, 1] and
+     * returns r, g, and b in the set [0, 255].
+     *
+     * @param   Number  h       The hue
+     * @param   Number  s       The saturation
+     * @param   Number  l       The lightness
+     * @return  Array           The RGB representation
+     */
+    this.hslToRgb = function(h, s, l) {
+        var r, g, b;
+
+        h/=360;
+        s/=255;
+        l/=255;
+
+        if (s == 0) {
+            r = g = b = l; // achromatic
+        } else {
+            function hue2rgb(p, q, t) {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            }
+
+            var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            var p = 2 * l - q;
+
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+
+        return [ Math.round(r * 255), Math.round(g * 255), Math.round(b * 255) ];
+    };
+
+    /**
+     * Converts an RGB color value to HSV. Conversion formula
+     * adapted from http://en.wikipedia.org/wiki/HSV_color_space.
+     * Assumes r, g, and b are contained in the set [0, 255] and
+     * returns h, s, and v in the set [0, 1].
+     *
+     * @param   Number  r       The red color value
+     * @param   Number  g       The green color value
+     * @param   Number  b       The blue color value
+     * @return  Array           The HSV representation
+     */
+    this.rgbToHsv = function(r, g, b) {
+        r /= 255, g /= 255, b /= 255;
+
+        var max = Math.max(r, g, b), min = Math.min(r, g, b);
+        var h, s, v = max;
+
+        var d = max - min;
+        s = max == 0 ? 0 : d / max;
+
+        if (max == min) {
+            h = 0; // achromatic
+        } else {
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+
+            h /= 6;
+        }
+
+        return [ Math.round(360*h), Math.round(255*s), Math.round(255*v) ];
+    };
+
+    /**
+     * Converts an HSV color value to RGB. Conversion formula
+     * adapted from http://en.wikipedia.org/wiki/HSV_color_space.
+     * Assumes h, s, and v are contained in the set [0, 1] and
+     * returns r, g, and b in the set [0, 255].
+     *
+     * @param   Number  h       The hue
+     * @param   Number  s       The saturation
+     * @param   Number  v       The value
+     * @return  Array           The RGB representation
+     */
+    this.hsvToRgb = function(h, s, v) {
+        var r, g, b;
+
+        h/=360;
+        s/=255;
+        v/=255;
+
+        var i = Math.floor(h * 6);
+        var f = h * 6 - i;
+        var p = v * (1 - s);
+        var q = v * (1 - f * s);
+        var t = v * (1 - (1 - f) * s);
+
+        switch (i % 6) {
+            case 0: r = v, g = t, b = p; break;
+            case 1: r = q, g = v, b = p; break;
+            case 2: r = p, g = v, b = t; break;
+            case 3: r = p, g = q, b = v; break;
+            case 4: r = t, g = p, b = v; break;
+            case 5: r = v, g = p, b = q; break;
+        }
+
+        return [ Math.round(r * 255), Math.round(g * 255), Math.round(b * 255) ];
     };
 
     //====================== Helper methods ======================
