@@ -57,6 +57,8 @@ To initialise the API...
 
 Initialises the API and returns a reference to it. The minimum you need is to set an FPS limit and callback function e.g.
 
+    const api = require('./api.js');
+    
     api = api.start({
         callbackLoop: myLoop,
         fpsLimit: 30
@@ -64,7 +66,7 @@ Initialises the API and returns a reference to it. The minimum you need is to se
 
 The function myLoop() will then be called 30 times a second.
 
-The options are...
+##### The options are...
 
  **callbackLoop** (function) *required - The function to call every frame
  
@@ -74,7 +76,92 @@ The options are...
  
  **consoleData** (boolean) default: true - If true then show stats in console (updated every 500ms).
  
+ ---
  
+Whichever method you use, these functions can be used at any point.
+ 
+### setFpsLimit(fps) 
+
+Sets the FPS limit to fps.
+
+---
+
+### setRotation(angle)
+
+Rotates both the display and buttons in 90deg increments.
+
+The only valid options for angle are: 0, 90, 180 or 270.
+
+---
+
+### exit() 
+
+Returns to the home screen - this only works if you are using the API from a prog called via index.js
+
+---
+
+### debug(string/object/array)
+
+Outputs whatever is passed to it to the web interface as a debug message.
+
+---
+
+### error(string/object/array)
+
+Outputs whatever is passed to it to the web interface as an error message.
+
+---
+
+### isRasPi
+
+true if running on a Raspberry Pi, otherwise false.
+
+---
+
+### millis
+
+Number of milliseconds since start, useful for time based animations and interactions.
+
+---
+
+### fps
+
+Current FPS, 1 second average.
+
+---
+
+### frameTime
+
+Last frame time in ms.
+
+---
+
+### pxlW
+
+The width of the display in pixels.
+
+---
+
+### pxlH
+
+The height of the display in pixels.
+
+---
+
+### pxlCount
+
+The number of pixels in the display.
+
+---
+
+### pxlH
+
+The height of the display in pixels.
+
+
+
+
+
 
 
 ## Drawing functions
@@ -227,7 +314,21 @@ This variable is an object containing all the button states (true or false).
     
 ---
 
+## Sound functions
 
+### playWav(file,loop)
+
+Plays a WAV file located in the `wav/` folder. There are over 500 wavs included in this repo and you can add your own.
+
+file is just the filename without any path or extension. e.g. `sfx_damage_hit1`  will play `./wav/sfx_damage_hit1.wav`
+
+If you set loop to true the WAV will continue to play until stopped. 
+
+This function returns a reference that can be used to stop the playback. e.g.
+
+    myPlayer = api.playWav('sfx_damage_hit1',true);
+    ...
+    myPlayer.stop();
 
 ## Helper functions
 
