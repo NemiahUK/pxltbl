@@ -134,70 +134,8 @@ var pxltblApi = new function() {
                 gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Right
 
                 gpio.on('change', function(channel, value) {
-                    //TODO add debounce - add GPIO => button map
 
-                    switch (channel) {
-                        case 22:
-                            if(pxltblApi.rotation == 0) pxltblApi.buttons.leftTop = value;
-                            if(pxltblApi.rotation == 90) pxltblApi.buttons.bottomLeft = value;
-                            if(pxltblApi.rotation == 180) pxltblApi.buttons.leftTop = value;
-                            if(pxltblApi.rotation == 720) pxltblApi.buttons.leftTop = value;
-
-                            break;
-                        case 37:
-                            if(pxltblApi.rotation == 0) pxltblApi.buttons.topLeft = value;
-                            if(pxltblApi.rotation == 90) pxltblApi.buttons.leftBottom = value;
-                            if(pxltblApi.rotation == 180) pxltblApi.buttons.topLeft = value;
-                            if(pxltblApi.rotation == 720) pxltblApi.buttons.topLeft = value;
-
-                            break;
-                        case 15:
-                            if(pxltblApi.rotation == 0) pxltblApi.buttons.topRight = value;
-                            if(pxltblApi.rotation == 90) pxltblApi.buttons.leftTom = value;
-                            if(pxltblApi.rotation == 180) pxltblApi.buttons.topRight = value;
-                            if(pxltblApi.rotation == 720) pxltblApi.buttons.topRight = value;
-
-                            break;
-                        case 13:
-                            if(pxltblApi.rotation == 0) pxltblApi.buttons.rightTop = value;
-                            if(pxltblApi.rotation == 90) pxltblApi.buttons.topLeft = value;
-                            if(pxltblApi.rotation == 180) pxltblApi.buttons.rightTop = value;
-                            if(pxltblApi.rotation == 720) pxltblApi.buttons.rightTop = value;
-
-                            break;
-                        case 36:
-                            if(pxltblApi.rotation == 0) pxltblApi.buttons.rightBottom = value;
-                            if(pxltblApi.rotation == 90) pxltblApi.buttons.topRight = value;
-                            if(pxltblApi.rotation == 180) pxltblApi.buttons.rightBottom = value;
-                            if(pxltblApi.rotation == 720) pxltblApi.buttons.rightBottom = value;
-
-                            break;
-                        case 32:
-                            if(pxltblApi.rotation == 0) pxltblApi.buttons.bottomRight = value;
-                            if(pxltblApi.rotation == 90) pxltblApi.buttons.rightTop = value;
-                            if(pxltblApi.rotation == 180) pxltblApi.buttons.bottomRight = value;
-                            if(pxltblApi.rotation == 720) pxltblApi.buttons.bottomRight = value;
-
-                            break;
-                        case 18:
-                            if(pxltblApi.rotation == 0) pxltblApi.buttons.bottomLeft = value;
-                            if(pxltblApi.rotation == 90) pxltblApi.buttons.rightBottom = value;
-                            if(pxltblApi.rotation == 180) pxltblApi.buttons.bottomLeft = value;
-                            if(pxltblApi.rotation == 720) pxltblApi.buttons.bottomLeft = value;
-
-                            break;
-                        case 16:
-                            if(pxltblApi.rotation == 0) pxltblApi.buttons.leftBottom = value;
-                            if(pxltblApi.rotation == 90) pxltblApi.buttons.bottomRight = value;
-                            if(pxltblApi.rotation == 180) pxltblApi.buttons.leftBottom = value;
-                            if(pxltblApi.rotation == 720) pxltblApi.buttons.leftBottom = value;
-
-                            break;
-                        case 31:
-                            if(value) pxltblApi.exit();
-                            break;
-
-                    }
+                    pxltblApi.setButton(channel,value);
 
                 });
 
@@ -362,71 +300,79 @@ var pxltblApi = new function() {
         this.webServer.listen(3000);
     };
 
+    this.setButton = function(channel,value) {
+        switch (channel) {
+            case 22:
+                if(this.rotation == 0) this.buttons.leftTop = value;
+                if(this.rotation == 90) this.buttons.bottomLeft = value;
+                if(this.rotation == 180) this.buttons.rightBottom = value;
+                if(this.rotation == 720) this.buttons.topRight = value;
 
-    this.buttonDown = function(button) {
-        switch (button) {
-            case 'leftTop':
-                this.buttons.leftTop = true;
                 break;
-            case 'topLeft':
-                this.buttons.topLeft = true;
+            case 37:
+                if(this.rotation == 0) this.buttons.topLeft = value;
+                if(this.rotation == 90) this.buttons.leftBottom = value;
+                if(this.rotation == 180) this.buttons.bottomRight = value;
+                if(this.rotation == 720) this.buttons.rightTop = value;
+
                 break;
-            case 'topRight':
-                this.buttons.topRight = true;
+            case 15:
+                if(this.rotation == 0) this.buttons.topRight = value;
+                if(this.rotation == 90) this.buttons.leftTop = value;
+                if(this.rotation == 180) this.buttons.bottomLeft = value;
+                if(this.rotation == 720) this.buttons.rightBottom = value;
+
                 break;
-            case 'rightTop':
-                this.buttons.rightTop = true;
+            case 13:
+                if(this.rotation == 0) this.buttons.rightTop = value;
+                if(this.rotation == 90) this.buttons.topLeft = value;
+                if(this.rotation == 180) this.buttons.leftBottom = value;
+                if(this.rotation == 720) this.buttons.bottomRight = value;
+
                 break;
-            case 'rightBottom':
-                this.buttons.rightBottom = true;
+            case 36:
+                if(this.rotation == 0) this.buttons.rightBottom = value;
+                if(this.rotation == 90) this.buttons.topRight = value;
+                if(this.rotation == 180) this.buttons.leftTop = value;
+                if(this.rotation == 720) this.buttons.bottomLeft = value;
+
                 break;
-            case 'bottomRight':
-                this.buttons.bottomRight = true;
+            case 32:
+                if(this.rotation == 0) this.buttons.bottomRight = value;
+                if(this.rotation == 90) this.buttons.rightTop = value;
+                if(this.rotation == 180) this.buttons.topLeft = value;
+                if(this.rotation == 720) this.buttons.leftBottom = value;
+
                 break;
-            case 'bottomLeft':
-                this.buttons.bottomLeft = true;
+            case 18:
+                if(this.rotation == 0) this.buttons.bottomLeft = value;
+                if(this.rotation == 90) this.buttons.rightBottom = value;
+                if(this.rotation == 180) this.buttons.topRight = value;
+                if(this.rotation == 720) this.buttons.leftTop = value;
+
                 break;
-            case 'leftBottom':
-                this.buttons.leftBottom = true;
+            case 16:
+                if(this.rotation == 0) this.buttons.leftBottom = value;
+                if(this.rotation == 90) this.buttons.bottomRight = value;
+                if(this.rotation == 180) this.buttons.rightTop = value;
+                if(this.rotation == 720) this.buttons.topLeft = value;
+
                 break;
-            case 'home':
-                this.exit();
+            case 31:
+                if(value) this.exit();
                 break;
 
         }
     };
 
-    this.buttonUp = function(button) {
-        switch (button) {
-            case 'leftTop':
-                this.buttons.leftTop = false;
-                break;
-            case 'topLeft':
-                this.buttons.topLeft = false;
-                break;
-            case 'topRight':
-                this.buttons.topRight = false;
-                break;
-            case 'rightTop':
-                this.buttons.rightTop = false;
-                break;
-            case 'rightBottom':
-                this.buttons.rightBottom = false;
-                break;
-            case 'bottomRight':
-                this.buttons.bottomRight = false;
-                break;
-            case 'bottomLeft':
-                this.buttons.bottomLeft = false;
-                break;
-            case 'leftBottom':
-                this.buttons.leftBottom = false;
-                break;
-            case 'home':
-                this.exit();
-                break;
+    this.buttonDown = function(channel) {
+        pxltblApi.setButton(channel,true);
 
-        }
+    };
+
+    this.buttonUp = function(channel) {
+        pxltblApi.setButton(channel,false);
+
     };
 
 
@@ -459,12 +405,7 @@ var pxltblApi = new function() {
             this.touch[i] = false;
         }
 
-        this.buttons.up = false;
-        this.buttons.down = false;
-        this.buttons.left = false;
-        this.buttons.right = false;
-        this.buttons.fire = false;
-        this.buttons.home = false;
+        //TODO - for each button, set to false
 
     };
 

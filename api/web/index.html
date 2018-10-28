@@ -120,7 +120,7 @@
                 e.preventDefault();
                 switch (e.which) {
                     case 27:
-                        socket.emit('buttonDown','home');
+                        socket.emit('buttonDown','31');
                         break;
                 }
 
@@ -130,7 +130,7 @@
                 e.preventDefault();
                 switch (e.which) {
                     case 27:
-                        socket.emit('buttonUp','home');
+                        socket.emit('buttonUp','31');
                         break;
                 }
 
@@ -310,21 +310,21 @@
 <body>
 <div class="center">
 <div id="pxlTbl">
-        <button class="push--flat" data-cmd="topLeft" style="top:0; left:8vmin;"></button>
-        <button class="push--flat" data-cmd="topRight" style="top:0; right: 8vmin;"></button>
+        <button class="push--flat" data-cmd="37" style="top:0; left:8vmin;"></button>
+        <button class="push--flat" data-cmd="15" style="top:0; right: 8vmin;"></button>
 
-        <button class="push--flat" data-cmd="leftTop" style="left:0; top:8vmin;"></button>
-        <button class="push--flat" data-cmd="leftBottom" style="left:0; bottom:8vmin;"></button>
+        <button class="push--flat" data-cmd="22" style="left:0; top:8vmin;"></button>
+        <button class="push--flat" data-cmd="16" style="left:0; bottom:8vmin;"></button>
 
         <div id="display"></div>
 
-        <button class="push--flat" data-cmd="rightTop" style="top:8vmin; right:0;"></button>
-        <button class="push--flat" data-cmd="rightBottom" style="right:0; bottom:8vmin;"></button>
+        <button class="push--flat" data-cmd="13" style="top:8vmin; right:0;"></button>
+        <button class="push--flat" data-cmd="36" style="right:0; bottom:8vmin;"></button>
 
-        <button class="push--flat" data-cmd="bottomLeft" style="bottom:0; left:8vmin;"></button>
-        <button class="push--flat" data-cmd="bottomRight" style="bottom:0; right:8vmin;"></button>
+        <button class="push--flat" data-cmd="18" style="bottom:0; left:8vmin;"></button>
+        <button class="push--flat" data-cmd="32" style="bottom:0; right:8vmin;"></button>
 
-    <button class="push--flat" data-cmd="home" style="bottom:0; left:50%; margin-left: -2vmin;"></button>
+    <button class="push--flat" data-cmd="31" style="bottom:0; left:50%; margin-left: -2vmin;"></button>
 
 
 </div>

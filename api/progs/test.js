@@ -2,7 +2,7 @@ var player;
 
 exports.setup = function(api) {
     api.fpsLimit = 60;
-    api.setRotation(90);
+    api.setRotation(180);
 
 
 };
@@ -44,7 +44,7 @@ exports.loop = function(api) {
     }
     if(xPos > 13 && animState === 0) xScroll+=0.2;
 
-    if(api.buttons.fire) {
+    if(api.buttons.leftTop) {
         animState++;
 
 
@@ -53,12 +53,12 @@ exports.loop = function(api) {
     api.setColor(0,255,255);
     if(api.buttons.leftTop) api.setPixel(0,1);
     if(api.buttons.topLeft) api.setPixel(1,0);
-    if(api.buttons.topRight) api.setPixel(21,0);
-    if(api.buttons.rightTop) api.setPixel(22,1);
-    if(api.buttons.rightBottom) api.setPixel(22,9);
-    if(api.buttons.bottomRight) api.setPixel(21,10);
-    if(api.buttons.bottomLeft) api.setPixel(1,10);
-    if(api.buttons.leftBottom) api.setPixel(0,9);
+    if(api.buttons.topRight) api.setPixel(api.pxlW-2,0);
+    if(api.buttons.rightTop) api.setPixel(api.pxlW-1,1);
+    if(api.buttons.rightBottom) api.setPixel(api.pxlW-1,api.pxlH-2);
+    if(api.buttons.bottomRight) api.setPixel(api.pxlW-2,api.pxlH-1);
+    if(api.buttons.bottomLeft) api.setPixel(1,api.pxlH-1);
+    if(api.buttons.leftBottom) api.setPixel(0,api.pxlH-2);
 
     //prevent overflow
     if(xPos > 24 && animState === 0) {
