@@ -306,56 +306,56 @@ var pxltblApi = new function() {
                 if(this.rotation == 0) this.buttons.leftTop = value;
                 if(this.rotation == 90) this.buttons.bottomLeft = value;
                 if(this.rotation == 180) this.buttons.rightBottom = value;
-                if(this.rotation == 720) this.buttons.topRight = value;
+                if(this.rotation == 270) this.buttons.topRight = value;
 
                 break;
             case 37:
                 if(this.rotation == 0) this.buttons.topLeft = value;
                 if(this.rotation == 90) this.buttons.leftBottom = value;
                 if(this.rotation == 180) this.buttons.bottomRight = value;
-                if(this.rotation == 720) this.buttons.rightTop = value;
+                if(this.rotation == 270) this.buttons.rightTop = value;
 
                 break;
             case 15:
                 if(this.rotation == 0) this.buttons.topRight = value;
                 if(this.rotation == 90) this.buttons.leftTop = value;
                 if(this.rotation == 180) this.buttons.bottomLeft = value;
-                if(this.rotation == 720) this.buttons.rightBottom = value;
+                if(this.rotation == 270) this.buttons.rightBottom = value;
 
                 break;
             case 13:
                 if(this.rotation == 0) this.buttons.rightTop = value;
                 if(this.rotation == 90) this.buttons.topLeft = value;
                 if(this.rotation == 180) this.buttons.leftBottom = value;
-                if(this.rotation == 720) this.buttons.bottomRight = value;
+                if(this.rotation == 270) this.buttons.bottomRight = value;
 
                 break;
             case 36:
                 if(this.rotation == 0) this.buttons.rightBottom = value;
                 if(this.rotation == 90) this.buttons.topRight = value;
                 if(this.rotation == 180) this.buttons.leftTop = value;
-                if(this.rotation == 720) this.buttons.bottomLeft = value;
+                if(this.rotation == 270) this.buttons.bottomLeft = value;
 
                 break;
             case 32:
                 if(this.rotation == 0) this.buttons.bottomRight = value;
                 if(this.rotation == 90) this.buttons.rightTop = value;
                 if(this.rotation == 180) this.buttons.topLeft = value;
-                if(this.rotation == 720) this.buttons.leftBottom = value;
+                if(this.rotation == 270) this.buttons.leftBottom = value;
 
                 break;
             case 18:
                 if(this.rotation == 0) this.buttons.bottomLeft = value;
                 if(this.rotation == 90) this.buttons.rightBottom = value;
                 if(this.rotation == 180) this.buttons.topRight = value;
-                if(this.rotation == 720) this.buttons.leftTop = value;
+                if(this.rotation == 270) this.buttons.leftTop = value;
 
                 break;
             case 16:
                 if(this.rotation == 0) this.buttons.leftBottom = value;
                 if(this.rotation == 90) this.buttons.bottomRight = value;
                 if(this.rotation == 180) this.buttons.rightTop = value;
-                if(this.rotation == 720) this.buttons.topLeft = value;
+                if(this.rotation == 270) this.buttons.topLeft = value;
 
                 break;
             case 31:
