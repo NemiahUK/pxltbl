@@ -60,3 +60,5 @@ Sets the drawing colour. `h` is 0-360, `s,l` are 0-255. `a` is optional, in the 
 Sets the drawing colour. `h` is 0-360, `s,l` are 0-255. `a` is optional, in the range of 0-1, default 1.0
 
 ---
+
+To be continued....

@@ -636,13 +636,23 @@ var pxltblApi = new function() {
         inX = Math.round(inX);
         inY = Math.round(inY);
 
-        if(this.rotation === 0) {
-            var x = inX;
-            var y = inY;
-        }
-        if(this.rotation === 90) {
-            var x = this.pxlH-inY-1;
-            var y = inX;
+        switch(this.rotation) {
+            case 0:
+                var x = inX;
+                var y = inY;
+                break;
+            case 90:
+                var x = this.pxlH - inY - 1;
+                var y = inX;
+                break;
+            case 180:
+                var x = this.pxlW - inX - 1;
+                var y = this.pxlH - inY - 1;
+                break;
+            case 270:
+                var x = inY;
+                var y = this.pxlW - inX - 1;
+                break;
         }
 
         if(x < 0 || y < 0 || x >= this.originalPxlW || y >= this.originalPxlH) return false;
