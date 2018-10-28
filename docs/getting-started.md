@@ -1,6 +1,10 @@
 # Getting Started
 #### A quick guide to setting up Pixel Table on your PC and creating your first prog.
 
+
+![alt text](https://i.imgur.com/081x9W5.png "Pixel Table Emulator")
+
+
 If you just want to use the web-based emulator instead of building your own Pixel Table, then this is the guide for you.
 
 Pixel Table is designed to run on a Raspberry Pi 3+, but it should run on any platform that Node supports. We've tested it on Windows 10.
