@@ -124,42 +124,74 @@ var pxltblApi = new function() {
 
 
                 //start button input
-                gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //B3 Up
-                gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //B4 Down
-                gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //B5 Left
-                gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH); //B6 Right
-                gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH); //B2 Fire
-                gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //B1 Home
-                gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //B7
-                gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //B8
+                gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Top
+                gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Right
+                gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Bottom
+                gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Left
+                gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Top
+                gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Left
+                gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Bottom
+                gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Right
 
                 gpio.on('change', function(channel, value) {
                     //TODO add debounce - add GPIO => button map
 
                     switch (channel) {
                         case 22:
-                            pxltblApi.buttons.leftTop = value;
+                            if(pxltblApi.rotation == 0) pxltblApi.buttons.leftTop = value;
+                            if(pxltblApi.rotation == 90) pxltblApi.buttons.bottomLeft = value;
+                            if(pxltblApi.rotation == 180) pxltblApi.buttons.leftTop = value;
+                            if(pxltblApi.rotation == 720) pxltblApi.buttons.leftTop = value;
+
                             break;
                         case 37:
-                            pxltblApi.buttons.topLeft = value;
+                            if(pxltblApi.rotation == 0) pxltblApi.buttons.topLeft = value;
+                            if(pxltblApi.rotation == 90) pxltblApi.buttons.leftBottom = value;
+                            if(pxltblApi.rotation == 180) pxltblApi.buttons.topLeft = value;
+                            if(pxltblApi.rotation == 720) pxltblApi.buttons.topLeft = value;
+
                             break;
                         case 15:
-                            pxltblApi.buttons.topRight = value;
+                            if(pxltblApi.rotation == 0) pxltblApi.buttons.topRight = value;
+                            if(pxltblApi.rotation == 90) pxltblApi.buttons.leftTom = value;
+                            if(pxltblApi.rotation == 180) pxltblApi.buttons.topRight = value;
+                            if(pxltblApi.rotation == 720) pxltblApi.buttons.topRight = value;
+
                             break;
                         case 13:
-                            pxltblApi.buttons.rightTop = value;
+                            if(pxltblApi.rotation == 0) pxltblApi.buttons.rightTop = value;
+                            if(pxltblApi.rotation == 90) pxltblApi.buttons.topLeft = value;
+                            if(pxltblApi.rotation == 180) pxltblApi.buttons.rightTop = value;
+                            if(pxltblApi.rotation == 720) pxltblApi.buttons.rightTop = value;
+
                             break;
                         case 36:
-                            pxltblApi.buttons.rightBottom = value;
+                            if(pxltblApi.rotation == 0) pxltblApi.buttons.rightBottom = value;
+                            if(pxltblApi.rotation == 90) pxltblApi.buttons.topRight = value;
+                            if(pxltblApi.rotation == 180) pxltblApi.buttons.rightBottom = value;
+                            if(pxltblApi.rotation == 720) pxltblApi.buttons.rightBottom = value;
+
                             break;
                         case 32:
-                            pxltblApi.buttons.bottomRight = value;
+                            if(pxltblApi.rotation == 0) pxltblApi.buttons.bottomRight = value;
+                            if(pxltblApi.rotation == 90) pxltblApi.buttons.rightTop = value;
+                            if(pxltblApi.rotation == 180) pxltblApi.buttons.bottomRight = value;
+                            if(pxltblApi.rotation == 720) pxltblApi.buttons.bottomRight = value;
+
                             break;
                         case 18:
-                            pxltblApi.buttons.bottomLeft = value;
+                            if(pxltblApi.rotation == 0) pxltblApi.buttons.bottomLeft = value;
+                            if(pxltblApi.rotation == 90) pxltblApi.buttons.rightBottom = value;
+                            if(pxltblApi.rotation == 180) pxltblApi.buttons.bottomLeft = value;
+                            if(pxltblApi.rotation == 720) pxltblApi.buttons.bottomLeft = value;
+
                             break;
                         case 16:
-                            pxltblApi.buttons.leftBottom = value;
+                            if(pxltblApi.rotation == 0) pxltblApi.buttons.leftBottom = value;
+                            if(pxltblApi.rotation == 90) pxltblApi.buttons.bottomRight = value;
+                            if(pxltblApi.rotation == 180) pxltblApi.buttons.leftBottom = value;
+                            if(pxltblApi.rotation == 720) pxltblApi.buttons.leftBottom = value;
+
                             break;
                         case 31:
                             if(value) pxltblApi.exit();
