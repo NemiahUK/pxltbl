@@ -9,7 +9,7 @@
 
         var socket = io(document.location.href);
         socket.on('connect', function(){
-            $('#log').text('Connected: ');
+            $('#console').append('<p>Connected.</p>');
         });
         socket.on('leds', function(data){
 
@@ -35,6 +35,18 @@
         socket.on('frameData', function(data){
 
             $('#log').text(JSON.stringify(data));
+
+            var y = 0;
+            if(data.rotation == 90 || data.rotation == 270) {
+                $('#rotate-padding').css('height','40vmin');
+                y = 20;
+            } else {
+                $('#rotate-padding').css('height','0');
+
+            }
+
+            $('#pxlTbl').css('transform','translateY('+y+'vmin) rotate(-'+data.rotation+'deg) ');
+
 
 
         });
@@ -107,21 +119,6 @@
             $('body').keydown(function(e) {
                 e.preventDefault();
                 switch (e.which) {
-                    case 32:
-                        socket.emit('buttonDown','fire');
-                        break;
-                    case 37:
-                        socket.emit('buttonDown','left');
-                        break;
-                    case 38:
-                        socket.emit('buttonDown','up');
-                        break;
-                    case 39:
-                        socket.emit('buttonDown','right');
-                        break;
-                    case 40:
-                        socket.emit('buttonDown','down');
-                        break;
                     case 27:
                         socket.emit('buttonDown','home');
                         break;
@@ -132,21 +129,6 @@
             $('body').keyup(function(e) {
                 e.preventDefault();
                 switch (e.which) {
-                    case 32:
-                        socket.emit('buttonUp','fire');
-                        break;
-                    case 37:
-                        socket.emit('buttonUp','left');
-                        break;
-                    case 38:
-                        socket.emit('buttonUp','up');
-                        break;
-                    case 39:
-                        socket.emit('buttonUp','right');
-                        break;
-                    case 40:
-                        socket.emit('buttonUp','down');
-                        break;
                     case 27:
                         socket.emit('buttonUp','home');
                         break;
@@ -167,8 +149,8 @@
         }
 
         #console {
-            width:50%;
-            height: 22vw;
+
+            height: 22vmin;
 
             font-family: "Lucida Console";
             background: #555;
@@ -186,14 +168,24 @@
             color: #ff8888;
         }
 
+        .center {
+            text-align: center;
+        }
         #pxlTbl {
-            background: peru;
-            border-radius: 50px;
+            background: 50% 50% url(bg.jpg);
+            background-size: cover;
 
-            margin: 50px auto;
+            border: 1px solid #352516;
+            border-radius: 4vmin;
+
+
+            margin: 2vmin auto;
             position: relative;
-            padding: 90px;
-            float: left;
+            padding: 6vmin;
+
+            display: inline-block;
+
+            transition: 0.5s transform;
 
 
         }
@@ -204,18 +196,18 @@
             position: absolute;
             border-radius: 100%;
 
-            width:50px;
-            height: 50px;
-            margin: 20px;
+            width:4vmin;
+            height: 4vmin;
+            margin: 1vmin;
 
         }
 
 
         #display {
 
-            padding: 20px;
+            padding: 2vmin;
             background: #000;
-            border-radius: 20px;
+            border-radius: 2vmin;
 
         }
 
@@ -225,6 +217,7 @@
             padding:0;
             width:100%;
             clear:left;
+            white-space: nowrap;
 
         }
 
@@ -233,15 +226,81 @@
             margin:1px;
             padding:0;
             float:left;
-            width:30px;
-            height:30px;
+            width:3vmin;
+            height:3vmin;
             background-color:#fff;
 
 
         }
 
+        #rotate-padding {
+            height: 0;
+            transition: 0.5s height;
+        }
 
 
+        [class*="push"] {
+            position: relative;
+            display: inline-block;
+            width: 4vmin;
+            height: 4vmin;
+            border: 0;
+            margin: 1em;
+            outline: none;
+            background-color: #262626;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: box-shadow 200ms;
+        }
+
+        .push--flat {
+            box-shadow: inset 0 0.125vmin 0 #333333, inset 0 -0.125vmin 0 #1a1a1a, inset 0 0 0 0.125vmin #1f1f1f, inset 0 0 0 0.3333333333vmin #262626, inset 0 0 0 0.4vmin black, inset 0 0 0 0.4347826087vmin black, inset 0 0 0 0.5333333333vmin rgba(115, 115, 115, 0.7), inset 0 0 0 0.7272727273vmin #262626, inset 0 1.6vmin 0.5333333333vmin #1a1a1a, inset 0 0 0.4vmin 0.6666666667vmin #0d0d0d, 0 0.2vmin 0 rgba(0, 0, 0, 0.3);
+        }
+        .push--flat:after {
+            content: '';
+            position: absolute;
+            bottom: 0.2vmin;
+            left: 0.4vmin;
+            display: block;
+            width: 3.2vmin;
+            height: 3.2vmin;
+            border: 0.2666666667vmin solid rgba(0, 0, 0, 0.3);
+            border-width: 0 0 0.2666666667vmin;
+            border-radius: 50%;
+            transition-duration: 200ms;
+        }
+        .push--flat:active, .push--flat.is-pushed {
+            box-shadow: inset 0 0.125vmin 0 #333333, inset 0 -0.125vmin 0 #1a1a1a, inset 0 0 0 0.125vmin #1f1f1f, inset 0 0 0 0.3333333333vmin #262626, inset 0 0 0 0.4vmin black, inset 0 0 0 0.4705882353vmin black, inset 0 0 0 0.5333333333vmin rgba(115, 115, 115, 0.2), inset 0 0 0 0.7272727273vmin #1f1f1f, inset 0 1.6vmin 0.5333333333vmin #121212, inset 0 0 0.4vmin 0.6666666667vmin black, 0 0.2vmin 0 rgba(0, 0, 0, 0.3);
+            background-color: #212121;
+        }
+        .push--flat:active:after, .push--flat.is-pushed:after {
+            bottom: 0.4666666667vmin;
+            border-width: 0;
+        }
+
+        .push--skeuo {
+            box-shadow: inset 0 0.1666666667vmin 0 #333333, inset 0 -0.1666666667vmin 0.0666666667vmin #1a1a1a, 0 0 0.0666666667vmin #262626, inset 0 0 0.1333333333vmin black, inset 0 0 0.1333333333vmin rgba(102, 51, 0, 0.5), inset 0 0 0.0666666667vmin 0.3333333333vmin #262626, inset 0 -0.1333333333vmin 0.1vmin 0.4vmin rgba(102, 51, 0, 0.7), inset 0 0 0.0666666667vmin 0.4vmin black, inset 0 0 0.0666666667vmin 0.4vmin rgba(102, 51, 0, 0.7), inset 0 0 0.0333333333vmin 0.4347826087vmin black, inset 0 0 0.0333333333vmin 0.5vmin rgba(115, 115, 115, 0.7), inset 0 0.2vmin 0 0.4705882353vmin rgba(77, 77, 77, 0.7), inset 0 -0.2vmin 0.0666666667vmin 0.4705882353vmin rgba(13, 13, 13, 0.2), inset 0 0 0 0.7272727273vmin #262626, inset 0 1.6vmin 0.5333333333vmin #1a1a1a, inset 0 0 0.4vmin 0.6666666667vmin #0d0d0d, 0 0.1vmin 0.2vmin rgba(0, 0, 0, 0.5);
+        }
+        .push--skeuo:active, .push--skeuo.is-pushed {
+            box-shadow: inset 0 0.1666666667vmin 0 #333333, inset 0 -0.1666666667vmin 0.0666666667vmin #1a1a1a, 0 0 0.0666666667vmin #262626, inset 0 0 0.1333333333vmin black, inset 0 0 0.1333333333vmin rgba(102, 51, 0, 0.5), inset 0 0 0.0666666667vmin 0.3333333333vmin #262626, inset 0 -0.1333333333vmin 0.1vmin 0.4vmin rgba(102, 51, 0, 0.7), inset 0 0 0.0666666667vmin 0.4vmin black, inset 0 0 0.0666666667vmin 0.4vmin rgba(102, 51, 0, 0.7), inset 0 0 0.1vmin 0.4705882353vmin black, inset 0 0 0.0333333333vmin 0.5333333333vmin rgba(115, 115, 115, 0.2), inset 0 0.2vmin 0 28px rgba(77, 77, 77, 0.5), inset 0 -0.2vmin 0.0666666667vmin 28px rgba(0, 0, 0, 0.2), inset 0 0 0 0.7272727273vmin #1f1f1f, inset 0 1.6vmin 0.5333333333vmin #121212, inset 0 0 0.4vmin 0.6666666667vmin black, 0 0.1vmin 0.2vmin rgba(0, 0, 0, 0.5);
+            background-color: #212121;
+        }
+        .push--skeuo:active:before, .push--skeuo.is-pushed:before {
+            opacity: .5;
+        }
+        .push--skeuo:before {
+            content: '';
+            position: absolute;
+            bottom: 0.8888888889vmin;
+            left: 1.1111111111vmin;
+            display: block;
+            width: 1.8181818182vmin;
+            height: 1.2121212121vmin;
+            background: rgba(115, 115, 115, 0.2);
+            background: linear-gradient(to top, rgba(140, 140, 140, 0.3) 0%, rgba(38, 38, 38, 0.1) 100%);
+            border-radius: 40% 40% 60% 60%;
+            transition: opacity 200ms;
+        }
 
 
 
@@ -249,30 +308,31 @@
     </style>
 </head>
 <body>
-
+<div class="center">
 <div id="pxlTbl">
-        <button data-cmd="topLeft" style="top:0; left:100px;"></button>
-        <button data-cmd="topRight" style="top:0; right: 100px;"></button>
+        <button class="push--flat" data-cmd="topLeft" style="top:0; left:8vmin;"></button>
+        <button class="push--flat" data-cmd="topRight" style="top:0; right: 8vmin;"></button>
 
-        <button data-cmd="leftTop" style="left:0; top:100px;"></button>
-        <button data-cmd="leftBottom" style="left:0; bottom:100px;"></button>
+        <button class="push--flat" data-cmd="leftTop" style="left:0; top:8vmin;"></button>
+        <button class="push--flat" data-cmd="leftBottom" style="left:0; bottom:8vmin;"></button>
 
         <div id="display"></div>
 
-        <button data-cmd="rightTop" style="top:100px; right:0;"></button>
-        <button data-cmd="rightBottom" style="right:0; bottom:100px;"></button>
+        <button class="push--flat" data-cmd="rightTop" style="top:8vmin; right:0;"></button>
+        <button class="push--flat" data-cmd="rightBottom" style="right:0; bottom:8vmin;"></button>
 
-        <button data-cmd="bottomLeft" style="bottom:0; left:100px;"></button>
-        <button data-cmd="bottomRight" style="bottom:0; right:100px;"></button>
+        <button class="push--flat" data-cmd="bottomLeft" style="bottom:0; left:8vmin;"></button>
+        <button class="push--flat" data-cmd="bottomRight" style="bottom:0; right:8vmin;"></button>
 
-    <button data-cmd="home" style="bottom:0; left:50%; margin-left: -25px;">Home</button>
+    <button class="push--flat" data-cmd="home" style="bottom:0; left:50%; margin-left: -2vmin;"></button>
 
 
 </div>
-<br style="clear:both;"/>
+</div>
+<div id="rotate-padding"></div>
 
 <div id="console">
-    <p>Hello.</p>
+    <p>Connecting...</p>
 </div>
 <br style="clear:both;"/>
 <div id="buttons">
@@ -280,6 +340,5 @@
 
 
 </div>
-<div id="log">Waiting...</div>
 </body>
 </html>

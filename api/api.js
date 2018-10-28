@@ -943,7 +943,8 @@ var pxltblApi = new function() {
                     fpsLimit: this.fpsLimit,
                     frameTime: this.frameTime,
                     minFrameTime: minFrameTime,
-                    length: this.buffer.length
+                    length: this.buffer.length,
+                    rotation: this.rotation
                 });
             }
 
