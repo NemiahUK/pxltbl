@@ -110,6 +110,7 @@ var pxltblApi = new function() {
             raspi.init(() => {
 
                 console.log('Raspberry Pi detected, booting...');
+                this.isRasPi = true;
 
                 const Serial = require('raspi-serial').Serial;
                 var gpio = require('rpi-gpio');
