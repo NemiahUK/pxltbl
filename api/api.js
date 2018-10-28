@@ -17,7 +17,8 @@ const http = require('http');
 var pxltblApi = new function() {
 
 
-   this.isRasPi = false;
+    this.isRasPi = false;
+    this.consoleData = true;
 
     //these should probably be public
     this.frameTime = 0;
@@ -96,6 +97,8 @@ var pxltblApi = new function() {
 
         //setup callbacks
         this.cbLoop = options.callbackLoop;
+
+        if(options.consoleData !== undefined) this.consoleData = options.consoleData;
 
         //setup options
 
@@ -915,7 +918,7 @@ var pxltblApi = new function() {
         this.lastLoopTime = new Date().getTime();
 
         //update the console every 500ms
-        if (curTime - this.lastStatsTime > 500) {
+        if (curTime - this.lastStatsTime > 500 && this.consoleData) {
 
             this.fps = Math.floor(this.frames * 1000 / (curTime - this.lastStatsTime));
             this.lastStatsTime = curTime;
@@ -924,6 +927,7 @@ var pxltblApi = new function() {
             var minFrameTime = Math.round(1000 / this.fpsLimit);
 
             console.clear();
+            console.log('Is RasPi: ' + this.isRasPi);
             console.log('Web Clients: ' + this.webClients);
             console.log('Millis: ' + this.millis);
             console.log('Game FPS: ' + this.fps);
