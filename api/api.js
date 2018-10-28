@@ -405,7 +405,16 @@ var pxltblApi = new function() {
             this.touch[i] = false;
         }
 
-        //TODO - for each button, set to false
+        this.buttons = {
+            topLeft: false,
+            leftTop: false,
+            topRight: false,
+            rightTop: false,
+            rightBottom: false,
+            bottomRight: false,
+            bottomLeft: false,
+            leftBottom: false
+        };
 
     };
 
