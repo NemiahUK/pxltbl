@@ -27,4 +27,6 @@ forward, and once built, you can use this API to make programming your table sup
 
 [Full API reference (work in progress)](https://github.com/TmpR/pxltbl/blob/master/docs/api-reference.md) 
 
+## Follow us
 
+[Facebook](https://facebook.com/nemiah) - [Twitter](https://twitter.com/nemiahUK)
