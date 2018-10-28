@@ -8,7 +8,9 @@ Fills the screen with the selected colour.
 ---
 
 ### setColor(r,g,b,[a])
-Sets the drawing colour. `r,g,b` are values 0-255. `a` is optional, in the range of 0-1, default 1.0
+Sets the drawing colour. 
+
+`r,g,b` are values 0-255. `a` is optional, in the range of 0-1, default 1.0
 
 ---
 
@@ -19,7 +21,18 @@ String must be HTML/CSS Hex colour code. e.g. `#DECAFF`
 
 ---
 
-### setColor({object})
+### setColor(array)
+Sets the drawing colour.
+
+Expects an array of 3 or 4 elements...
+
+    [0] = r    0-255
+    [1] = g    0-255
+    [2] = b    0-255
+    [3] = a    0.0-1.0
+
+
+### setColor(object)
 Sets the drawing colour.
 
 Possible object properties are...
@@ -30,7 +43,7 @@ RGB format
         r : 0-255
         g : 0-255
         b : 0-255
-        a : 0.0 - 1.0    //optional - default 1.0
+        a : 0.0-1.0    //optional - default 1.0
     }
 HSL format
 
@@ -38,7 +51,7 @@ HSL format
         h : 0-360
         s : 0-255
         l : 0-255
-        a : 0.0 - 1.0    //optional - default 1.0
+        a : 0.0-1.0    //optional - default 1.0
     }
 HSV format
 
@@ -46,7 +59,7 @@ HSV format
         h : 0-360
         s : 0-255
         v : 0-255
-        a : 0.0 - 1.0    //optional - default 1.0
+        a : 0.0-1.0    //optional - default 1.0
     }
 
 ---
