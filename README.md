@@ -10,7 +10,7 @@ The API comes with a browser-based Emulator so you don’t need to build the tab
 You can now run the web-based emulator from any machine: Windows, Linux, Mac or RasPi. Follow the quick start guide and create 
 progs that will run on a physical Pixel Table and play with them using a virtual Pixel Table in your browser. 
 
-[Quick Start Guide](https://github.com/TmpR/pxltbl/blob/master/docs/getting-started.md)
+[Quick Start Guide](https://github.com/NemiahUK/pxltbl/blob/master/docs/getting-started.md)
 
 
 ## BIG plans
@@ -25,7 +25,7 @@ forward, and once built, you can use this API to make programming your table sup
 
 ## API reference
 
-[Full API reference (work in progress)](https://github.com/TmpR/pxltbl/blob/master/docs/api-reference.md) 
+[Full API reference (work in progress)](https://github.com/NemiahUK/pxltbl/blob/master/docs/api-reference.md) 
 
 ## Follow us
 

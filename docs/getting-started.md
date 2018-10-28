@@ -20,4 +20,4 @@ in Ubuntu you can run the following command in terminal to install automatically
 * Navigate to the subfolder `progs/`
 * Copy the `hello-world.js` file to `your-prog.js` create your own prog.
 
-See https://github.com/TmpR/pxltbl/blob/master/docs/api-reference.md for more info on how to use the API.
+See https://github.com/NemiahUK/pxltbl/blob/master/docs/api-reference.md for more info on how to use the API.
