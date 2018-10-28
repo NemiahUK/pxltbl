@@ -80,7 +80,12 @@ var pxltblApi = new function() {
         rightBottom: false,
         bottomRight: false,
         bottomLeft: false,
-        leftBottom: false
+        leftBottom: false,
+        top: false,
+        bottom: false,
+        left: false,
+        right: false,
+        any: false
     };
 
     this.touch = new Array(this.pxlCount);
@@ -361,8 +366,16 @@ var pxltblApi = new function() {
             case 31:
                 if(value) this.exit();
                 break;
-
         }
+
+        //set virtual buttons
+
+        this.buttons.top = this.buttons.topLeft || this.buttons.topRight;
+        this.buttons.bottom = this.buttons.bottomLeft || this.buttons.bottomRight;
+        this.buttons.left = this.buttons.leftTop || this.buttons.leftBottom;
+        this.buttons.right = this.buttons.rightTop || this.buttons.rightBottom;
+
+        this.buttons.any = this.buttons.top || this.buttons.bottom || this.buttons.left || this.buttons.right;
     };
 
     this.buttonDown = function(channel) {

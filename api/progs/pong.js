@@ -28,7 +28,8 @@ exports.setup = function(api) {
 
 exports.loop = function(api) {
 
-
+    //if a button is pressed then exit
+    if(api.buttons.any) api.exit();
 
     //move the pixel by the current speed
     x+=vX;
@@ -70,6 +71,8 @@ exports.loop = function(api) {
     }
     if (t > 255 - flashSpeed) forward = false;
     if (t < flashSpeed) forward = true;
+
+
 
 };
 

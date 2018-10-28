@@ -9,7 +9,6 @@ exports.setup = function(api) {
     // Code here get's executed once at program startup.
     api.debug('Starting game...');
     api.fpsLimit = 60;
-    api.setRotation(90);
     api.playWav('sfx_sound_poweron');
 
 };
@@ -17,6 +16,8 @@ exports.setup = function(api) {
 var hasRun = false;
 var gameStatus = 0;
 var gravity = 0.5;
+
+var rotate = 0;
 
 var introStatus, introTicks;
 
@@ -46,48 +47,19 @@ exports.loop = function(api) {
 function gameStart(api) {
     if (!hasRun) {
         hasRun = true;
-
-        //reset game vars
+        api.setRotation(0);
         introStatus = 0;
         introTicks = 0;
         level = 1;
         width = 9;
 
-        towerTop = 0;
-        towerHeight = 0;
-        towerLeft = Math.floor((api.pxlW - width)/2);
 
-        scroll = 0;
 
-        flyInHeight = 2;
-        flyInX = 0.0-width;
-        flyInY = api.pxlH-(4+flyInHeight);
-        flyInSpeed = 0.1;
-        flyInStatus = 1;       //0 - waiting   1 - flying in  2 - falling  3 - Landing
-
-        flyInColor = {
-            h: 0,
-            s: 128,
-            l: 255,
-            r: 255,
-            g: 0,
-            b: 0
-        };
-
-        stack=[];
-        stack.push({
-            width: width,
-            left: towerLeft,
-            height: 1,
-            color: { r:128, g:128, b:128}
-        });
-
-        gibs=[];
     }
 
     //stop fire from being passed to this stage of the game
-    if(api.buttons.bottomLeft === false) fireLockout = false;
-    if(fireLockout) api.buttons.bottomLeft=false;
+    if(api.buttons.bottom === false) fireLockout = false;
+    if(fireLockout) api.buttons.bottom=false;
 
     introTicks++;
 
@@ -96,7 +68,19 @@ function gameStart(api) {
             api.blank(0,0,0);
             api.setColor(0,255,255);
             api.text('Rdy?',0,1);
-            if(api.buttons.bottomLeft) introStatus = 1;
+            if(api.buttons.left) {
+                introStatus = 1;
+                rotate = 90;
+            }
+            if(api.buttons.right) {
+                introStatus = 1;
+                rotate = 270;
+            }
+
+            if(api.buttons.top || api.buttons.bottom) {
+                api.exit();
+            }
+
             break;
         case 1:
             //explode screen
@@ -114,9 +98,47 @@ function gameStart(api) {
             }
             break;
         case 3:
-            scroll = api.pxlH;
+            api.setRotation(rotate);
+
             gameStatus=1;
             fireLockout=true;
+
+            towerTop = 0;
+            towerHeight = 0;
+            towerLeft = Math.floor((api.pxlW - width)/2);
+
+            scroll = api.pxlH;
+
+            flyInHeight = 2;
+            flyInX = 0.0-width;
+            flyInY = api.pxlH-(4+flyInHeight);
+            flyInSpeed = 0.1;
+            flyInStatus = 1;       //0 - waiting   1 - flying in  2 - falling  3 - Landing
+
+            flyInColor = {
+                h: 0,
+                s: 128,
+                l: 255,
+                r: 255,
+                g: 0,
+                b: 0
+            };
+
+            stack=[];
+            stack.push({
+                width: width,
+                left: towerLeft,
+                height: 1,
+                color: { r:128, g:128, b:128}
+            });
+
+            gibs=[];
+
+
+            //reset game vars
+
+
+
     }
 }
 
@@ -125,8 +147,8 @@ function gamePlay(api) {
     api.blank(0, 0, 0);
 
     //stop fire from being passed to this stage of the game
-    if(api.buttons.bottomLeft === false) fireLockout = false;
-    if(fireLockout) api.buttons.bottomLeft=false;
+    if(api.buttons.bottom === false) fireLockout = false;
+    if(fireLockout) api.buttons.bottom=false;
 
     //scroll tower/gibs if needed..
     if(scroll - towerHeight < 8) scroll++;
@@ -149,7 +171,7 @@ function gamePlay(api) {
             api.setColor(flyInColor);
             api.fillBox(flyInX,flyInY,width,flyInHeight);
 
-            if(api.buttons.bottomLeft) {
+            if((api.buttons.bottom)) {
                 fallXSpeed = flyInSpeed;
                 flyInStatus++;
                 api.playWav('sfx_movement_dooropen1');
@@ -279,8 +301,8 @@ function gamePlay(api) {
 function gameOver(api) {
 
     //stop fire from being passed to this stage of the game
-    if(api.buttons.bottomLeft === false) fireLockout = false;
-    if(fireLockout) api.buttons.bottomLeft=false;
+    if(api.buttons.bottom === false) fireLockout = false;
+    if(fireLockout) api.buttons.bottom=false;
 
 
 
@@ -295,10 +317,11 @@ function gameOver(api) {
         api.text(level, (api.pxlW-bounds.w)/2, (api.pxlH-bounds.h)/2);
 
 
-        if (api.buttons.bottomLeft) {
+        if (api.buttons.bottom) {
             gameStatus = 0;
             hasRun = false;
             fireLockout = true;
+            api.clearInputs();
             api.playWav('sfx_sound_poweron');
         }
     }

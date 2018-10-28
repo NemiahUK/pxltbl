@@ -309,7 +309,12 @@ This variable is an object containing all the button states (true or false).
         rightBottom: true/false,
         bottomRight: true/false,
         bottomLeft: true/false,
-        leftBottom: true/false
+        leftBottom: true/false,
+        top: true/false,           // either top button has been pressed
+        bottom: true/false,        // either bottom button has been pressed
+        left: true/false,          // either left button has been pressed
+        right: true/false,         // either right button has been pressed
+        any: true/false            // any button has been pressed
     };
     
 ---

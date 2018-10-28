@@ -2,7 +2,7 @@ var player;
 
 exports.setup = function(api) {
     api.fpsLimit = 60;
-    api.setRotation(270);
+    api.setRotation(0);
 
 
 };
@@ -44,21 +44,13 @@ exports.loop = function(api) {
     }
     if(xPos > 13 && animState === 0) xScroll+=0.2;
 
-    if(api.buttons.leftTop) {
+    if(api.buttons.any) {
         animState++;
 
 
     }
 
-    api.setColor(0,255,255);
-    if(api.buttons.leftTop) api.setPixel(0,1);
-    if(api.buttons.topLeft) api.setPixel(1,0);
-    if(api.buttons.topRight) api.setPixel(api.pxlW-2,0);
-    if(api.buttons.rightTop) api.setPixel(api.pxlW-1,1);
-    if(api.buttons.rightBottom) api.setPixel(api.pxlW-1,api.pxlH-2);
-    if(api.buttons.bottomRight) api.setPixel(api.pxlW-2,api.pxlH-1);
-    if(api.buttons.bottomLeft) api.setPixel(1,api.pxlH-1);
-    if(api.buttons.leftBottom) api.setPixel(0,api.pxlH-2);
+
 
     //prevent overflow
     if(xPos > 24 && animState === 0) {

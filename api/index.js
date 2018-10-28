@@ -93,25 +93,25 @@ function home() {
     }
 
     if(gotProgs) {
-        if (api.buttons.bottomLeft && !btnDownPressed) {
+        if ((api.buttons.bottom) && !btnDownPressed) {
             curProg++;
             scroll = api.pxlW;
             if (curProg >= progs.length) curProg = 0;
             btnDownPressed = true;
         }
 
-        if (api.buttons.topLeft && !btnUpPressed) {
+        if ((api.buttons.top) && !btnUpPressed) {
             curProg--;
             scroll = api.pxlW;
             if (curProg < 0) curProg = progs.length - 1;
             btnUpPressed = true;
         }
 
-        if (!api.buttons.bottomLeft) btnDownPressed = false;
-        if (!api.buttons.topLeft) btnUpPressed = false;
+        if (!api.buttons.bottom) btnDownPressed = false;
+        if (!api.buttons.top) btnUpPressed = false;
 
 
-        if (api.buttons.rightTop) {
+        if (api.buttons.left || api.buttons.right) {
             if (curProg == progs.length - 1) {
                 api.clearInputs();
                 scroll = api.pxlW;

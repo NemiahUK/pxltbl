@@ -20,7 +20,7 @@ exports.loop = function(api) {
     api.text(message, 1,2);
 
     // If fire button pressed then exit back to home screen.
-    if(api.buttons.topLeft) api.exit();
+    if(api.buttons.any) api.exit();
 
 };
 
