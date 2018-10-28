@@ -1,12 +1,12 @@
-#RasPi Setup
-##Enable audio over GPIO
+# RasPi Setup
+## Enable audio over GPIO
 
 add the following to /boot/config.txt: 
 
     dtoverlay=pwm-2chan,pin=18,func=2,pin2=13,func2=4
 
 
-##Set screen res to 1600x900
+## Set screen res to 1600x900
 Why? becasue this works really well for VNC on a 1080p monitor and is wide enough to display the LED buffer.
 
 add the following to /boot/config.txt: 
@@ -16,16 +16,16 @@ add the following to /boot/config.txt:
 
 
 
-##RasPi config:
+## RasPi config:
 
-Enable SSH
-Enable VNC
-Enable I2C
-Enable SPI
-Enable Serial Port
-Disable Serial Console
+* Enable SSH
+* Enable VNC
+* Enable I2C
+* Enable SPI
+* Enable Serial Port
+* Disable Serial Console
 
-##Other config
+## Other config
 
 Disable boot info (may already been done), edit this file: /boot/cmdline.txt and look for something liek this
     dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p6 rootfstype=ext4 elevator=deadline rootwait
@@ -33,13 +33,13 @@ Disable boot info (may already been done), edit this file: /boot/cmdline.txt and
 Delete the "console=serail0,115200" part.
 
 
-##Install
+## Install
 
-###Arduino (in future this may be handled by node)
+### Arduino (in future this may be handled by node)
 
     sudo apt-get install arduino
 
-###Arduino auto-reset script (in future this may be handled by node)
+### Arduino auto-reset script (in future this may be handled by node)
 
     cd ~
     wget https://github.com/SpellFoundry/avrdude-rpi/archive/master.zip
