@@ -65,13 +65,53 @@ HSV format
 ---
 
 ### setColorHsl(h,s,l,a)
-Sets the drawing colour. `h` is 0-360, `s,l` are 0-255. `a` is optional, in the range of 0-1, default 1.0
+Sets the drawing colour. 
+
+`h` is 0-360, `s,l` are 0-255. `a` is optional, in the range of 0-1, default 1.0
 
 ---
 
 ### setColorHsv(h,s,v,a)
-Sets the drawing colour. `h` is 0-360, `s,l` are 0-255. `a` is optional, in the range of 0-1, default 1.0
+Sets the drawing colour. 
+
+`h` is 0-360, `s,v` are 0-255. `a` is optional, in the range of 0-1, default 1.0
 
 ---
+
+#### fillBox(x,y,w,y)
+
+Draws a filled box at location `x,y` of width `w` and height `h`
+
+---
+
+### text(text,x,y)
+
+Draws `text` starting with the upper left corner of the first character at location `x,y`.
+
+Returns an object containing the width and height of the bounding box containing the text.
+
+    {
+        w : width,
+        h : height
+    }
+
+---
+
+## Helper functions
+
+
+#### rgbToHsv(r,g,b)
+
+---
+
+#### hsvToRgb(h,s,v)
+
+---
+
+#### rgbToHsl(r,g,b)
+
+---
+
+#### hslToRgb(h,s,l)
 
 To be continued....
