@@ -1,344 +1,48 @@
-<html>
-<head>
-    <script
-            src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-            integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
-            crossorigin="anonymous"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-
-        var socket = io(document.location.href);
-        socket.on('connect', function(){
-            $('#console').append('<p>Connected.</p>');
-        });
-        socket.on('leds', function(data){
-
-            var int8View = new Uint8Array(data);
-            var pixels = $('#display li').toArray();
-
-            $('#display li').each(function(index, pixel){
-                $(pixel).css('background-color','rgba('+int8View[index*3]+','+int8View[index*3+1]+','+int8View[index*3+2]+',1)');
-            });
-
-        });
-
-        socket.on('debug', function(data){
-
-            if(typeof data == 'object') {
-                data = 'Debug: '+JSON.stringify(data);
-            }
-            $('#console').append('<p class="debug">'+data+'</p>');
-            $('#console').scrollTop($('#console')[0].scrollHeight);
-
-        });
-
-        socket.on('frameData', function(data){
-
-            $('#log').text(JSON.stringify(data));
-
-            var y = 0;
-            if(data.rotation == 90 || data.rotation == 270) {
-                $('#rotate-padding').css('height','40vmin');
-                y = 20;
-            } else {
-                $('#rotate-padding').css('height','0');
-
-            }
-
-            $('#pxlTbl').css('transform','translateY('+y+'vmin) rotate(-'+data.rotation+'deg) ');
-
-
-
-        });
-
-        socket.on('error', function(data){
-
-            if(typeof data == 'object') {
-                data = 'Error: '+JSON.stringify(data);
-            }
-            $('#console').append('<p class="error">'+data+'</p>');
-
-            $('#console').scrollTop($('#console')[0].scrollHeight);
-
-        });
-
-
-        socket.on('disconnect', function(){
-            $('#log').text('Disconnected');
-
-        });
-
-        var pxlW = 23;
-        var pxlH = 11;
-
-        $(function() {
-
-            //init LEDs
-            for (var y = 0; y < pxlH; y++) {
-                $('#display').append($('<ul>'));
-                for (var x = 0; x < pxlW; x++) {
-                    $('#display ul').last().append($('<li data-x="'+x+'" data-y="'+y+'" data-i="'+ ((y*pxlW)+x) +'">'));
-                }
-
-            }
-            $('#display').append($('<br style="clear: left"/>'));
-
-            $('#pxlTbl button').mousedown(function(){
-                socket.emit('buttonDown',$(this).data('cmd'));
-            });
-
-            $('#pxlTbl button').mouseup(function(){
-                socket.emit('buttonUp',$(this).data('cmd'));
-            });
-
-            $('#display li').mouseenter(function(e){
-
-                if(e.which == 1) {
-                    var data = $(this).data('i');
-                    socket.emit('touchDown', data);
-                }
-            });
-            $('#display li').mousedown(function(e){
-
-                var data = $(this).data('i');
-                socket.emit('touchDown',data);
-            });
-
-            $('#display li').mouseleave(function(e){
-
-                var data = $(this).data('i');
-                socket.emit('touchUp',data);
-            });
-            $('#display li').mouseup(function(e){
-
-                var data = $(this).data('i');
-                socket.emit('touchUp',data);
-            });
-
-
-            $('body').keydown(function(e) {
-                e.preventDefault();
-                switch (e.which) {
-                    case 27:
-                        socket.emit('buttonDown','31');
-                        break;
-                }
-
-            });
-
-            $('body').keyup(function(e) {
-                e.preventDefault();
-                switch (e.which) {
-                    case 27:
-                        socket.emit('buttonUp','31');
-                        break;
-                }
-
-            });
-
-
-        });
-    </script>
-
-    <style type="text/css">
-
-        body {
-            background-color: #333;
-            color:#eee;
-            font-family: sans-serif;
-        }
-
-        #console {
-
-            height: 22vmin;
-
-            font-family: "Lucida Console";
-            background: #555;
-            color:#eee;
-            overflow-y: scroll;
-            padding: 10px 0;
-        }
-
-        #console p {
-            padding:0 10px;
-            margin: 0;
-        }
-
-        #console .error {
-            color: #ff8888;
-        }
-
-        .center {
-            text-align: center;
-        }
-        #pxlTbl {
-            background: 50% 50% url(bg.jpg);
-            background-size: cover;
-
-            border: 1px solid #352516;
-            border-radius: 4vmin;
-
-
-            margin: 2vmin auto;
-            position: relative;
-            padding: 6vmin;
-
-            display: inline-block;
-
-            transition: 0.5s transform;
-
-
-        }
-
-
-
-        #pxlTbl button {
-            position: absolute;
-            border-radius: 100%;
-
-            width:4vmin;
-            height: 4vmin;
-            margin: 1vmin;
-
-        }
-
-
-        #display {
-
-            padding: 2vmin;
-            background: #000;
-            border-radius: 2vmin;
-
-        }
-
-        #display ul {
-            list-style:none;
-            margin:0;
-            padding:0;
-            width:100%;
-            clear:left;
-            white-space: nowrap;
-
-        }
-
-        #display li {
-            list-style:none;
-            margin:1px;
-            padding:0;
-            float:left;
-            width:3vmin;
-            height:3vmin;
-            background-color:#fff;
-
-
-        }
-
-        #rotate-padding {
-            height: 0;
-            transition: 0.5s height;
-        }
-
-
-        [class*="push"] {
-            position: relative;
-            display: inline-block;
-            width: 4vmin;
-            height: 4vmin;
-            border: 0;
-            margin: 1em;
-            outline: none;
-            background-color: #262626;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: box-shadow 200ms;
-        }
-
-        .push--flat {
-            box-shadow: inset 0 0.125vmin 0 #333333, inset 0 -0.125vmin 0 #1a1a1a, inset 0 0 0 0.125vmin #1f1f1f, inset 0 0 0 0.3333333333vmin #262626, inset 0 0 0 0.4vmin black, inset 0 0 0 0.4347826087vmin black, inset 0 0 0 0.5333333333vmin rgba(115, 115, 115, 0.7), inset 0 0 0 0.7272727273vmin #262626, inset 0 1.6vmin 0.5333333333vmin #1a1a1a, inset 0 0 0.4vmin 0.6666666667vmin #0d0d0d, 0 0.2vmin 0 rgba(0, 0, 0, 0.3);
-        }
-        .push--flat:after {
-            content: '';
-            position: absolute;
-            bottom: 0.2vmin;
-            left: 0.4vmin;
-            display: block;
-            width: 3.2vmin;
-            height: 3.2vmin;
-            border: 0.2666666667vmin solid rgba(0, 0, 0, 0.3);
-            border-width: 0 0 0.2666666667vmin;
-            border-radius: 50%;
-            transition-duration: 200ms;
-        }
-        .push--flat:active, .push--flat.is-pushed {
-            box-shadow: inset 0 0.125vmin 0 #333333, inset 0 -0.125vmin 0 #1a1a1a, inset 0 0 0 0.125vmin #1f1f1f, inset 0 0 0 0.3333333333vmin #262626, inset 0 0 0 0.4vmin black, inset 0 0 0 0.4705882353vmin black, inset 0 0 0 0.5333333333vmin rgba(115, 115, 115, 0.2), inset 0 0 0 0.7272727273vmin #1f1f1f, inset 0 1.6vmin 0.5333333333vmin #121212, inset 0 0 0.4vmin 0.6666666667vmin black, 0 0.2vmin 0 rgba(0, 0, 0, 0.3);
-            background-color: #212121;
-        }
-        .push--flat:active:after, .push--flat.is-pushed:after {
-            bottom: 0.4666666667vmin;
-            border-width: 0;
-        }
-
-        .push--skeuo {
-            box-shadow: inset 0 0.1666666667vmin 0 #333333, inset 0 -0.1666666667vmin 0.0666666667vmin #1a1a1a, 0 0 0.0666666667vmin #262626, inset 0 0 0.1333333333vmin black, inset 0 0 0.1333333333vmin rgba(102, 51, 0, 0.5), inset 0 0 0.0666666667vmin 0.3333333333vmin #262626, inset 0 -0.1333333333vmin 0.1vmin 0.4vmin rgba(102, 51, 0, 0.7), inset 0 0 0.0666666667vmin 0.4vmin black, inset 0 0 0.0666666667vmin 0.4vmin rgba(102, 51, 0, 0.7), inset 0 0 0.0333333333vmin 0.4347826087vmin black, inset 0 0 0.0333333333vmin 0.5vmin rgba(115, 115, 115, 0.7), inset 0 0.2vmin 0 0.4705882353vmin rgba(77, 77, 77, 0.7), inset 0 -0.2vmin 0.0666666667vmin 0.4705882353vmin rgba(13, 13, 13, 0.2), inset 0 0 0 0.7272727273vmin #262626, inset 0 1.6vmin 0.5333333333vmin #1a1a1a, inset 0 0 0.4vmin 0.6666666667vmin #0d0d0d, 0 0.1vmin 0.2vmin rgba(0, 0, 0, 0.5);
-        }
-        .push--skeuo:active, .push--skeuo.is-pushed {
-            box-shadow: inset 0 0.1666666667vmin 0 #333333, inset 0 -0.1666666667vmin 0.0666666667vmin #1a1a1a, 0 0 0.0666666667vmin #262626, inset 0 0 0.1333333333vmin black, inset 0 0 0.1333333333vmin rgba(102, 51, 0, 0.5), inset 0 0 0.0666666667vmin 0.3333333333vmin #262626, inset 0 -0.1333333333vmin 0.1vmin 0.4vmin rgba(102, 51, 0, 0.7), inset 0 0 0.0666666667vmin 0.4vmin black, inset 0 0 0.0666666667vmin 0.4vmin rgba(102, 51, 0, 0.7), inset 0 0 0.1vmin 0.4705882353vmin black, inset 0 0 0.0333333333vmin 0.5333333333vmin rgba(115, 115, 115, 0.2), inset 0 0.2vmin 0 28px rgba(77, 77, 77, 0.5), inset 0 -0.2vmin 0.0666666667vmin 28px rgba(0, 0, 0, 0.2), inset 0 0 0 0.7272727273vmin #1f1f1f, inset 0 1.6vmin 0.5333333333vmin #121212, inset 0 0 0.4vmin 0.6666666667vmin black, 0 0.1vmin 0.2vmin rgba(0, 0, 0, 0.5);
-            background-color: #212121;
-        }
-        .push--skeuo:active:before, .push--skeuo.is-pushed:before {
-            opacity: .5;
-        }
-        .push--skeuo:before {
-            content: '';
-            position: absolute;
-            bottom: 0.8888888889vmin;
-            left: 1.1111111111vmin;
-            display: block;
-            width: 1.8181818182vmin;
-            height: 1.2121212121vmin;
-            background: rgba(115, 115, 115, 0.2);
-            background: linear-gradient(to top, rgba(140, 140, 140, 0.3) 0%, rgba(38, 38, 38, 0.1) 100%);
-            border-radius: 40% 40% 60% 60%;
-            transition: opacity 200ms;
-        }
-
-
-
-
-    </style>
-</head>
-<body>
-<div class="center">
-<div id="pxlTbl">
-        <button class="push--flat" data-cmd="37" style="top:0; left:8vmin;"></button>
-        <button class="push--flat" data-cmd="15" style="top:0; right: 8vmin;"></button>
-
-        <button class="push--flat" data-cmd="22" style="left:0; top:8vmin;"></button>
-        <button class="push--flat" data-cmd="16" style="left:0; bottom:8vmin;"></button>
-
-        <div id="display"></div>
-
-        <button class="push--flat" data-cmd="13" style="top:8vmin; right:0;"></button>
-        <button class="push--flat" data-cmd="36" style="right:0; bottom:8vmin;"></button>
-
-        <button class="push--flat" data-cmd="18" style="bottom:0; left:8vmin;"></button>
-        <button class="push--flat" data-cmd="32" style="bottom:0; right:8vmin;"></button>
-
-    <button class="push--flat" data-cmd="31" style="bottom:0; left:50%; margin-left: -2vmin;"></button>
-
-
-</div>
-</div>
-<div id="rotate-padding"></div>
-
-<div id="console">
-    <p>Connecting...</p>
-</div>
-<br style="clear:both;"/>
-<div id="buttons">
-
-
-
-</div>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="utf-8">
+        <script
+                src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+                integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
+                crossorigin="anonymous"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/script.js"></script>
+
+        <link href="styles.css" rel="stylesheet">
+
+        <title>Pixel Table</title>
+
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    </head>
+
+    <body>
+        <div class="center">
+            <div id="pxlTbl">
+                <button class="push--flat" data-cmd="37" style="top:0; left:8vmin;"></button>
+                <button class="push--flat" data-cmd="15" style="top:0; right: 8vmin;"></button>
+
+                <button class="push--flat" data-cmd="22" style="left:0; top:8vmin;"></button>
+                <button class="push--flat" data-cmd="16" style="left:0; bottom:8vmin;"></button>
+
+                <div id="display"></div>
+
+                <button class="push--flat" data-cmd="13" style="top:8vmin; right:0;"></button>
+                <button class="push--flat" data-cmd="36" style="right:0; bottom:8vmin;"></button>
+
+                <button class="push--flat" data-cmd="18" style="bottom:0; left:8vmin;"></button>
+                <button class="push--flat" data-cmd="32" style="bottom:0; right:8vmin;"></button>
+
+                <button class="push--flat" data-cmd="31" style="bottom:0; left:50%; margin-left: -2vmin;"></button>
+            </div>
+        </div>
+        <div id="rotate-padding"></div>
+
+        <div id="console">
+            <p>Connecting...</p>
+        </div>
+        <br style="clear:both;"/>
+    </body>
 </html>
