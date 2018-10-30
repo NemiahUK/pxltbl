@@ -2,7 +2,6 @@
 
 Drop Game by Steven Tomlinson https://github.com/TmpR
 
-
  */
 
 exports.setup = function(api) {
@@ -10,7 +9,6 @@ exports.setup = function(api) {
     api.debug('Starting game...');
     api.fpsLimit = 60;
     api.playWav('sfx_sound_poweron');
-
 };
 
 var hasRun = false;
@@ -52,9 +50,6 @@ function gameStart(api) {
         introTicks = 0;
         level = 1;
         width = 9;
-
-
-
     }
 
     //stop fire from being passed to this stage of the game
@@ -133,12 +128,7 @@ function gameStart(api) {
             });
 
             gibs=[];
-
-
             //reset game vars
-
-
-
     }
 }
 
@@ -211,9 +201,6 @@ function gamePlay(api) {
                 width = flyInX+width - towerLeft;
                 flyInX+=oldWidth-width;
                 api.playWav('sfx_exp_short_hard15');
-
-
-
             } else if(flyInX > towerLeft) {
                 //too far right
 
@@ -264,9 +251,6 @@ function gamePlay(api) {
             });
             towerHeight+=flyInHeight;
 
-
-
-
             flyInStatus=1;
             flyInSpeed*= -1;
             if(flyInSpeed > 0) {
@@ -299,12 +283,9 @@ function gamePlay(api) {
 };
 
 function gameOver(api) {
-
     //stop fire from being passed to this stage of the game
     if(api.buttons.bottom === false) fireLockout = false;
     if(fireLockout) api.buttons.bottom=false;
-
-
 
     gameOverTicks++;
     api.blank(0,0,0);
@@ -315,7 +296,6 @@ function gameOver(api) {
         api.setColor(flyInColor);
         var bounds = api.textBounds(level);
         api.text(level, (api.pxlW-bounds.w)/2, (api.pxlH-bounds.h)/2);
-
 
         if (api.buttons.bottom) {
             gameStatus = 0;
@@ -334,7 +314,6 @@ function animateTower(api) {
         api.setColor(stack[i].color);
         api.fillBox(stack[i].left, scroll-towerHeight, stack[i].width, stack[i].height);
     }
-
 }
 
 function animateGibs(api) {

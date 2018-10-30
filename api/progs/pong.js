@@ -1,8 +1,3 @@
-
-
-
-
-
 //these are used to make the pixel pulse
 var t = 0;
 var forward = true;
@@ -17,14 +12,9 @@ var vY = 0.3;
 //have we had a bump?
 var bump = 0;
 
-
-
-
 exports.setup = function(api) {
     api.fpsLimit = 60;
 };
-
-
 
 exports.loop = function(api) {
 
@@ -71,9 +61,6 @@ exports.loop = function(api) {
     }
     if (t > 255 - flashSpeed) forward = false;
     if (t < flashSpeed) forward = true;
-
-
-
 };
 
 

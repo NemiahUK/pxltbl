@@ -3,8 +3,6 @@ var player;
 exports.setup = function(api) {
     api.fpsLimit = 60;
     api.setRotation(0);
-
-
 };
 
 var rainbow = [0,45,65,135,210,260,270];
@@ -15,7 +13,6 @@ var xScroll = 5;
 var animState = 0;
 
 exports.loop = function(api) {
-
     api.blank(0, 0, 0);
 
     var y = 1;
@@ -46,8 +43,6 @@ exports.loop = function(api) {
 
     if(api.buttons.any) {
         animState++;
-
-
     }
 
 
@@ -58,9 +53,8 @@ exports.loop = function(api) {
         xScroll = 10;
     }
 
-    if(xPos-xScroll > 30) api.exit();
-
-
-
+    if(xPos-xScroll > 30){
+        api.exit();
+    }
 };
 
