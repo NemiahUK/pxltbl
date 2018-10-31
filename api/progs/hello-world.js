@@ -1,6 +1,5 @@
 // Hello world example prog.
 
-
 // Put variables here that you need to persist between loops.
 var message = 'Hi =]';
 
