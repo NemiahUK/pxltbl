@@ -61,8 +61,8 @@ socket.on('disconnect', function(){
 });
 
 //need to get these from api data instead
-var pxlW = 23;
-var pxlH = 11;
+var pxlW = 48;
+var pxlH = 24;
 
 $(function() {
 

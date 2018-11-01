@@ -36,8 +36,8 @@ var pxltblApi = new function() {
     //options - these are the defaults, ovverridden by options object
     this.fpsLimit = 30;
 
-    this.originalPxlW = 23;
-    this.originalPxlH = 11;
+    this.originalPxlW = 48;
+    this.originalPxlH = 24;
     this.pxlW = this.originalPxlW;
     this.pxlH = this.originalPxlH;
     this.rotation = 0;
