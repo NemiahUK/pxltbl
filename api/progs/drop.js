@@ -172,6 +172,8 @@ function gamePlay(api) {
         flyInStatus++;
         api.playWav('sfx_movement_dooropen1');
       }
+
+
       break;
 
     case 2: //falling ...

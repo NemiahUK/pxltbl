@@ -15,6 +15,9 @@ body {
     color:#eee;
     overflow-y: scroll;
     padding: 10px 0;
+    float: left;
+    width:70%;
+    margin-right: 20px;
 }
 
 #console p {
@@ -30,6 +33,7 @@ body {
     text-align: center;
 }
 #pxlTbl {
+    opacity: 0;
     background: 50% 50% url(bg.jpg);
     background-size: cover;
 
@@ -43,7 +47,7 @@ body {
 
     display: inline-block;
 
-    transition: 0.5s transform;
+    transition: 0.5s transform, 1s opacity;
 
 
 }
@@ -71,19 +75,20 @@ body {
 
 #display ul {
     list-style:none;
-    margin:0;
+    margin:1px 0;
     padding:0;
     width:100%;
-    clear:left;
+    height: 1.5vmin;
+    line-height: 1.5vmin;
     white-space: nowrap;
 
 }
 
 #display li {
     list-style:none;
-    margin:1px;
+    margin:0 1px;
     padding:0;
-    float:left;
+    display: inline-block;
     width:1.5vmin;
     height:1.5vmin;
     background-color:#fff;

@@ -17,50 +17,57 @@ const http = require('http');
 var pxltblApi = new function() {
 
 
+    //these should probably be public (read-only)
     this.isRasPi = false;
-    this.consoleData = true;
-
-    //these should probably be public
     this.frameTime = 0;
     this.millis = 0;
     this.frames = 0;
     this.fps = 0;
-    this.paused = false;
-
     this.colorR = 255;
     this.colorG = 255;
     this.colorB = 255;
     this.colorA = 1;
+    this.goHome = false; //used to signal intent to return to main menu
 
 
-    //options - these are the defaults, ovverridden by options object
-    this.fpsLimit = 30;
-
-    this.originalPxlW = 48;
-    this.originalPxlH = 24;
-    this.pxlW = this.originalPxlW;
-    this.pxlH = this.originalPxlH;
+    //these can be set at any point (public read/write)
     this.rotation = 0;
-
-    this.stripSerpantine = true;
-    this.stripStart = 'TL';  //can be TL, TR, BL, BR
-    this.pxlCount = this.pxlW*this.pxlH;
-    this.baud = 1000000;
-    this.frameStart = new Buffer([0x01]);
     this.brightness = 128;
     this.whiteBalance = {
         r: 1.0,
         g: 0.9,
         b: 0.5
     };
+    this.paused = false; //not implemented
 
 
-    //callback functions
+    //options - these are the defaults, overridden by options object
+    this.fpsLimit = 30;
+    this.consoleData = true;
+    //callback function
     this.cbLoop;
+
+    //these should be gotten from the firmware or overridden for no-pi emulation
+    this.originalPxlW = 64;
+    this.originalPxlH = 32;
+    this.baud = 1000000;
+    this.stripSerpantine = true;
+    this.stripStart = 'TL';  //can be TL, TR, BL, BR
+
+    //derived
+    this.pxlW = this.originalPxlW;
+    this.pxlH = this.originalPxlH;
+    this.pxlCount = this.pxlW*this.pxlH;
+
+
+
+
+
 
     //these should probably be private
     this.serial;
     this.buffer = new Buffer((this.pxlCount * 3));
+    this.frameStart = new Buffer([0x01]);
 
 
     this.startTime = new Date().getTime();
@@ -72,6 +79,7 @@ var pxltblApi = new function() {
     this.webRoot = './web';
     this.webClients = 0;
 
+    //TODO - allow custom buttom map of buttonName => GPIO pin to be added to options object. This would replace the one below.
     this.buttons = {
         topLeft: false,
         leftTop: false,
@@ -88,11 +96,10 @@ var pxltblApi = new function() {
         any: false
     };
 
+    //touch data
     this.touch = new Array(this.pxlCount);
 
-    this.playing = false;
 
-    this.goHome = false;
 
 
 
@@ -129,6 +136,7 @@ var pxltblApi = new function() {
 
 
                 //start button input
+                //TODO use buttonmap object once implimented
                 gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Top
                 gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Right
                 gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Bottom
@@ -158,7 +166,7 @@ var pxltblApi = new function() {
                 })
 
                 //setup SPI Rx events
-                //TODO - here we need functions to handle SPI commands recieved form the arduino, such as 'booted', 'button press', 'etc'
+                //TODO - here we need functions to handle SPI commands recieved form the arduino, such as 'booted', 'etc'
 
             });
 
@@ -191,6 +199,12 @@ var pxltblApi = new function() {
 
     this.reboot = function () {
         //reboots arduino
+
+
+    };
+
+    this.resetLeds = function () {
+        //tells arduino to power cycle the LED strip (for fixing stuck pixels)
 
 
     };
@@ -946,7 +960,7 @@ var pxltblApi = new function() {
 
             //send to web
             if(this.webClients) {
-                this.webIo.volatile.emit('frameData', {
+                this.webIo.emit('frameData', {
                     webClients: this.webClients,
                     millis: this.millis,
                     fps: + this.fps,
@@ -954,6 +968,8 @@ var pxltblApi = new function() {
                     frameTime: this.frameTime,
                     minFrameTime: minFrameTime,
                     length: this.buffer.length,
+                    pxlW: this.originalPxlW,
+                    pxlH: this.originalPxlH,
                     rotation: this.rotation
                 });
             }

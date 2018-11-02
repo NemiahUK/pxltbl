@@ -27,7 +27,33 @@ socket.on('debug', function(data){
 
 socket.on('frameData', function(data){
 
-    $('#log').text(JSON.stringify(data));
+    $('#stats').html('');
+    $.each(data, function (key, val) {
+        $('#stats').append('<ul>'+key+': '+val+'</ul>');
+    });
+
+
+
+    if(pxlW === false) {
+        pxlW = data.pxlW;
+        pxlH = data.pxlH;
+
+        pxlSize = (75 / pxlW) + 'vmin';
+
+        //init LEDs
+        for (var y = 0; y < pxlH; y++) {
+            $('#display').append($('<ul>'));
+            for (var x = 0; x < pxlW; x++) {
+                $('#display ul').last().append($('<li data-x="'+x+'" data-y="'+y+'" data-i="'+ ((y*pxlW)+x) +'">'));
+            }
+
+        }
+
+        $('#display ul').css('height',pxlSize).css('line-height',pxlSize);
+        $('#display li').css('width',pxlSize).css('height',pxlSize);
+
+        $('#pxlTbl').css('opacity',1);
+    }
 
     var y = 0;
     if(data.rotation == 90 || data.rotation == 270) {
@@ -37,8 +63,13 @@ socket.on('frameData', function(data){
         $('#rotate-padding').css('height','0');
 
     }
+    if(data.rotation == 270) {
+        data.rotation = 90;
+    } else {
 
-    $('#pxlTbl').css('transform','translateY('+y+'vmin) rotate(-'+data.rotation+'deg) ');
+        data.rotation*=-1;
+    }
+    $('#pxlTbl').css('transform','translateY('+y+'vmin) rotate('+data.rotation+'deg) ');
 
 
 });
@@ -61,20 +92,13 @@ socket.on('disconnect', function(){
 });
 
 //need to get these from api data instead
-var pxlW = 48;
-var pxlH = 24;
+var pxlW = false;
+var pxlH = false;
+var pxlSize = false;
 
 $(function() {
 
-    //init LEDs
-    for (var y = 0; y < pxlH; y++) {
-        $('#display').append($('<ul>'));
-        for (var x = 0; x < pxlW; x++) {
-            $('#display ul').last().append($('<li data-x="'+x+'" data-y="'+y+'" data-i="'+ ((y*pxlW)+x) +'">'));
-        }
 
-    }
-    $('#display').append($('<br style="clear: left"/>'));
 
 
     // buttons...
