@@ -48,8 +48,8 @@ var pxltblApi = new function() {
     this.cbLoop;
 
     //these should be gotten from the firmware or overridden for no-pi emulation
-    this.originalPxlW = 64;
-    this.originalPxlH = 32;
+    this.originalPxlW = 43;
+    this.originalPxlH = 24;
     this.baud = 1000000;
     this.stripSerpantine = true;
     this.stripStart = 'TL';  //can be TL, TR, BL, BR
@@ -180,7 +180,7 @@ var pxltblApi = new function() {
         this.startWeb();
 
 
-        //wait for RasPi to be ready
+        if(!this.consoleData) console.log('Console display disabled, visit http://127.0.0.1:3000 to view stats.');
 
 
     };
@@ -938,7 +938,7 @@ var pxltblApi = new function() {
         this.lastLoopTime = new Date().getTime();
 
         //update the console every 500ms
-        if (curTime - this.lastStatsTime > 500 && this.consoleData) {
+        if (curTime - this.lastStatsTime > 500) {
 
             this.fps = Math.floor(this.frames * 1000 / (curTime - this.lastStatsTime));
             this.lastStatsTime = curTime;
@@ -946,15 +946,17 @@ var pxltblApi = new function() {
 
             var minFrameTime = Math.round(1000 / this.fpsLimit);
 
-            console.clear();
-            console.log('Is RasPi: ' + this.isRasPi);
-            console.log('Web Clients: ' + this.webClients);
-            console.log('Millis: ' + this.millis);
-            console.log('Game FPS: ' + this.fps);
-            console.log('FPS limit: ' + this.fpsLimit);
-            console.log('Frame time: ' + this.frameTime);
-            console.log('Min frame time: ' + minFrameTime);
-            console.log('Num of pixels: ' + this.buffer.length);
+            if(this.consoleData) {
+                console.clear();
+                console.log('Is RasPi: ' + this.isRasPi);
+                console.log('Web Clients: ' + this.webClients);
+                console.log('Millis: ' + this.millis);
+                console.log('Game FPS: ' + this.fps);
+                console.log('FPS limit: ' + this.fpsLimit);
+                console.log('Frame time: ' + this.frameTime);
+                console.log('Min frame time: ' + minFrameTime);
+                console.log('Num of pixels: ' + this.buffer.length);
+            }
 
             //this.dump();
 

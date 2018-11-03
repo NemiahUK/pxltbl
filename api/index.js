@@ -21,7 +21,8 @@ var prog;
 
     api.start({
         callbackLoop: loop,
-        fpsLimit: 30
+        fpsLimit: 30,
+        consoleData: false
     });
 
 
