@@ -9,6 +9,7 @@ var direction = 90;
 var speed = 2; //in pixels per second
 var lastMove;
 var x,y;
+var appleX, appleY;
 
 var snake = [];
 
@@ -22,12 +23,14 @@ exports.setup = function(api) {
     api.fillBox(1,1,api.pxlW-2,api.pxlH-2);
 
     lastMove = api.millis;
-    x = api.pxlW/2;
-    y = api.pxlH/2;
+    x = Math.floor(api.pxlW/2);
+    y = Math.floor(api.pxlH/2);
 
     for(let i=5; i>=0; i--) {
         snake.push({x: x-i, y:y});
     }
+
+    spawnApple(api);
 
 };
 
@@ -36,32 +39,17 @@ exports.loop = function(api) {
     api.setColor(0,0,0);
     api.fillBox(1,1,api.pxlW-2,api.pxlH-2);
 
-    //if a button is pressed then exit
+    //if a button is pressed then change direction
     if(api.buttons.left) direction-=90;
     if(api.buttons.right) direction+=90;
     if(api.buttons.any) api.clearInputs();
 
-
+    //over/under flow
     if(direction >= 360) direction-=360;
     if(direction < 0) direction+=360;
 
 
-
-
-
-
-
-
-    //draw the pixel
-
-    api.setColor(0,255,255);
-    for(let i=0; i < snake.length; i++) {
-        if(i == snake.length - 1) api.setColor(255,255,255);
-
-        api.setPixel(snake[i].x,snake[i].y);
-
-    }
-
+    //process movement
     if(api.millis - lastMove > 1000/speed) {
         lastMove = api.millis;
         switch (direction) {
@@ -78,9 +66,49 @@ exports.loop = function(api) {
                 x--;
                 break;
         }
-        snake.push({x: x, y:y});
-        snake.shift();
+        snake.push({x: x, y: y});
+
+
+        //if snake has eaten the apple
+        if (x == appleX && y == appleY) {
+            //allow the snake to grow
+            //spawn new apple
+            spawnApple(api);
+        } else {
+            //keep the snake the same length
+            snake.shift();
+        }
     }
+
+    //draw the apple
+    api.setColor(0,255,0);
+    api.setPixel(appleX,appleY);
+
+
+    //draw the snake
+    api.setColor(0,255,255);
+    for(let i=0; i < snake.length; i++) {
+        if(i == snake.length - 1) api.setColor(255,255,255);
+
+        api.setPixel(snake[i].x,snake[i].y);
+
+    }
+
+
+
+
+
+
+
+
 };
 
 
+function spawnApple(api) {
+    //spawns an apple at a random point that's not part of a snake
+
+    //valid locations are 2 pixel smaller than the display (to account for borders)
+    appleX = Math.floor(Math.random()*(api.pxlW-2)) + 1;
+    appleY = Math.floor(Math.random()*(api.pxlH-2)) + 1;
+
+}
