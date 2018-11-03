@@ -62,8 +62,6 @@ var pxltblApi = new function() {
 
 
 
-
-
     //these should probably be private
     this.serial;
     this.buffer = new Buffer((this.pxlCount * 3));
