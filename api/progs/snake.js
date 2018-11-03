@@ -74,10 +74,22 @@ exports.loop = function(api) {
             //allow the snake to grow
             //spawn new apple
             spawnApple(api);
+            //increase speed
+            speed+=0.2;
         } else {
             //keep the snake the same length
             snake.shift();
         }
+
+
+        //if the snake has hit the wall
+        if(x > api.pxlW -2 || x < 1 || y > api.pxlH -2 || y < 1 ) {
+            //TODO - instead of just quitting, display score and restart game.
+            api.debug(snake.length);
+            api.exit();
+        }
+
+        //TODO - if the snake has hit a snake
     }
 
     //draw the apple
