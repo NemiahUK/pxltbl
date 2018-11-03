@@ -48,8 +48,8 @@ var pxltblApi = new function() {
     this.cbLoop;
 
     //these should be gotten from the firmware or overridden for no-pi emulation
-    this.originalPxlW = 43;
-    this.originalPxlH = 24;
+    this.originalPxlW = 23;
+    this.originalPxlH = 11;
     this.baud = 1000000;
     this.stripSerpantine = true;
     this.stripStart = 'TL';  //can be TL, TR, BL, BR
@@ -317,6 +317,10 @@ var pxltblApi = new function() {
             });
         });
         this.webServer.listen(3000);
+    };
+
+    this.setButtonByName = function(name,value) {
+
     };
 
     this.setButton = function(channel,value) {
