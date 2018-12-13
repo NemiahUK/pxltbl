@@ -27,10 +27,10 @@ add the following to /boot/config.txt:
 
 ## Other config
 
-Disable boot info (may already been done), edit this file: /boot/cmdline.txt and look for something liek this
-    dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p6 rootfstype=ext4 elevator=deadline rootwait
+Disable boot info (this is usually already done), edit this file: `/boot/cmdline.txt` and look for something like this
+    `dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p6 rootfstype=ext4 elevator=deadline rootwait`
 
-Delete the "console=serail0,115200" part.
+Delete the `console=serail0,115200` part.
 
 
 ## Install
