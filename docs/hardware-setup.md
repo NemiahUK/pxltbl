@@ -1,9 +1,9 @@
 # RasPi Setup
-## Enable audio over GPIO
+## Enable audio over I2S
 
-add the following to /boot/config.txt: 
+Run the following install script: 
 
-    dtoverlay=pwm-2chan,pin=18,func=2,pin2=13,func2=4
+    curl -sS https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/master/i2samp.sh | bash
 
 
 ## Set screen res to 1600x900
