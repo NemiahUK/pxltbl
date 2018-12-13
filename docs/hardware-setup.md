@@ -32,55 +32,42 @@ Delete the `console=serail0,115200` part.
 
 ## Enable auto run as service
 
-Create the init.d script...
+Find out where npm is installed by typing `which npm` it should return `/usr/bin/npm` or `/usr/local/bin/npm` make a note of this.
 
-    cd /etc/init.d
-    sudo nano pxltbl
+Create the service file...
+
+    sudo nano /etc/systemd/system/pxltbl.service
 
 Paste the following:
 
-    #! /bin/sh
-    # /etc/init.d/pxltbl
+    [Unit]
+    Description=Pixel Table service
+    After=network.target
 
-    ### BEGIN INIT INFO
-    # Provides:          test
-    # Required-Start:    $remote_fs $syslog
-    # Required-Stop:     $remote_fs $syslog
-    # Default-Start:     2 3 4 5
-    # Default-Stop:      0 1 6
-    # Short-Description: Example initscript
-    # Description:       This file should be used to construct scripts to be
-    #                    placed in /etc/init.d.
-    ### END INIT INFO
+    [Service]
+    ExecStart=/usr/bin/npm start
+    WorkingDirectory=/home/pi/pxltbl/api
+    StandardOutput=inherit
+    StandardError=inherit
+    Restart=on-failure
+    User=pi
 
-    # Carry out specific functions when asked to by the system
-    case "$1" in
-       start)
-        echo "Starting pxltbl"
-        # run application you want to start
-        cd /home/pi/pxltbl/api
-        /usr/bin/node index.js >> /dev/null 
-       ;;
-       stop)
-        echo "Stopping pxltbl"
-        # kill application you want to stop
-        killall -9 node
-        # Not a great approach for running
-        # multiple node instances
-        ;;
-      *)
-        echo "Usage: /etc/init.d/pxltbl {start|stop}"
-        exit 1
-        ;;
-    esac
+    [Install]
+    WantedBy=multi-user.target
 
-    exit 0
+Change the line `ExecStart=/usr/bin/npm start` to match the npm path you noted down earlier.
 
-Make the file eXecutable `sudo chmod +x pxltbl`
+Enable the service
 
-Update rc.d `sudo update-rc.d pxltbl defaults`
+    sudo systemctl enable pxltbl.service
+   
+Start the service
 
-Reboot
+    sudo systemctl start pxltbl.service
+    
+If you want to view the logs
+
+    journalctl -u pxltbl
 
 ## Install
 
