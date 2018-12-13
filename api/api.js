@@ -127,10 +127,10 @@ var pxltblApi = new function() {
 
 
                 //start keyboard input
-                readline.emitKeypressEvents(process.stdin);
-                process.stdin.setRawMode(true);
-
-                process.stdin.on('keypress', pxltblApi.keyPress);
+                //TODO the 3 lines below erorr if running in service mode becasue there is no STDIN, need to check and enable if possible
+                //readline.emitKeypressEvents(process.stdin);
+                //process.stdin.setRawMode(true);
+                //process.stdin.on('keypress', pxltblApi.keyPress);
 
 
                 //start button input
