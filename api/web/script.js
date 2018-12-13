@@ -49,6 +49,34 @@ socket.on('frameData', function(data){
 
         }
 
+        // touch...
+
+        $('#display li').mouseenter(function(e){
+            if(e.which == 1) {
+                var data = $(this).data('i');
+                socket.emit('touchDown', data);
+            }
+        });
+        $('#display li').mousedown(function(e){
+            var data = $(this).data('i');
+            socket.emit('touchDown',data);
+
+        });
+
+        $('#display li').mouseleave(function(e){
+
+            var data = $(this).data('i');
+            socket.emit('touchUp',data);
+        });
+        $('#display li').mouseup(function(e){
+
+            var data = $(this).data('i');
+            socket.emit('touchUp',data);
+        });
+
+
+
+
         $('#display ul').css('height',pxlSize).css('line-height',pxlSize);
         $('#display li').css('width',pxlSize).css('height',pxlSize);
 
@@ -113,30 +141,6 @@ $(function() {
 
 
 
-    // touch...
-
-    $('#display li').mouseenter(function(e){
-        if(e.which == 1) {
-            var data = $(this).data('i');
-            socket.emit('touchDown', data);
-        }
-    });
-    $('#display li').mousedown(function(e){
-
-        var data = $(this).data('i');
-        socket.emit('touchDown',data);
-    });
-
-    $('#display li').mouseleave(function(e){
-
-        var data = $(this).data('i');
-        socket.emit('touchUp',data);
-    });
-    $('#display li').mouseup(function(e){
-
-        var data = $(this).data('i');
-        socket.emit('touchUp',data);
-    });
 
 
     // keypresses...
