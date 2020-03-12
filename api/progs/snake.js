@@ -4,7 +4,6 @@ var forward = true;
 var flashSpeed = 16;
 
 //pixel location and speed
-
 var direction = 90;
 var speed = 2; //in pixels per second
 var lastMove;
@@ -12,14 +11,16 @@ var x,y;
 var appleX, appleY;
 
 var snake = [];
-var score = 0;
+
+
+var gameStatus = 0;
 
 
 // Ricky's TODO notes
 //---------------------------------------------------------------------------------------------------------------
 // Shouldn't be able to spawn apple on the snake
 // Snake Snake should have max length or it could fill the screen, taking up all valid apple spawn locations
-// Turn left and right instead of just right.
+// More control options
 
 exports.setup = function(api) {
     api.fpsLimit = 60;
@@ -36,14 +37,11 @@ exports.setup = function(api) {
         snake.push({x: x-i, y:y});
     }
 
-    score = 0;
-
     spawnApple(api);
 
 };
 
 exports.loop = function(api) {
-
     api.setColor(0,0,0);
     api.fillBox(1,1,api.pxlW-2,api.pxlH-2);
 
@@ -96,7 +94,7 @@ exports.loop = function(api) {
             gameOver(api);
         }
 
-        //if (checkCollisionWithSnake(x, y, api)) gameOver(api);
+        if (checkCollisionWithSnake(x, y, api)) gameOver(api);
     }
 
     //draw the apple
@@ -119,7 +117,7 @@ function gameOver(api) {
 
 function checkCollisionWithSnake(x, y, api) {
     for(let i = 1; i < snake.length - 1; i++) {
-        if(snake[i].x === x || snake[i].y === y) return true;
+        if(snake[i].x === x && snake[i].y === y) return true;
     }
 
     return false;
