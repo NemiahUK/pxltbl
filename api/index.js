@@ -34,9 +34,6 @@ var prog;
 
 function loop() {
 
-
-
-
     if(api.goHome) {
         screen = 'home';
         api.goHome = false;
@@ -62,6 +59,7 @@ function loop() {
             try {
                 prog.loop(api);
             } catch (err) {
+                console.log(err);
                 screen = 'err';
                 api.error(err);
             }

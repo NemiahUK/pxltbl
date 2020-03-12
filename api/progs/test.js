@@ -24,6 +24,7 @@ exports.loop = function(api) {
     api.fillBox(xPos+3-xScroll,4+y,1,4);
     api.text('nemiah', xPos+1-xScroll,y);
 
+
     for (var j=0; j < 8; j++) {
         for (var i = 0; i < 7; i++) {
             var y = 1;
@@ -46,12 +47,12 @@ exports.loop = function(api) {
     }
 
 
-
     //prevent overflow
     if(xPos > 24 && animState === 0) {
         xPos = 18;
         xScroll = 10;
     }
+
 
     if(xPos-xScroll > 30){
         api.exit();

@@ -104,10 +104,12 @@ socket.on('frameData', function(data){
 
 socket.on('error', function(data){
 
-    if(typeof data == 'object') {
-        data = 'Error: '+JSON.stringify(data);
+
+
+    if(typeof data == 'object' && data.stack && data.message) {
+        data = data.message + "<br>Stack Trace: " + data.stack;
     }
-    $('#console').append('<p class="error">'+data+'</p>');
+    $('#console').append('<p class="error">Error: '+data+'</p>');
 
     $('#console').scrollTop($('#console')[0].scrollHeight);
 
