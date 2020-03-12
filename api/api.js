@@ -66,8 +66,8 @@ var pxltblApi = new function() {
     this.cbLoop;
 
     //these should be gotten from the firmware or overridden for no-pi emulation
-    this.originalPxlW = 23;
-    this.originalPxlH = 11;
+    this.originalPxlW = 32;
+    this.originalPxlH = 18;
     this.baud = 1000000;
     this.stripSerpantine = true;
     this.stripStart = 'TL';  //can be TL, TR, BL, BR

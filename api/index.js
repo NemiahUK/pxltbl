@@ -59,7 +59,6 @@ function loop() {
             try {
                 prog.loop(api);
             } catch (err) {
-                console.log(err);
                 screen = 'err';
                 api.error(err);
             }

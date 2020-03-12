@@ -93,10 +93,10 @@ exports.loop = function(api) {
         //if the snake has hit the wall
         if(x > api.pxlW -2 || x < 1 || y > api.pxlH -2 || y < 1 ) {
             //TODO - instead of just quitting, display score and restart game.
-            gameOver();
+            gameOver(api);
         }
 
-        if (checkCollisionWithSnake(x, y, api)) gameOver(api);
+        //if (checkCollisionWithSnake(x, y, api)) gameOver(api);
     }
 
     //draw the apple
