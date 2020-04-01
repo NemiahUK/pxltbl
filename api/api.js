@@ -31,7 +31,6 @@ const http = require('http');
 
 
 
-
 var pxltblApi = new function() {
 
 

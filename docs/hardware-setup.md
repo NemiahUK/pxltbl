@@ -71,6 +71,24 @@ If you want to view the logs
 
 ## Install
 
+### Prerequisites for node-hid
+
+Compilation tools: 
+
+    sudo apt-get install build-essential git
+
+gcc-4.8+: 
+
+    sudo apt-get install gcc-4.8 g++-4.8 && export CXX=g++-4.8
+
+libusb-1.0-0 w/headers:
+
+    sudo apt-get install libusb-1.0-0 libusb-1.0-0-dev
+
+libudev-dev: 
+
+    sudo apt-get install libudev-dev
+
 ### Arduino (in future this may be handled by node)
 
     sudo apt-get install arduino
