@@ -1,3 +1,21 @@
+//overloading error object to return JSON object - should this go soemwhere else?
+
+if (!('toJSON' in Error.prototype))
+    Object.defineProperty(Error.prototype, 'toJSON', {
+        value: function () {
+            var alt = {};
+
+            Object.getOwnPropertyNames(this).forEach(function (key) {
+                alt[key] = this[key];
+            }, this);
+
+            return alt;
+        },
+        configurable: true,
+        writable: true
+    });
+
+
 
 const readline = require('readline');
 const fs = require('fs');
@@ -48,8 +66,9 @@ var pxltblApi = new function() {
     this.cbLoop;
 
     //these should be gotten from the firmware or overridden for no-pi emulation
-    this.originalPxlW = 23;
-    this.originalPxlH = 11;
+    this.originalPxlW = 32;
+    this.originalPxlH = 18;
+    this.strandLength = 96;
     this.baud = 1000000;
     this.stripSerpantine = true;
     this.stripStart = 'TL';  //can be TL, TR, BL, BR
@@ -64,7 +83,7 @@ var pxltblApi = new function() {
 
     //these should probably be private
     this.serial;
-    this.buffer = new Buffer((this.pxlCount * 3));
+    this.buffer = new Buffer((this.strandLength*8) * 3);  //add empty buffer for future use. This will be table border and RGB buttons. Also makes total divisible by 8 for Teensy Octo
     this.frameStart = new Buffer([0x01]);
 
 
@@ -154,7 +173,7 @@ var pxltblApi = new function() {
 
                 //start serial
                 pxltblApi.serial = new Serial({
-                    portId: '/dev/ttyS0',
+                    portId: '/dev/ttyACM0',
                     baudRate: pxltblApi.baud
                 });
 
@@ -471,15 +490,15 @@ var pxltblApi = new function() {
                     for (var x = 0; x < this.originalPxlW; x++) {
                         var i = y * this.originalPxlW + x;
                         var iReverse = y * this.originalPxlW + (this.originalPxlW - x) - 1;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r;
-                        serpantineBuffer[i * 3] = this.buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
+                        serpantineBuffer[i * 3] = this.buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r;
+                        serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
                         serpantineBuffer[i * 3 + 2] = this.buffer[iReverse * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
                     }
                 } else { //even row
                     for (var x = 0; x < this.originalPxlW; x++) {
                         var i = y * this.originalPxlW + x;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r;
-                        serpantineBuffer[i * 3] = this.buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
+                        serpantineBuffer[i * 3] = this.buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r;
+                        serpantineBuffer[i * 3 + 1] = this.buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
                         serpantineBuffer[i * 3 + 2] = this.buffer[i * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
                     }
 
@@ -489,7 +508,8 @@ var pxltblApi = new function() {
             serpantineBuffer = this.buffer;
             //todo add RGB => GRB conversion, brightness etc
         }
-
+        
+        
         //send to web
         if(this.webClients) {
             this.webIo.volatile.emit('leds', this.buffer);

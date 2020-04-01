@@ -34,9 +34,6 @@ var prog;
 
 function loop() {
 
-
-
-
     if(api.goHome) {
         screen = 'home';
         api.goHome = false;
