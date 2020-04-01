@@ -171,7 +171,7 @@ var pxltblApi = new function() {
 
                 //start serial
                 pxltblApi.serial = new Serial({
-                    portId: '/dev/ttyS0',
+                    portId: '/dev/ttyACM0',
                     baudRate: pxltblApi.baud
                 });
 
@@ -488,15 +488,15 @@ var pxltblApi = new function() {
                     for (var x = 0; x < this.originalPxlW; x++) {
                         var i = y * this.originalPxlW + x;
                         var iReverse = y * this.originalPxlW + (this.originalPxlW - x) - 1;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r;
-                        serpantineBuffer[i * 3] = this.buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
+                        serpantineBuffer[i * 3] = this.buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r;
+                        serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
                         serpantineBuffer[i * 3 + 2] = this.buffer[iReverse * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
                     }
                 } else { //even row
                     for (var x = 0; x < this.originalPxlW; x++) {
                         var i = y * this.originalPxlW + x;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r;
-                        serpantineBuffer[i * 3] = this.buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
+                        serpantineBuffer[i * 3] = this.buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r;
+                        serpantineBuffer[i * 3 + 1] = this.buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
                         serpantineBuffer[i * 3 + 2] = this.buffer[i * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
                     }
 
