@@ -68,6 +68,7 @@ var pxltblApi = new function() {
     //these should be gotten from the firmware or overridden for no-pi emulation
     this.originalPxlW = 32;
     this.originalPxlH = 18;
+    this.strandLength = 96;
     this.baud = 1000000;
     this.stripSerpantine = true;
     this.stripStart = 'TL';  //can be TL, TR, BL, BR
@@ -82,7 +83,7 @@ var pxltblApi = new function() {
 
     //these should probably be private
     this.serial;
-    this.buffer = new Buffer((this.pxlCount * 3));
+    this.buffer = new Buffer((this.strandLength*8) * 3);  //add empty buffer for future use. This will be table border and RGB buttons. Also makes total divisible by 8 for Teensy Octo
     this.frameStart = new Buffer([0x01]);
 
 
@@ -506,7 +507,8 @@ var pxltblApi = new function() {
             serpantineBuffer = this.buffer;
             //todo add RGB => GRB conversion, brightness etc
         }
-
+        
+        
         //send to web
         if(this.webClients) {
             this.webIo.volatile.emit('leds', this.buffer);
