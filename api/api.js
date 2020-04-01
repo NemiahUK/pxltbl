@@ -143,6 +143,7 @@ var pxltblApi = new function() {
                 gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Left
                 gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Bottom
                 gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Right
+                gpio.setup(31, gpio.DIR_IN, gpio.EDGE_BOTH); //Home
 
                 gpio.on('change', function(channel, value) {
 
