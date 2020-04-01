@@ -25,14 +25,15 @@ OctoWS2811 leds(LEDS_PER_STRIP, displayMemory, drawingMemory, config);
 
 
 void setup() {
+  Serial1.begin(1000000);
   leds.begin();
   leds.show();
   
 }
 
 int serialGlediator() {
-  while (!Serial.available()) {}
-  return Serial.read();
+  while (!Serial1.available()) {}
+  return Serial1.read();
   
 }
 

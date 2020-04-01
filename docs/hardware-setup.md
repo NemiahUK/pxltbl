@@ -50,7 +50,7 @@ Paste the following:
     StandardOutput=inherit
     StandardError=inherit
     Restart=on-failure
-    User=pi
+    User=root
 
     [Install]
     WantedBy=multi-user.target
@@ -113,8 +113,8 @@ libudev-dev:
                    3V3 -  1 2  - Arduino +5V
            Arduino SDA -  3 4  - Amp +5V
            Arduino SCL -  5 6  - Arduino GND
-                       -  7 8  - Arduino UART Rx
-               Amp GND -  9 10 - Arduino UART Tx
+                       -  7 8  - Arduino UART Rx (Pin0)
+               Amp GND -  9 10 - Arduino UART Tx (Pin1)
          Arduino Reset - 11 12 - Amp BCLK / Analog PWM L
              Button RT - 13 14 - GND
              Button TR - 15 16 - Button LB

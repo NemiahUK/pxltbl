@@ -23,7 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-
+const HID = require('node-hid');
 //these consts need moving to the api class
 
 
@@ -49,7 +49,7 @@ var pxltblApi = new function() {
 
     //these can be set at any point (public read/write)
     this.rotation = 0;
-    this.brightness = 128;
+    this.brightness = 50;
     this.whiteBalance = {
         r: 1.0,
         g: 0.9,
@@ -82,6 +82,7 @@ var pxltblApi = new function() {
 
     //these should probably be private
     this.serial;
+    this.serialPath = '/dev/ttyS0';
     this.buffer = new Buffer((this.strandLength*8) * 3);  //add empty buffer for future use. This will be table border and RGB buttons. Also makes total divisible by 8 for Teensy Octo
     this.frameStart = new Buffer([0x01]);
 
@@ -114,7 +115,14 @@ var pxltblApi = new function() {
 
     //touch data
     this.touch = new Array(this.pxlCount);
-
+    this.hidPath = '/dev/hidraw1';
+    this.touchMaxX = 32767;
+    this.touchMaxY = 32767;
+    this.touchTLpixelX = 903;
+    this.touchTLpixelY = 1713;
+    this.touchBRpixelX = 31652;
+    this.touchBRpixelY = 31710;
+    this.touchReadingData = false;
 
 
 
@@ -172,7 +180,7 @@ var pxltblApi = new function() {
 
                 //start serial
                 pxltblApi.serial = new Serial({
-                    portId: '/dev/ttyACM0',
+                    portId: pxltblApi.serialPath,
                     baudRate: pxltblApi.baud
                 });
 
@@ -180,10 +188,46 @@ var pxltblApi = new function() {
                     console.log('pxltbl booting...DONE');
                     pxltblApi.blank(0, 0, 0);
                     pxltblApi.show();
-                })
+                });
 
                 //setup SPI Rx events
                 //TODO - here we need functions to handle SPI commands recieved form the arduino, such as 'booted', 'etc'
+
+
+                //setup HID touch
+                const touchPanel = new HID.HID(this.hidPath);
+                touchPanel.on("data", function(data) {
+                    if(pxltblApi.touchReadingData) return;
+                    pxltblApi.touchReadingData = true;
+                    pxltblApi.touch = Array(pxltblApi.pxlCount);
+
+                    for (let point = 0; point < 10; point++) {
+                        if (data[1 + point * 10] === 7) {
+                            const thisPoint = data.slice(point + 2, point + 11);
+                            const touchX = thisPoint[0] | (thisPoint[1] << 8);
+                            const touchY = thisPoint[2] | (thisPoint[3] << 8);
+                            //workout which pixel is being touched...
+                            const pixelWidth = (pxltblApi.touchBRpixelX - pxltblApi.touchTLpixelX) / (pxltblApi.pxlW-1);
+                            const pixelHeight = (pxltblApi.touchBRpixelY - pxltblApi.touchTLpixelY) / (pxltblApi.pxlH-1);
+                            const pixelStartX = pxltblApi.touchTLpixelX - (pixelWidth/2);
+                            const pixelStartY = pxltblApi.touchTLpixelY - (pixelHeight/2);
+
+                            const pixelX = Math.floor((touchX - pixelStartX)/pixelWidth);
+                            const pixelY = Math.floor((touchY - pixelStartY)/pixelHeight);
+
+                            if(pixelX >= 0 && pixelX < pxltblApi.pxlW && pixelY >= 0 && pixelY < pxltblApi.pxlH) pxltblApi.touch[pixelX+pixelY*pxltblApi.pxlW] = true;
+
+
+
+
+
+
+
+
+                        }
+                    }
+                    pxltblApi.touchReadingData = false;
+                });
 
             });
 
@@ -288,7 +332,7 @@ var pxltblApi = new function() {
 
             fs.readFile(filePath, function(error, content) {
                 if (error) {
-                    if(error.code == 'ENOENT'){
+                    if(error.code === 'ENOENT'){
                         fs.readFile('./404.html', function(error, content) {
                             response.writeHead(200, { 'Content-Type': contentType });
                             response.end(content, 'utf-8');
@@ -943,8 +987,8 @@ var pxltblApi = new function() {
 
     this.loop = function () {
 
-
         //the main loop
+
 
         var curTime = new Date().getTime();
         this.frameTime = curTime - this.lastLoopTime;
@@ -978,6 +1022,7 @@ var pxltblApi = new function() {
                 console.log('Frame time: ' + this.frameTime);
                 console.log('Min frame time: ' + minFrameTime);
                 console.log('Num of pixels: ' + this.buffer.length);
+                console.log('Touch: ' + this.touch);
             }
 
             //this.dump();
