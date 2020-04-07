@@ -138,9 +138,9 @@ function home() {
 
         if (progs.length) {
             api.blank(0, 0, 0);
-            if (curProg == progs.length - 1) api.setColor(50, 0, 255);
+            if (curProg === progs.length - 1) api.setColor(50, 0, 255);
             var txtSize = api.text(progs[curProg], Math.round(scroll), 1);
-            scroll = scroll - 1;
+            scroll = 0;
             if (scroll < -txtSize.w) scroll = api.pxlW; //TODO add text bounds to api then use that to calc length
         }
     }
@@ -229,7 +229,7 @@ function purgeCache(moduleName) {
             delete module.constructor._pathCache[cacheKey];
         }
     });
-};
+}
 
 /**
  * Traverses the cache to search for all the cached
@@ -255,4 +255,4 @@ function searchCache(moduleName, callback) {
             callback(mod);
         }(mod));
     }
-};
+}

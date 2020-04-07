@@ -67,10 +67,11 @@ var pxltblApi = new function() {
     //these should be gotten from the firmware or overridden for no-pi emulation
     this.originalPxlW = 32;
     this.originalPxlH = 18;
-    this.strandLength = 96;
+    this.numLeds = this.originalPxlW * this.originalPxlH; //This could be more than the size of the screen as it includes button LEDs etc.
     this.baud = 1000000;
-    this.stripSerpantine = true;
-    this.stripStart = 'TL';  //can be TL, TR, BL, BR
+    this.stripSerpantine = false;
+    this.stripStart = 'TL';  //TODO not implimented yet can be TL, TR, BL, BR
+    this.rgbOrder = 'RGB'; //TODO not implimented yet
 
     //derived
     this.pxlW = this.originalPxlW;
@@ -83,8 +84,9 @@ var pxltblApi = new function() {
     //these should probably be private
     this.serial;
     this.serialPath = '/dev/ttyS0';
-    this.buffer = new Buffer((this.strandLength*8) * 3);  //add empty buffer for future use. This will be table border and RGB buttons. Also makes total divisible by 8 for Teensy Octo
-    this.frameStart = new Buffer([0x01]);
+    this.buffer = Buffer.alloc((this.numLeds) * 3);  //add empty buffer for future use. This will be table border and RGB buttons. Also makes total divisible by 8 for Teensy Octo
+    this.frameStart = Buffer.from([0x1, 0x2]);
+    this.gotParams = false;
 
 
     this.startTime = new Date().getTime();
@@ -115,6 +117,7 @@ var pxltblApi = new function() {
 
     //touch data
     this.touch = new Array(this.pxlCount);
+    this.touchPanel;
     this.hidPath = '/dev/hidraw1';
     this.touchMaxX = 32767;
     this.touchMaxY = 32767;
@@ -185,9 +188,13 @@ var pxltblApi = new function() {
                 });
 
                 pxltblApi.serial.open(() => {
-                    console.log('pxltbl booting...DONE');
-                    pxltblApi.blank(0, 0, 0);
-                    pxltblApi.show();
+                    console.log('Serial port '+pxltblApi.serialPath+' open at '+pxltblApi.baud+' baud.');
+                    pxltblApi.serial.on('data', (data) => {
+                        pxltblApi.handleSerial(data);
+                    });
+                    process.stdout.write('Querying pxltable hardware...');
+                    pxltblApi.getParams();
+                    //this.show();
                 });
 
                 //setup SPI Rx events
@@ -195,39 +202,10 @@ var pxltblApi = new function() {
 
 
                 //setup HID touch
-                const touchPanel = new HID.HID(this.hidPath);
-                touchPanel.on("data", function(data) {
-                    if(pxltblApi.touchReadingData) return;
-                    pxltblApi.touchReadingData = true;
-                    pxltblApi.touch = Array(pxltblApi.pxlCount);
+                //this.touchPanel = new HID.HID(this.hidPath);
+                //this.touchPanel.setNonBlocking(true);
+                //this.touchPanel.on("data", this.readTouchPanel);
 
-                    for (let point = 0; point < 10; point++) {
-                        if (data[1 + point * 10] === 7) {
-                            const thisPoint = data.slice(point + 2, point + 11);
-                            const touchX = thisPoint[0] | (thisPoint[1] << 8);
-                            const touchY = thisPoint[2] | (thisPoint[3] << 8);
-                            //workout which pixel is being touched...
-                            const pixelWidth = (pxltblApi.touchBRpixelX - pxltblApi.touchTLpixelX) / (pxltblApi.pxlW-1);
-                            const pixelHeight = (pxltblApi.touchBRpixelY - pxltblApi.touchTLpixelY) / (pxltblApi.pxlH-1);
-                            const pixelStartX = pxltblApi.touchTLpixelX - (pixelWidth/2);
-                            const pixelStartY = pxltblApi.touchTLpixelY - (pixelHeight/2);
-
-                            const pixelX = Math.floor((touchX - pixelStartX)/pixelWidth);
-                            const pixelY = Math.floor((touchY - pixelStartY)/pixelHeight);
-
-                            if(pixelX >= 0 && pixelX < pxltblApi.pxlW && pixelY >= 0 && pixelY < pxltblApi.pxlH) pxltblApi.touch[pixelX+pixelY*pxltblApi.pxlW] = true;
-
-
-
-
-
-
-
-
-                        }
-                    }
-                    pxltblApi.touchReadingData = false;
-                });
 
             });
 
@@ -517,12 +495,83 @@ var pxltblApi = new function() {
         }
     };
 
+    this.readTouchPanel = function (data) {
+
+        pxltblApi.touchReadingData = true;
+        pxltblApi.touch = Array(pxltblApi.pxlCount);
+
+        for (let point = 0; point < 10; point++) {
+            if (data[1 + point * 10] === 7) {
+                const thisPoint = data.slice(point*10 + 2, point*10 + 11);
+                const touchX = thisPoint[0] | (thisPoint[1] << 8);
+                const touchY = thisPoint[2] | (thisPoint[3] << 8);
+                //workout which pixel is being touched...
+                const pixelWidth = (pxltblApi.touchBRpixelX - pxltblApi.touchTLpixelX) / (pxltblApi.pxlW-1);
+                const pixelHeight = (pxltblApi.touchBRpixelY - pxltblApi.touchTLpixelY) / (pxltblApi.pxlH-1);
+                const pixelStartX = pxltblApi.touchTLpixelX - (pixelWidth/2);
+                const pixelStartY = pxltblApi.touchTLpixelY - (pixelHeight/2);
+
+                const pixelX = Math.floor((touchX - pixelStartX)/pixelWidth);
+                const pixelY = Math.floor((touchY - pixelStartY)/pixelHeight);
+
+                if(pixelX >= 0 && pixelX < pxltblApi.pxlW && pixelY >= 0 && pixelY < pxltblApi.pxlH) pxltblApi.touch[pixelX+pixelY*pxltblApi.pxlW] = true;
+                pxltblApi.setColor(255,0,0,1);
+                pxltblApi.setPixel(pixelX,pixelY);
+
+
+
+
+
+
+
+            }
+        }
+
+
+
+
+    };
+
+    this.getParams = function () {
+        if(this.isRasPi) {
+            this.serial.write(Buffer.from([0x1,0x3]), function () {
+
+                //nothing to do here other than wait for reply
+                process.stdout.write('.');
+                setTimeout(function() {
+                    if(!pxltblApi.gotParams) pxltblApi.getParams();
+                },1000);
+
+            });
+        }
+    };
+
+    this.handleSerial = function (data) {
+        //TODO if this is a reply to getPrarams...
+        const parts = data.toString().split('\n');
+        console.log('\n'+data.toString());
+        this.numLeds = parseInt(parts[1]);
+        this.originalPxlW = parseInt(parts[2]);
+        this.originalPxlH = parseInt(parts[3]);
+        this.baud = parseInt(parts[4]);
+        this.rgbOrder = parts[5];
+        this.gotParams = true;
+        //TODO add serial options for direction e.g. TL and serpantine T/F
+
+        //TODO add calculated params below to function setBuffers()
+        this.buffer = Buffer.alloc((this.numLeds) * 3);
+        this.pxlW = this.originalPxlW;
+        this.pxlH = this.originalPxlH;
+        this.pxlCount = this.pxlW*this.pxlH;
+
+        this.show();
+    };
 
     this.show = function () {
         //pushes the buffer to the Arduino via UART.
 
 
-        var serpantineBuffer = new Buffer(this.pxlCount * 3);
+        var serpantineBuffer = Buffer.alloc((this.numLeds) * 3);
 
         //TODO - this assumes stripStart = 'TL'  - it needs to take this into account.
 
@@ -533,16 +582,16 @@ var pxltblApi = new function() {
                     for (var x = 0; x < this.originalPxlW; x++) {
                         var i = y * this.originalPxlW + x;
                         var iReverse = y * this.originalPxlW + (this.originalPxlW - x) - 1;
-                        serpantineBuffer[i * 3] = this.buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
-                        serpantineBuffer[i * 3 + 2] = this.buffer[iReverse * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
+                        serpantineBuffer[i * 3] = (this.buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r);
+                        serpantineBuffer[i * 3 + 1] = (this.buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g);
+                        serpantineBuffer[i * 3 + 2] = (this.buffer[iReverse * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b);
                     }
                 } else { //even row
                     for (var x = 0; x < this.originalPxlW; x++) {
                         var i = y * this.originalPxlW + x;
-                        serpantineBuffer[i * 3] = this.buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r;
-                        serpantineBuffer[i * 3 + 1] = this.buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g;
-                        serpantineBuffer[i * 3 + 2] = this.buffer[i * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b;
+                        serpantineBuffer[i * 3] = (this.buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r);
+                        serpantineBuffer[i * 3 + 1] = (this.buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g);
+                        serpantineBuffer[i * 3 + 2] = (this.buffer[i * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b);
                     }
 
                 }
@@ -551,6 +600,12 @@ var pxltblApi = new function() {
             serpantineBuffer = this.buffer;
             //todo add RGB => GRB conversion, brightness etc
         }
+
+        //remove 1s form serpantine buffer
+        for (var i = 0; i < serpantineBuffer.length; i++) {
+            if(serpantineBuffer[i] === 1) serpantineBuffer[i] = 0;
+        }
+
         
         
         //send to web
@@ -562,6 +617,7 @@ var pxltblApi = new function() {
         try {
             //sent to serial
             if(this.isRasPi) {
+                //console.log(serpantineBuffer);
                 this.serial.write(Buffer.concat([this.frameStart, serpantineBuffer]), function () {
                     pxltblApi.loop();
 
@@ -989,6 +1045,9 @@ var pxltblApi = new function() {
 
         //the main loop
 
+        pxltblApi.touchReadingData = false;
+
+
 
         var curTime = new Date().getTime();
         this.frameTime = curTime - this.lastLoopTime;
@@ -1004,7 +1063,7 @@ var pxltblApi = new function() {
         this.lastLoopTime = new Date().getTime();
 
         //update the console every 500ms
-        if (curTime - this.lastStatsTime > 500) {
+        if (curTime - this.lastStatsTime > 1000) {
 
             this.fps = Math.floor(this.frames * 1000 / (curTime - this.lastStatsTime));
             this.lastStatsTime = curTime;
@@ -1021,8 +1080,17 @@ var pxltblApi = new function() {
                 console.log('FPS limit: ' + this.fpsLimit);
                 console.log('Frame time: ' + this.frameTime);
                 console.log('Min frame time: ' + minFrameTime);
-                console.log('Num of pixels: ' + this.buffer.length);
-                console.log('Touch: ' + this.touch);
+                console.log('Screen size: ' + this.pxlW+'x'+this.pxlH+' ('+this.pxlW*this.pxlH+')');
+                console.log('Total num of pixels: ' + this.buffer.length/3);
+                //console.log('Touch: ' + this.touch);
+                //console.log(Buffer.concat([this.frameStart, this.buffer]));
+                /*
+                for (var i = 0; i < this.buffer.length; i++) {
+                    if(i % (this.pxlW * 3) === 0) process.stdout.write('\n');
+                    process.stdout.write(this.buffer[i].toString(16).padStart(2, '0'));
+
+                }
+                */
             }
 
             //this.dump();

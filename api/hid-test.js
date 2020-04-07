@@ -9,7 +9,7 @@ console.log(devices);
 
 const raspi = require('raspi');
 
-let colorR = 255;
+let colorR = 0;
 let colorG = 255;
 let colorB = 255;
 let colorA = 1;
@@ -18,7 +18,7 @@ let fpsLimit = 30;
 let consoleData = true;
 
 let rotation = 0;
-let brightness = 50;
+let brightness = 150;
 let whiteBalance = {
     r: 1.0,
     g: 0.9,
@@ -201,19 +201,20 @@ let alreadyReading = false;
 function readTouch(data) {
 
     if (alreadyReading) return;
-    alreadyReading = true;
+    //alreadyReading = true;
     //console.clear();
 
 
 
         touch = Array(pxlCount);
 
-        blank(bgCol, 0, 0);
-
+        blank(11, 0, 10);
+        let hasTouched = false;
 
         for (let point = 0; point < 10; point++) {
             if (data[1 + point * 10] === 7) {
-                const thisPoint = data.slice(point + 2, point + 11);
+                const thisPoint = data.slice(point*10 + 2, point*10 + 11);
+                //console.log(thisPoint);
                 const touchX = thisPoint[0] | (thisPoint[1] << 8);
                 const touchY = thisPoint[2] | (thisPoint[3] << 8);
                 //workout which pixel is being touched...
@@ -224,13 +225,20 @@ function readTouch(data) {
 
                 if(pixelX >= 0 && pixelX < pxlW && pixelY >= 0 && pixelY < pxlH) touch[pixelX+pixelY*pxlW] = true;
                 setPixel(pixelX,pixelY);
+                hasTouched = true;
 
             }
         }
         let now = new Date().getTime();
-        console.log(readCount +' '+ (now - lastLoopTime) +'ms');
+        if(hasTouched) {
+            console.log(readCount +' '+ (now - lastLoopTime) +'ms'+' '+ (now - startTime) +'ms');
+            readCount++;
+        } else {
+            readCount = 0;
+            startTime = new Date().getTime();
+        }
         lastLoopTime = new Date().getTime();
-        readCount++;
+
         show();
 
 }
