@@ -1082,6 +1082,9 @@ var pxltblApi = new function() {
                 console.log('Min frame time: ' + minFrameTime);
                 console.log('Screen size: ' + this.pxlW+'x'+this.pxlH+' ('+this.pxlW*this.pxlH+')');
                 console.log('Total num of pixels: ' + this.buffer.length/3);
+                console.log('Frame size: ' + (this.buffer.length + this.frameStart.length) + ' bytes');
+                console.log('Bandwidth: ' + Math.round((this.buffer.length+this.frameStart.length) * this.fps * 8 / 1024) +' kbps (Available: '+this.baud / 1000 +' kbps)');
+
                 //console.log('Touch: ' + this.touch);
                 //console.log(Buffer.concat([this.frameStart, this.buffer]));
                 /*
