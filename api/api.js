@@ -597,7 +597,11 @@ var pxltblApi = new function() {
                 }
             }
         } else {
-            serpantineBuffer = this.buffer;
+            for (var i = 0; i < this.pxlCount; i++) {
+                serpantineBuffer[i * 3] = (this.buffer[i * 3] * (this.brightness / 255) * this.whiteBalance.r);
+                serpantineBuffer[i * 3 + 1] = (this.buffer[i * 3 + 1] * (this.brightness / 255) * this.whiteBalance.g);
+                serpantineBuffer[i * 3 + 2] = (this.buffer[i * 3 + 2] * (this.brightness / 255) * this.whiteBalance.b);
+            }
             //todo add RGB => GRB conversion, brightness etc
         }
 

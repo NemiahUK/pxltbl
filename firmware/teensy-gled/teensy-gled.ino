@@ -49,7 +49,7 @@ void setup() {
 
 int serialGlediator() {
   while (!Serial1.available() && !Serial.available()) {
-    if(millis() - lastSerialRead > 100) showLogo();
+    if(millis() - lastSerialRead > 1000) showLogo();
   }
   if(Serial.available()) {
     resetLogo();
@@ -187,14 +187,14 @@ void readFrame() {
 
 void returnInfo() {
  
-  Serial.println("PxlTbl v1.0 - Params: Number of LEDs, Screen Width, Screen Height, Baud rate, RGB Order");
+  Serial.println("PxlTbl v1.0 - Params: Number of LEDs, Screen Width, Screen Height, Baud rate, RGB Order, Start, Serpantine");
   Serial.println(NUM_LEDS);
   Serial.println(COLS_LEDS);
   Serial.println(SCREEN_ROWS_LEDS);
   Serial.println(BAUD);
   Serial.println(RGB_ORDER);
 
-  Serial1.println("PxlTbl v1.0 - Params: Number of LEDs, Screen Width, Screen Height, Baud rate, RGB Order");
+  Serial1.println("PxlTbl v1.0 - Params: Number of LEDs, Screen Width, Screen Height, Baud rate, RGB Order, Start, Serpantine");
   Serial1.println(NUM_LEDS);
   Serial1.println(COLS_LEDS);
   Serial1.println(SCREEN_ROWS_LEDS);

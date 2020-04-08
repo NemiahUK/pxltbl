@@ -11,7 +11,9 @@ var progs = [];
 var gotProgs = false;
 var gettingProgs = false;
 var curProg = 0;
-var scroll = 0.0;
+var textScroll = 0.0;
+var preTextScroll = 0.0;
+var menuScroll = 0.0;
 
 var btnDownPressed;
 var btnUpPressed;
@@ -83,7 +85,8 @@ function home() {
 
             }
             progs.push('Settings');
-            scroll = api.pxlW;
+            textScroll = 0;
+            preTextScroll = api.pxlW;
             if (curProg >= progs.length) curProg = 0;
             gettingProgs = false;
             gotProgs = true;
@@ -93,14 +96,16 @@ function home() {
     if(gotProgs) {
         if ((api.buttons.bottom) && !btnDownPressed) {
             curProg++;
-            scroll = api.pxlW;
+            textScroll = 0;
+            preTextScroll = api.pxlW;
             if (curProg >= progs.length) curProg = 0;
             btnDownPressed = true;
         }
 
         if ((api.buttons.top) && !btnUpPressed) {
             curProg--;
-            scroll = api.pxlW;
+            textScroll = 0;
+            preTextScroll = api.pxlW;
             if (curProg < 0) curProg = progs.length - 1;
             btnUpPressed = true;
         }
@@ -110,9 +115,9 @@ function home() {
 
 
         if (api.buttons.left || api.buttons.right) {
-            if (curProg == progs.length - 1) {
+            if (curProg === progs.length - 1) {
                 api.clearInputs();
-                scroll = api.pxlW;
+                textScroll = 0;
                 gotProgs = false;
                 screen = 'settings';
                 return;
@@ -134,14 +139,37 @@ function home() {
         api.setColor(0, 0, 0);
         api.setPixel(2, 4);
 
-        api.setColor(255, 255, 255);
+
 
         if (progs.length) {
             api.blank(0, 0, 0);
+
+            if(menuScroll > curProg * -10) menuScroll--;
+            if(menuScroll < curProg * -10) menuScroll++;
+            if(preTextScroll > 0) {
+                preTextScroll--;
+            } else {
+                textScroll--;
+            }
+            for(let i=0;i < progs.length;i++) {
+                api.setColor(100, 100, 100);
+
+
+                if(i === curProg) {
+                    api.setColor(0, 255, 255);
+                    const textSize = api.text(progs[i], -100,0);
+                    let textPos = 0;
+                    if(textSize.w > api.pxlW) textPos = Math.round(textScroll);
+                    api.text(progs[i], textPos, i*10 + menuScroll + api.pxlH/2 - 5);
+                    if (textScroll < 0 - textSize.w) textScroll = api.pxlW;
+                } else {
+                    api.text(progs[i], 0, i*10 + menuScroll + api.pxlH/2 - 5);
+                }
+
+
+            }
             if (curProg === progs.length - 1) api.setColor(50, 0, 255);
-            var txtSize = api.text(progs[curProg], Math.round(scroll), 1);
-            scroll = 0;
-            if (scroll < -txtSize.w) scroll = api.pxlW; //TODO add text bounds to api then use that to calc length
+
         }
     }
 
@@ -182,9 +210,9 @@ function settings() {
 
     api.blank(0,0,0);
     api.setColor(50,0,255);
-    var txtSize=api.text('Brightness',Math.round(scroll),1);
-    scroll = scroll - 0.7;
-    if (scroll < -txtSize.w) scroll = api.pxlW;
+    var txtSize=api.text('Brightness',Math.round(textScroll),1);
+    textScroll = textScroll - 0.7;
+    if (textScroll < -txtSize.w) textScroll = api.pxlW;
 
 }
 
