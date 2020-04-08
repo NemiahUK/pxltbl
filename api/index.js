@@ -98,7 +98,7 @@ function home() {
             curProg++;
             textScroll = 0;
             preTextScroll = api.pxlW;
-            if (curProg >= progs.length) curProg = 0;
+            if (curProg >= progs.length) curProg = progs.length-1;
             btnDownPressed = true;
         }
 
@@ -106,7 +106,7 @@ function home() {
             curProg--;
             textScroll = 0;
             preTextScroll = api.pxlW;
-            if (curProg < 0) curProg = progs.length - 1;
+            if (curProg < 0) curProg = 0;
             btnUpPressed = true;
         }
 

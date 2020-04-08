@@ -1,6 +1,3 @@
-const animWidth = 15;
-const animHeight = 8;
-
 var rainbow = [0,45,65,135,210,260,270];
 
 var xPos = 0;
@@ -10,10 +7,9 @@ var xScroll = 5;
 var animState = 0;
 
 exports.setup = function(api) {
-    api.fpsLimit = 30;
+    api.fpsLimit = 60;
     api.setRotation(0);
-
-    yPos = Math.floor((api.pxlH - animHeight)/2);
+    yPos = Math.floor((api.pxlH - 8)/2);
 };
 
 
@@ -22,13 +18,13 @@ exports.loop = function(api) {
     api.blank(0, 0, 0);
 
     var y = yPos;
-    if(xPos%6 < 3) y--;
+    if(xPos%6 < 3) y=yPos-1;
 
     api.setColor(255,255,255);
     api.fillBox(xPos-xScroll,1+y,7,7);
     api.setColor(0, 0, 0);
     api.fillBox(xPos+3-xScroll,4+y,1,4);
-    api.text('n', xPos+1-xScroll,y);
+    api.text('nemiah', xPos+1-xScroll,y);
 
 
     for (var j=0; j < 8; j++) {
@@ -46,7 +42,7 @@ exports.loop = function(api) {
     } else {
         xPos+=1;
     }
-    if(xPos > api.pxlW-animWidth/2 && animState === 0) xScroll+=0.2;
+    if(xPos >= (api.pxlW+10)/2 && animState === 0) xScroll+=0.2;
 
     if(api.buttons.any) {
         animState++;
@@ -54,13 +50,13 @@ exports.loop = function(api) {
 
 
     //prevent overflow
-    if(xPos >= api.pxlW-animWidth/2 && animState === 0) {
-        xPos = (api.pxlW-animWidth/2) - 0;
-        xScroll = 0;
+    if(xPos > ((api.pxlW+12)/2)+6 && animState === 0) {
+        xPos = (api.pxlW+12)/2;
+        xScroll = 6;
     }
 
 
-    if(xPos-xScroll > api.pxlW+animWidth){
+    if(xPos-xScroll > api.pxlW+12){
         api.exit();
     }
 };
