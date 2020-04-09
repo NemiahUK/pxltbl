@@ -4,8 +4,8 @@ var forward = true;
 var flashSpeed = 16;
 
 //pixel location and speed
-var x = 12;
-var y = 5;
+var x;
+var y;
 var vX = 0.3;
 var vY = 0.3;
 
@@ -14,6 +14,8 @@ var bump = 0;
 
 exports.setup = function(api) {
     api.fpsLimit = 60;
+    x = api.pxlW/2;
+    y = api.pxlH/2;
 };
 
 exports.loop = function(api) {
@@ -47,7 +49,7 @@ exports.loop = function(api) {
 
     //draw the black playing area
     api.setColor(0,0,0,1);
-    api.fillBox(1, 1, 21, 9);
+    api.fillBox(1, 1, api.pxlW-2, api.pxlH-2);
 
     //draw the pixel
     api.setColor(0,t,255,0.9);

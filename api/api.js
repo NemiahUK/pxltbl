@@ -792,12 +792,22 @@ var pxltblApi = new function() {
 
         if(x < 0 || y < 0 || x >= this.originalPxlW || y >= this.originalPxlH) return false;
 
-        var pixel = y * this.originalPxlW + x;
+        const pixel = y * this.originalPxlW + x;
 
         this.buffer[pixel * 3] = this.buffer[pixel * 3] * (1-this.colorA) + this.colorA*this.colorR;
         this.buffer[pixel * 3 + 1] = this.buffer[pixel * 3 + 1] * (1-this.colorA) + this.colorA*this.colorG;
         this.buffer[pixel * 3 + 2] = this.buffer[pixel * 3 + 2] * (1-this.colorA) + this.colorA*this.colorB;
 
+    };
+
+    this.getPixel = function(x,y) {
+
+        const pixel = y * this.originalPxlW + x;
+        return {
+          r: this.buffer[pixel*3],
+          g: this.buffer[pixel*3],
+          b: this.buffer[pixel*3]
+        }
     };
 
     this.fillBox = function (x,y,w,h) {

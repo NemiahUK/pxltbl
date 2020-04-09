@@ -5,7 +5,7 @@ var flashSpeed = 16;
 
 //pixel location and speed
 var direction = 90;
-var speed = 2; //in pixels per second
+var speed = 2.0; //in pixels per second
 var lastMove;
 var x,y;
 var appleX, appleY;
@@ -76,12 +76,12 @@ exports.loop = function(api) {
 
 
         //if snake has eaten the apple
-        if (x == appleX && y == appleY) {
+        if (x === appleX && y === appleY) {
             //allow the snake to grow
             //spawn new apple
             spawnApple(api);
             //increase speed
-            speed+=0.2;
+            speed+=0.5;
         } else {
             //keep the snake the same length
             snake.shift();
@@ -105,7 +105,7 @@ exports.loop = function(api) {
     //draw the snake
     api.setColor(0,255,255);
     for(let i=0; i < snake.length; i++) {
-        if(i == snake.length - 1) api.setColor(255,255,255);
+        if(i === snake.length - 1) api.setColor(255,255,255);
         api.setPixel(snake[i].x,snake[i].y);
     }
 };
@@ -124,10 +124,16 @@ function checkCollisionWithSnake(x, y, api) {
 }
 
 function spawnApple(api) {
+    let newX, newY, pixelData;
     //spawns an apple at a random point that's not part of a snake
 
     //valid locations are 2 pixel smaller than the display (to account for borders)
-    appleX = Math.floor(Math.random()*(api.pxlW-2)) + 1;
-    appleY = Math.floor(Math.random()*(api.pxlH-2)) + 1;
+    do {
+        newX = Math.floor(Math.random() * (api.pxlW - 2)) + 1;
+        newY = Math.floor(Math.random() * (api.pxlH - 2)) + 1;
+        pixelData = api.getPixel(newX,newY);
+    } while (pixelData.r !== 0 || pixelData.g !== 0 || pixelData.b !== 0);
+    appleX = newX;
+    appleY = newY;
 
 }
