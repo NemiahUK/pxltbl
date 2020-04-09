@@ -14,6 +14,7 @@ var snake = [];
 
 
 var gameStatus = 0;
+var score = 0;
 
 
 // Ricky's TODO notes
@@ -58,6 +59,7 @@ exports.loop = function(api) {
     //process movement
     if(api.millis - lastMove > 1000/speed) {
         lastMove = api.millis;
+        score++;
         switch (direction) {
             case 0:
                 y--;
@@ -82,6 +84,7 @@ exports.loop = function(api) {
             spawnApple(api);
             //increase speed
             speed+=0.5;
+            score+=100;
         } else {
             //keep the snake the same length
             snake.shift();
@@ -111,7 +114,7 @@ exports.loop = function(api) {
 };
 
 function gameOver(api) {
-    api.debug(snake.length);
+    api.debug(score);
     api.exit();
 }
 
