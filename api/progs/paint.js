@@ -2,6 +2,7 @@ var color = 0;
 var cleared = false;
 
 exports.setup = function(api) {
+    api.fpsLimit = 60;
 
 };
 

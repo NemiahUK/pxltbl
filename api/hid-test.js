@@ -9,8 +9,8 @@ console.log(devices);
 
 const raspi = require('raspi');
 
-let colorR = 0;
-let colorG = 255;
+let colorR = 255;
+let colorG = 0;
 let colorB = 255;
 let colorA = 1;
 
@@ -18,7 +18,7 @@ let fpsLimit = 30;
 let consoleData = true;
 
 let rotation = 0;
-let brightness = 150;
+let brightness = 255;
 let whiteBalance = {
     r: 1.0,
     g: 0.9,
@@ -31,7 +31,7 @@ let originalPxlW = 32;
 let originalPxlH = 18;
 let strandLength = 96;
 let baud = 1000000;
-let stripSerpantine = true;
+let stripSerpantine = false;
 let stripStart = 'TL';  //can be TL, TR, BL, BR
 
 //derived
@@ -43,7 +43,7 @@ let pxlCount = pxlW*pxlH;
 let serial;
 let serialPath = '/dev/ttyS0';
 let buffer = new Buffer((strandLength*8) * 3);  //add empty buffer for future use. This will be table border and RGB buttons. Also makes total divisible by 8 for Teensy Octo
-let frameStart = new Buffer([0x01]);
+let frameStart = Buffer.from([0x1, 0x2]);
 
 
 let startTime = new Date().getTime();
@@ -88,6 +88,7 @@ raspi.init(() => {
         console.log('pxltbl booting...DONE');
 
         //setup HID touch
+        touchPanel.setNonBlocking(false);
         touchPanel.on('data',readTouch);
     });
 
@@ -101,43 +102,29 @@ raspi.init(() => {
 function show() {
     //pushes the buffer to the Arduino via UART.
 
+    blank(0, 0, 0);
+    for (let i = 0; i < touch.length; i++) {
+        if(touch[i]) buffer[i*3] = 255;
+    }
 
     var serpantineBuffer = new Buffer(pxlCount * 3);
 
-    //TODO - this assumes stripStart = 'TL'  - it needs to take this into account.
 
+    for (var i = 0; i < pxlCount; i++) {
+        serpantineBuffer[i * 3] = (buffer[i * 3] * (brightness / 255) * whiteBalance.r);
+        serpantineBuffer[i * 3 + 1] = (buffer[i * 3 + 1] * (brightness / 255) * whiteBalance.g);
+        serpantineBuffer[i * 3 + 2] = (buffer[i * 3 + 2] * (brightness / 255) * whiteBalance.b);
+    }
 
-    if (stripSerpantine === true) {
-        for (var y = 0; y < originalPxlH; y++) {
-            if (y % 2) { //odd row
-                for (var x = 0; x < originalPxlW; x++) {
-                    var i = y * originalPxlW + x;
-                    var iReverse = y * originalPxlW + (originalPxlW - x) - 1;
-                    serpantineBuffer[i * 3] = buffer[iReverse * 3] * (brightness / 255)*whiteBalance.r;
-                    serpantineBuffer[i * 3 + 1] = buffer[iReverse * 3 + 1] * (brightness / 255)*whiteBalance.g;
-                    serpantineBuffer[i * 3 + 2] = buffer[iReverse * 3 + 2] * (brightness / 255)*whiteBalance.b;
-                }
-            } else { //even row
-                for (var x = 0; x < originalPxlW; x++) {
-                    var i = y * originalPxlW + x;
-                    serpantineBuffer[i * 3] = buffer[i * 3] * (brightness / 255)*whiteBalance.r;
-                    serpantineBuffer[i * 3 + 1] = buffer[i * 3 + 1] * (brightness / 255)*whiteBalance.g;
-                    serpantineBuffer[i * 3 + 2] = buffer[i * 3 + 2] * (brightness / 255)*whiteBalance.b;
-                }
-
-            }
-        }
-    } else {
-        serpantineBuffer = buffer;
-        //todo add RGB => GRB conversion, brightness etc
+    //remove 1s form serpantine buffer
+    for (var i = 0; i < serpantineBuffer.length; i++) {
+        if(serpantineBuffer[i] === 1) serpantineBuffer[i] = 0;
     }
 
 
 
 
-
     serial.write(Buffer.concat([frameStart, serpantineBuffer]), function () {
-
         alreadyReading = false;
     });
 
@@ -200,15 +187,16 @@ function showPoints() {
 let alreadyReading = false;
 function readTouch(data) {
 
+
     if (alreadyReading) return;
-    //alreadyReading = true;
+    alreadyReading = true;
     //console.clear();
 
 
 
         touch = Array(pxlCount);
 
-        blank(11, 0, 10);
+
         let hasTouched = false;
 
         for (let point = 0; point < 10; point++) {
@@ -224,7 +212,7 @@ function readTouch(data) {
                 const pixelY = Math.floor((touchY - pixelStartY)/pixelHeight);
 
                 if(pixelX >= 0 && pixelX < pxlW && pixelY >= 0 && pixelY < pxlH) touch[pixelX+pixelY*pxlW] = true;
-                setPixel(pixelX,pixelY);
+
                 hasTouched = true;
 
             }

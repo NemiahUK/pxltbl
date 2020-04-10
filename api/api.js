@@ -126,6 +126,9 @@ var pxltblApi = new function() {
     this.touchBRpixelX = 31652;
     this.touchBRpixelY = 31710;
     this.touchReadingData = false;
+    this.touchLastRead = new Date().getTime();
+    this.touchReadTime = 0;
+    this.touchRawDataLength = 0;
 
 
 
@@ -202,8 +205,8 @@ var pxltblApi = new function() {
 
 
                 //setup HID touch
-                //this.touchPanel = new HID.HID(this.hidPath);
-                //this.touchPanel.setNonBlocking(true);
+                this.touchPanel = new HID.HID(this.hidPath);
+                this.touchPanel.setNonBlocking(true);
                 //this.touchPanel.on("data", this.readTouchPanel);
 
 
@@ -495,38 +498,54 @@ var pxltblApi = new function() {
         }
     };
 
-    this.readTouchPanel = function (data) {
+    this.readTouchPanel = function () {
 
-        pxltblApi.touchReadingData = true;
-        pxltblApi.touch = Array(pxltblApi.pxlCount);
+        let dataArray, lastDataArray;
 
-        for (let point = 0; point < 10; point++) {
-            if (data[1 + point * 10] === 7) {
-                const thisPoint = data.slice(point*10 + 2, point*10 + 11);
-                const touchX = thisPoint[0] | (thisPoint[1] << 8);
-                const touchY = thisPoint[2] | (thisPoint[3] << 8);
-                //workout which pixel is being touched...
-                const pixelWidth = (pxltblApi.touchBRpixelX - pxltblApi.touchTLpixelX) / (pxltblApi.pxlW-1);
-                const pixelHeight = (pxltblApi.touchBRpixelY - pxltblApi.touchTLpixelY) / (pxltblApi.pxlH-1);
-                const pixelStartX = pxltblApi.touchTLpixelX - (pixelWidth/2);
-                const pixelStartY = pxltblApi.touchTLpixelY - (pixelHeight/2);
+        const now = new Date().getTime();
+        pxltblApi.touchReadTime = now - pxltblApi.touchLastRead;
 
-                const pixelX = Math.floor((touchX - pixelStartX)/pixelWidth);
-                const pixelY = Math.floor((touchY - pixelStartY)/pixelHeight);
-
-                if(pixelX >= 0 && pixelX < pxltblApi.pxlW && pixelY >= 0 && pixelY < pxltblApi.pxlH) pxltblApi.touch[pixelX+pixelY*pxltblApi.pxlW] = true;
-                pxltblApi.setColor(255,0,0,1);
-                pxltblApi.setPixel(pixelX,pixelY);
+        //read all the data and dismiss it, apart form the last packet
+        do {
+            lastDataArray = dataArray;
+            try {
+                dataArray = pxltblApi.touchPanel.readSync();
+            } catch (e) {
+                dataArray = [];
+            }
+        } while(dataArray.length > 0);
 
 
 
 
 
+        if(lastDataArray !== undefined) {
+            const data = Buffer.from(lastDataArray);
+            pxltblApi.touchLastRead = now;
+            pxltblApi.touchReadingData = true;
+            pxltblApi.touchRawDataLength = data.length;
+            pxltblApi.touch = Array(pxltblApi.pxlCount);
+
+            for (let point = 0; point < 10; point++) {
+                if (data[1 + point * 10] === 7) {
+                    const thisPoint = data.slice(point * 10 + 2, point * 10 + 11);
+                    const touchX = thisPoint[0] | (thisPoint[1] << 8);
+                    const touchY = thisPoint[2] | (thisPoint[3] << 8);
+                    //workout which pixel is being touched...
+                    const pixelWidth = (pxltblApi.touchBRpixelX - pxltblApi.touchTLpixelX) / (pxltblApi.pxlW - 1);
+                    const pixelHeight = (pxltblApi.touchBRpixelY - pxltblApi.touchTLpixelY) / (pxltblApi.pxlH - 1);
+                    const pixelStartX = pxltblApi.touchTLpixelX - (pixelWidth / 2);
+                    const pixelStartY = pxltblApi.touchTLpixelY - (pixelHeight / 2);
+
+                    const pixelX = Math.floor((touchX - pixelStartX) / pixelWidth);
+                    const pixelY = Math.floor((touchY - pixelStartY) / pixelHeight);
+
+                    if (pixelX >= 0 && pixelX < pxltblApi.pxlW && pixelY >= 0 && pixelY < pxltblApi.pxlH) pxltblApi.touch[pixelX + pixelY * pxltblApi.pxlW] = true;
 
 
+                }
             }
         }
-
 
 
 
@@ -570,6 +589,15 @@ var pxltblApi = new function() {
     this.show = function () {
         //pushes the buffer to the Arduino via UART.
 
+        //debug overlay
+        /*
+        for (let i = 0; i < this.touch.length; i++) {
+            if(this.touch[i]) this.buffer[i*3] = 255;
+        }
+        this.setColor(255,0,255);
+        this.text(this.touchRawDataLength,0,0);
+        this.text(this.touchReadTime,0,11);
+        */
 
         var serpantineBuffer = Buffer.alloc((this.numLeds) * 3);
 
@@ -1059,7 +1087,7 @@ var pxltblApi = new function() {
 
         //the main loop
 
-        pxltblApi.touchReadingData = false;
+        this.readTouchPanel();
 
 
 
@@ -1099,6 +1127,7 @@ var pxltblApi = new function() {
                 console.log('Frame size: ' + (this.buffer.length + this.frameStart.length) + ' bytes');
                 console.log('Bandwidth: ' + Math.round((this.buffer.length+this.frameStart.length) * this.fps * 8 / 1024) +' kbps (Available: '+this.baud / 1000 +' kbps)');
 
+                console.log('Touch read time: ' + this.touchReadTime);
                 //console.log('Touch: ' + this.touch);
                 //console.log(Buffer.concat([this.frameStart, this.buffer]));
                 /*
@@ -1134,6 +1163,9 @@ var pxltblApi = new function() {
 
         //run the external loop function - this is where all the user code is
         this.cbLoop(this);
+
+        //debug overlay
+
 
 
         //update display and start again

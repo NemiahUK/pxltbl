@@ -94,7 +94,17 @@ function home() {
     }
 
     if(gotProgs) {
-        if ((api.buttons.bottom) && !btnDownPressed) {
+        const touches = api.getTouch();
+        let touchDown, touchUp, touchEnter;
+
+        if(touches.length) {
+            touchUp = touches[0].y < 4;
+            touchDown = touches[0].y > 14;
+            touchEnter = touches[0].y > 4 && touches[0].y < 14;
+
+        }
+
+        if ((api.buttons.bottom || touchDown) && !btnDownPressed) {
             curProg++;
             textScroll = 0;
             preTextScroll = api.pxlW;
@@ -102,7 +112,7 @@ function home() {
             btnDownPressed = true;
         }
 
-        if ((api.buttons.top) && !btnUpPressed) {
+        if ((api.buttons.top || touchUp) && !btnUpPressed) {
             curProg--;
             textScroll = 0;
             preTextScroll = api.pxlW;
@@ -110,11 +120,11 @@ function home() {
             btnUpPressed = true;
         }
 
-        if (!api.buttons.bottom) btnDownPressed = false;
-        if (!api.buttons.top) btnUpPressed = false;
+        if (!api.buttons.bottom && !touchDown) btnDownPressed = false;
+        if (!api.buttons.top && !touchUp) btnUpPressed = false;
 
 
-        if (api.buttons.left || api.buttons.right) {
+        if (api.buttons.left || api.buttons.right || touchEnter) {
             if (curProg === progs.length - 1) {
                 api.clearInputs();
                 textScroll = 0;
