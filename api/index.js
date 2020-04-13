@@ -98,10 +98,13 @@ function home() {
         let touchDown, touchUp, touchEnter;
 
         if(touches.length) {
-            touchUp = touches[0].y < 4;
-            touchDown = touches[0].y > 14;
-            touchEnter = touches[0].y > 4 && touches[0].y < 14;
 
+
+            for (let i = 0; i < touches.length; i++) {
+                    touchUp = touches[0].y < 4;
+                    touchDown = touches[0].y > 14;
+                    touchEnter = touches[0].y > 4 && touches[0].y < 14;
+            }
         }
 
         if ((api.buttons.bottom || touchDown) && !btnDownPressed) {
@@ -133,8 +136,8 @@ function home() {
                 return;
             } else {
                 screen = 'prog';
-                loadProg(progs[curProg]);
                 api.clearInputs();
+                loadProg(progs[curProg]);
                 gotProgs = false;
                 return;
             }
@@ -181,6 +184,22 @@ function home() {
             if (curProg === progs.length - 1) api.setColor(50, 0, 255);
 
         }
+
+        /*  green rotation arrows - maybe have diagonal opposite corners or somethign instead?
+        api.setColor(0,255,0,0.2);
+
+        api.fillBox(api.pxlW/2-2,api.pxlH-1,4,1);
+        api.fillBox(api.pxlW/2-1,api.pxlH-2,2,1);
+
+        api.fillBox(api.pxlW/2-2,0,4,1);
+        api.fillBox(api.pxlW/2-1,1,2,1);
+
+        api.fillBox(0,api.pxlH/2-2,1,4);
+        api.fillBox(1,api.pxlH/2-1,1,2);
+
+        api.fillBox(api.pxlW-1,api.pxlH/2-2,1,4);
+        api.fillBox(api.pxlW-2,api.pxlH/2-1,1,2);
+        */
     }
 
 }

@@ -44,8 +44,8 @@ exports.loop = function(api) {
     }
     if(xPos >= (api.pxlW+10)/2 && animState === 0) xScroll+=0.2;
 
-    if(api.buttons.any) {
-        animState++;
+    if(api.buttons.any || api.getTouch().length) {
+        animState=1;
     }
 
 

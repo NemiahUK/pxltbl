@@ -49,7 +49,7 @@ var pxltblApi = new function() {
 
     //these can be set at any point (public read/write)
     this.rotation = 0;
-    this.brightness = 50;
+    this.brightness = 200;
     this.whiteBalance = {
         r: 1.0,
         g: 0.9,
@@ -117,18 +117,32 @@ var pxltblApi = new function() {
 
     //touch data
     this.touch = new Array(this.pxlCount);
+    this.touchRead = new Array(this.pxlCount);
+
+    //HID device
     this.touchPanel;
     this.hidPath = '/dev/hidraw1';
-    this.touchMaxX = 32767;
-    this.touchMaxY = 32767;
-    this.touchTLpixelX = 903;
+
+    //defined - touch panel params
+    this.touchMaxX = 32767;     //int16
+    this.touchMaxY = 32767;     //int16
+    this.touchTLpixelX = 903;   //values from the touch panel of the top left corner of the top left pixel
     this.touchTLpixelY = 1713;
-    this.touchBRpixelX = 31652;
+    this.touchBRpixelX = 31652; //values from the touch panel of the bottom right corner of the bottom pixel
     this.touchBRpixelY = 31710;
+
+    //calculated touch position to pixel mapping
+    this.touchPixelWidth = (this.touchBRpixelX - this.touchTLpixelX) / (this.pxlW - 1);
+    this.touchPixelHeight = (this.touchBRpixelY - this.touchTLpixelY) / (this.pxlH - 1);
+    this.touchPixelStartX = this.touchTLpixelX - (this.touchPixelWidth / 2);
+    this.touchPixelStartY = this.touchTLpixelY - (this.touchPixelHeight / 2);
+
+    //touch reading data
     this.touchReadingData = false;
     this.touchLastRead = new Date().getTime();
     this.touchReadTime = 0;
     this.touchRawDataLength = 0;
+    this.touchPacketsPerRead = 0;
 
 
 
@@ -460,23 +474,26 @@ var pxltblApi = new function() {
     };
 
     this.getTouch = function() {
-        var touches = [];
-        for (var i = 0; i < this.pxlCount; i++) {
-            if(this.touch[i]) {
+        let touches = [];
+
+
+
+        for (let i = 0; i < this.pxlCount; i++) {
+            if(this.touch[i] && !this.touchRead[i]) {
                 var x = i % this.pxlW;
                 var y = Math.floor(i / this.pxlW);
                 touches.push({ x: x, y: y });
             }
         }
 
+        this.touchRead = this.touch;
+
         return touches;
     };
 
     this.clearInputs = function() {
         //stops button presses persisting between apps.
-        for (var i = 0; i < this.pxlCount; i++) {
-            this.touch[i] = false;
-        }
+        this.getTouch();
 
         this.buttons = {
             topLeft: false,
@@ -504,12 +521,42 @@ var pxltblApi = new function() {
 
         const now = new Date().getTime();
         pxltblApi.touchReadTime = now - pxltblApi.touchLastRead;
+        pxltblApi.touchPacketsPerRead = 0;
 
-        //read all the data and dismiss it, apart form the last packet
+        //read all avaiable data and merge it into one touch array
         do {
-            lastDataArray = dataArray;
+
             try {
                 dataArray = pxltblApi.touchPanel.readSync();
+
+                if(dataArray !== undefined && dataArray.length > 0) {
+                    const data = Buffer.from(dataArray);
+                    pxltblApi.touchLastRead = now;
+                    pxltblApi.touchReadingData = true;
+                    pxltblApi.touchRawDataLength = data.length;
+                    pxltblApi.touchPacketsPerRead++;
+                    pxltblApi.touch = Array(pxltblApi.pxlCount);
+
+                    for (let point = 0; point < 10; point++) {
+                        if (data[1 + point * 10] === 7) {
+                            const thisPoint = data.slice(point * 10 + 2, point * 10 + 11);
+                            const touchX = thisPoint[0] | (thisPoint[1] << 8);
+                            const touchY = thisPoint[2] | (thisPoint[3] << 8);
+                            //workout which pixel is being touched...
+
+
+                            const pixelX = Math.floor((touchX - pxltblApi.touchPixelStartX) / pxltblApi.touchPixelWidth);
+                            const pixelY = Math.floor((touchY - pxltblApi.touchPixelStartY) / pxltblApi.touchPixelHeight);
+
+                            if (pixelX >= 0 && pixelX < pxltblApi.pxlW && pixelY >= 0 && pixelY < pxltblApi.pxlH) pxltblApi.touch[pixelX + pixelY * pxltblApi.pxlW] = true;
+
+
+                        }
+                    }
+                }
+
+
+
             } catch (e) {
                 dataArray = [];
             }
@@ -519,33 +566,6 @@ var pxltblApi = new function() {
 
 
 
-        if(lastDataArray !== undefined) {
-            const data = Buffer.from(lastDataArray);
-            pxltblApi.touchLastRead = now;
-            pxltblApi.touchReadingData = true;
-            pxltblApi.touchRawDataLength = data.length;
-            pxltblApi.touch = Array(pxltblApi.pxlCount);
-
-            for (let point = 0; point < 10; point++) {
-                if (data[1 + point * 10] === 7) {
-                    const thisPoint = data.slice(point * 10 + 2, point * 10 + 11);
-                    const touchX = thisPoint[0] | (thisPoint[1] << 8);
-                    const touchY = thisPoint[2] | (thisPoint[3] << 8);
-                    //workout which pixel is being touched...
-                    const pixelWidth = (pxltblApi.touchBRpixelX - pxltblApi.touchTLpixelX) / (pxltblApi.pxlW - 1);
-                    const pixelHeight = (pxltblApi.touchBRpixelY - pxltblApi.touchTLpixelY) / (pxltblApi.pxlH - 1);
-                    const pixelStartX = pxltblApi.touchTLpixelX - (pixelWidth / 2);
-                    const pixelStartY = pxltblApi.touchTLpixelY - (pixelHeight / 2);
-
-                    const pixelX = Math.floor((touchX - pixelStartX) / pixelWidth);
-                    const pixelY = Math.floor((touchY - pixelStartY) / pixelHeight);
-
-                    if (pixelX >= 0 && pixelX < pxltblApi.pxlW && pixelY >= 0 && pixelY < pxltblApi.pxlH) pxltblApi.touch[pixelX + pixelY * pxltblApi.pxlW] = true;
-
-
-                }
-            }
-        }
 
 
 
@@ -1128,6 +1148,7 @@ var pxltblApi = new function() {
                 console.log('Bandwidth: ' + Math.round((this.buffer.length+this.frameStart.length) * this.fps * 8 / 1024) +' kbps (Available: '+this.baud / 1000 +' kbps)');
 
                 console.log('Touch read time: ' + this.touchReadTime);
+                console.log('Touch packets per read: ' + this.touchPacketsPerRead);
                 //console.log('Touch: ' + this.touch);
                 //console.log(Buffer.concat([this.frameStart, this.buffer]));
                 /*
