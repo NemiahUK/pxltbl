@@ -1,5 +1,13 @@
 /*
-Drop Game by Steven Tomlinson https://github.com/TmpR
+Poke-a-pixel Game by Steven Tomlinson https://github.com/TmpR
+
+TODO
+remove duplicate color object and ahve code use color index
+add more colors
+make game work for 3 and 4 players
+add time limit that counts down maximum score
+add more animations, effects and sounds
+
  */
 
 exports.setup = function(api) {
@@ -12,24 +20,29 @@ exports.setup = function(api) {
 var hasRun = false;
 var gameStatus = 0;
 var gravity = 0.5;
-
 var rotate = 0;
-
 var introStatus, introTicks;
-
 var level,width, towerLeft ,scroll;
-
 var gameOverTicks;
-
 var players = [];
-var stack = [];
 var gibs = [];
 
 let numPlayers = 2;
 
 let scoreTwinkle = 0;
-const pointTwinkleSpeed = 16;
+let btnPressPlus = false;
+let btnPressMinus = false;
+let btnPressPlayer = [false,false,false,false];
 
+const pointTwinkleSpeed = 16;
+const colors = [
+  {r:255, g:255, b:0},
+  {r:255, g:0,   b:255},
+  {r:0,   g:255, b:255},
+  {r:0,   g:255, b:0},
+  {r:255, g:0,   b:0},
+  {r:0,   g:0,   b:255},
+];
 exports.loop = function(api) {
   switch (gameStatus) {
     case 0:
@@ -54,43 +67,86 @@ function gameStart(api) {
     introTicks = 0;
     gameOverTicks = 0;
 
-    players[0] = {
-      score: 0,
-      color: {r: 0, g: 255, b:255}
-    };
-    players[1] = {
-      score: 0,
-      color: {r: 255, g: 0, b:50}
-    };
+    for (let i = 0; i < 4; i++) {
+      players[i] = {
+        score: 0,
+        color: colors[i],
+        colorIndex: i
+      };
+      spawnPoint(api,i);
+    }
 
-    spawnPoint(api,0);
-    spawnPoint(api,1);
+
+
 
   }
 
 
 
-  introTicks++;
+
   switch (introStatus) {
     case 0:
       api.blank(0,0,0);
+
+      // minus
+      if(api.isTouchInBounds(1,api.pxlH-4,3,1)) {
+        api.setColor(255,0,255);
+        if(!btnPressMinus) numPlayers--;
+        btnPressMinus = true;
+      } else {
+        api.setColor(255,255,255);
+        btnPressMinus = false;
+      }
+      api.fillBox(1,api.pxlH-4,3,1);
+
+      // plus
+      if(api.isTouchInBounds(5,api.pxlH-5,3,3)) {
+        api.setColor(255,0,255);
+        if(!btnPressPlus && numPlayers < 4) {
+          numPlayers++;
+          setPlayerColor(numPlayers-1);
+        }
+        btnPressPlus = true;
+      } else {
+        api.setColor(255,255,255);
+        btnPressPlus = false;
+      }
+      api.fillBox(5,api.pxlH-4,3,1);
+      api.fillBox(6,api.pxlH-5,1,3);
+
+      // play
       api.setColor(0,255,0);
-      api.fillBox(api.pxlW/2,api.pxlH-6,1,5);
-      api.fillBox(api.pxlW/2+1,api.pxlH-5,1,3);
-      api.fillBox(api.pxlW/2+2,api.pxlH-4,1,1);
-
-
-
-      const touches = api.getTouch();
-      //play
-      if(touches.length && touches[0].x < api.pxlW) {
+      api.fillBox(api.pxlW/2-1,api.pxlH-6,1,5);
+      api.fillBox(api.pxlW/2,api.pxlH-5,1,3);
+      api.fillBox(api.pxlW/2+1,api.pxlH-4,1,1);
+      if(api.isTouchInBounds(api.pxlW/2-1,api.pxlH-6,3,5)) {
         introStatus = 1;
+        api.clearInputs();
       }
 
-      //exit
-      if(touches.length && touches[0].x > api.pxlW) {
+      // exit
+      api.setColor(255,0,0);
+      api.fillBox(api.pxlW-5,api.pxlH-5,3,3);
+      if(api.isTouchInBounds(api.pxlW-5,api.pxlH-5,3,3)) {
         api.exit();
       }
+
+      // players
+      if(numPlayers > 4) numPlayers = 4;
+      if(numPlayers < 2) numPlayers = 2;
+
+      for (let i = 0; i < numPlayers; i++) {
+        api.setColor(players[i].color);
+        api.fillBox(api.pxlW/2 - numPlayers*2 + i*4 + 1,2,2,2);
+        if(api.isTouchInBounds(api.pxlW/2 - numPlayers*2 + i*4 + 1,2,2,2)) {
+          if(!btnPressPlayer[i]) setPlayerColor(i);
+          btnPressPlayer[i] = true;
+        } else {
+          btnPressPlayer[i] = false;
+        }
+      }
+
+
       break;
 
     case 1:
@@ -102,12 +158,13 @@ function gameStart(api) {
       break;
 
     case 2:
+      introTicks++;
       api.blank(0,0,0);
       animateGibs(api);
       if(introTicks === 60) {
         gibs = [];
-          introStatus++;
-        }
+        introStatus++;
+      }
       break;
 
     case 3:
@@ -125,10 +182,7 @@ function gamePlay(api) {
   //playing game
 
   //draw background
-  api.setColor(players[0].color);
-  api.fillBox(0,1,api.pxlW/2,api.pxlH-1);
-  api.setColor(players[1].color);
-  api.fillBox(api.pxlW/2,1,api.pxlW/2,api.pxlH);
+
   api.setColor(0,0,0, 0.9);
   api.fillBox(0,1,api.pxlW,api.pxlH);
 
@@ -227,7 +281,7 @@ function gameOver(api) {
   if (api.getTouch().length) {
       gameStatus = 0;
       hasRun = false;
-      api.clearInputs();
+
   }
 
 }
@@ -239,7 +293,7 @@ function animateGibs(api) {
   }
   for (var i=0; i<gibs.length; i++) {
       api.setColor(gibs[i]);
-      api.setPixel(gibs[i].x, gibs[i].y+scroll);
+      api.setPixel(gibs[i].x, gibs[i].y);
       //movement
       gibs[i].x+=gibs[i].vX;
       gibs[i].y+=gibs[i].vY;
@@ -270,9 +324,28 @@ function spawnPoint(api,player) {
 
   }
 
+}
 
+function setPlayerColor(player) {
+
+  let inUse;
+
+
+  do {
+    inUse = false;
+    players[player].colorIndex++;
+
+    if (players[player].colorIndex >= colors.length) players[player].colorIndex = 0;
+    for (let i = 0; i < numPlayers; i++) {
+      if (players[player].colorIndex === players[i].colorIndex && player !== i ) inUse = true;
+
+    }
+  } while(inUse);
+
+  players[player].color = colors[players[player].colorIndex];
 
 }
+
 function spawnGib(x,y,left,r,g,b) {
   var vX = -0.8 + (Math.random()*0.5);
   var vY =  -2 + (Math.random()*1);

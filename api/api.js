@@ -473,22 +473,37 @@ var pxltblApi = new function() {
 
     };
 
-    this.getTouch = function() {
+    this.getTouch = function(persist) {
         let touches = [];
-
+        if(persist === undefined) persist = false;
 
 
         for (let i = 0; i < this.pxlCount; i++) {
-            if(this.touch[i] && !this.touchRead[i]) {
+            if(this.touch[i] && (!this.touchRead[i] || persist)) {
                 var x = i % this.pxlW;
                 var y = Math.floor(i / this.pxlW);
                 touches.push({ x: x, y: y });
             }
         }
 
-        this.touchRead = this.touch;
+        if(!persist) this.touchRead = this.touch;
 
         return touches;
+    };
+
+    this.isTouchInBounds = function(x,y,w,h) {
+
+        for (let i = 0; i < this.pxlCount; i++) {
+
+            var curX = i % this.pxlW;
+            var curY = Math.floor(i / this.pxlW);
+
+            if(this.touch[i] && curX >= x && curX < x+w && curY >= y && curY < y+h) return true;
+
+        }
+
+        return false;
+
     };
 
     this.clearInputs = function() {
@@ -547,6 +562,7 @@ var pxltblApi = new function() {
 
                             const pixelX = Math.floor((touchX - pxltblApi.touchPixelStartX) / pxltblApi.touchPixelWidth);
                             const pixelY = Math.floor((touchY - pxltblApi.touchPixelStartY) / pxltblApi.touchPixelHeight);
+
 
                             if (pixelX >= 0 && pixelX < pxltblApi.pxlW && pixelY >= 0 && pixelY < pxltblApi.pxlH) pxltblApi.touch[pixelX + pixelY * pxltblApi.pxlW] = true;
 
