@@ -499,7 +499,7 @@ var pxltblApi = new function() {
             var curX = i % this.pxlW;
             var curY = Math.floor(i / this.pxlW);
 
-            if(this.touch[i] && curX >= x && curX < x+w && curY >= y && curY < y+h) return true;
+            if((this.touch[i] || this.touchWeb[i]) && curX >= x && curX < x+w && curY >= y && curY < y+h) return true;
 
         }
 
