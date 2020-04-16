@@ -12,6 +12,30 @@ progs that will run on a physical Pixel Table and play with them using a virtual
 
 [Quick Start Guide](https://github.com/NemiahUK/pxltbl/blob/master/docs/getting-started.md)
 
+## Costs
+
+You have several options including software-only, table-top and full-sized. Each of these options can be done to different
+levels of complexity and cost. Here's a rough guide to each option, a full bill of materials (BOM) can be found [HERE](https://docs.google.com/spreadsheets/d/1ZHOPDPXH3Y888mUGACTdFI8b1-cgUbUthqjndGLfB64).
+
+### Software only - FREE
+
+You can just download the API and use it on any machine via a web-browser. In future there will be a 'fullscreen' mode so that you 
+can emulate the table top exactly as it would be on an actual pxltbl.
+
+### PxlTbl Mini - £100 to £200
+
+A table-top-sized device using a Raspberry Pi, 7" touchscreen and 3D printed case. You can add an audio HAT and arcade buttons too. 
+
+### PxlTbl - £700 to £1,000
+
+The full-sized version, over 1m long and 40cm high with a 50" touch screen. You can add a 200W stereo amp, car speakers, arcade buttons and
+a real wood frame for an amazing looking and sounding piece of furniture. Or just keep things simple and costs low.
+
+## Skills needed
+
+Everything you need and where to buy them from will be listed in the [BOM](https://docs.google.com/spreadsheets/d/1ZHOPDPXH3Y888mUGACTdFI8b1-cgUbUthqjndGLfB64). You won't need to do any cutting, welding or custom 
+fabrication, it's all based around pieces that can be ordered to size and bolted together. You will need to know how to solder
+and if you have access to a 3D printer, laser cutter or CNC machine you can make the parts yourself instead of ordering them online.
 
 ## BIG plans
 
