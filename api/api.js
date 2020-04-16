@@ -116,11 +116,12 @@ var pxltblApi = new function() {
     };
 
     //touch data
-    this.touch = new Array(this.pxlCount);
-    this.touchRead = new Array(this.pxlCount);
+    this.touch = new Array(this.pxlCount);      //the touch data from the local hardware
+    this.touchRead = new Array(this.pxlCount);  //the persistent touch data to allow for de-duplicating touch events
+    this.touchWeb = new Array(this.pxlCount);   //the touch data from the web interface
 
     //HID device
-    this.touchPanel;
+    this.touchPanel;                //the touch panel device reference
     this.hidPath = '/dev/hidraw1';
 
     //defined - touch panel params
@@ -297,7 +298,7 @@ var pxltblApi = new function() {
 
 
             var filePath = pxltblApi.webRoot + request.url;
-            if (filePath == pxltblApi.webRoot + '/')
+            if (filePath === pxltblApi.webRoot + '/')
                 filePath = pxltblApi.webRoot + '/index.html';
 
 
@@ -465,11 +466,11 @@ var pxltblApi = new function() {
 
     //TODO - make these work with arrays (multi touch)
     this.touchDown = function(location) {
-        this.touch[location] = true;
+        this.touchWeb[location] = true;
     };
 
     this.touchUp = function(location) {
-        this.touch[location] = false;
+        this.touchWeb[location] = false;
 
     };
 
@@ -479,14 +480,14 @@ var pxltblApi = new function() {
 
 
         for (let i = 0; i < this.pxlCount; i++) {
-            if(this.touch[i] && (!this.touchRead[i] || persist)) {
+            if((this.touch[i] || this.touchWeb[i]) && (!this.touchRead[i] || persist)) {
                 var x = i % this.pxlW;
                 var y = Math.floor(i / this.pxlW);
                 touches.push({ x: x, y: y });
             }
         }
 
-        if(!persist) this.touchRead = this.touch;
+        if(!persist) this.touchRead = this.touch || this.touchWeb;
 
         return touches;
     };
