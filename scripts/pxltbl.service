@@ -1,0 +1,15 @@
+[Unit]
+Description=Pixel Table service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/npm run service
+WorkingDirectory=/home/pi/pxltbl/api
+StandardOutput=inherit
+StandardError=inherit
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target
+

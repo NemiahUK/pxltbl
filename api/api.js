@@ -514,13 +514,35 @@ var pxltblApi = new function() {
 
     this.readTouchPanel = function () {
 
+        //Touchpanel driver config
+
+        const touchParams = {
+            touchPacketSize: 8,
+            numPoints: 10,
+            checkPos: 7,
+            checkValue: 0x30,
+            coordPos: 3,
+            maxX: 4096,
+            maxY: 4096
+        };
+        /*
+        const touchParams = {
+            touchPacketSize: 10,
+            numPoints: 10,
+            checkPos: 1,
+            checkValue: 0x07,
+            coordPos: 2,
+            maxX: 32767,
+            maxY: 32767
+        };*/
+
         let dataArray, lastDataArray;
 
         const now = new Date().getTime();
         pxltblApi.touchReadTime = now - pxltblApi.touchLastRead;
         pxltblApi.touchPacketsPerRead = 0;
 
-        //read all avaiable data and merge it into one touch array
+        //read all available data and merge it into one touch array
         do {
 
             try {
@@ -535,13 +557,17 @@ var pxltblApi = new function() {
                     pxltblApi.touch = Array(pxltblApi.pxlCount);
 
                     for (let point = 0; point < 10; point++) {
-                        if (data[1 + point * 10] === 7) {
-                            const thisPoint = data.slice(point * 10 + 2, point * 10 + 11);
-                            const touchX = thisPoint[0] | (thisPoint[1] << 8);
-                            const touchY = thisPoint[2] | (thisPoint[3] << 8);
+                        if (data[point*touchParams.touchPacketSize+touchParams.checkPos] === touchParams.checkValue) {
+                            const thisPoint = data.slice(point * touchParams.touchPacketSize + touchParams.coordPos, point * touchParams.touchPacketSize + touchParams.coordPos + 4);
+                            let touchX = thisPoint[0] | (thisPoint[1] << 8);
+                            let touchY = thisPoint[2] | (thisPoint[3] << 8);
+
+                            //convert position to same scale as table
+                            touchX = this.touchMaxX * (touchX/touchParams.maxX);
+                            touchY = this.touchMaxY * (touchY/touchParams.maxY);
+
+
                             //workout which pixel is being touched...
-
-
                             const pixelX = Math.floor((touchX - pxltblApi.touchPixelStartX) / pxltblApi.touchPixelWidth);
                             const pixelY = Math.floor((touchY - pxltblApi.touchPixelStartY) / pxltblApi.touchPixelHeight);
 

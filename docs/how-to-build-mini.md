@@ -29,44 +29,7 @@ Disable boot info (this is usually already done), edit this file: `/boot/cmdline
 
 Delete the `console=serail0,115200` part.
 
-## Enable auto run as service
 
-Find out where npm is installed by typing `which npm` it should return `/usr/bin/npm` or `/usr/local/bin/npm` make a note of this.
-
-Create the service file...
-
-    sudo nano /etc/systemd/system/pxltbl.service
-
-Paste the following:
-
-    [Unit]
-    Description=Pixel Table service
-    After=network.target
-
-    [Service]
-    ExecStart=/usr/bin/npm run service
-    WorkingDirectory=/home/pi/pxltbl/api
-    StandardOutput=inherit
-    StandardError=inherit
-    Restart=on-failure
-    User=root
-
-    [Install]
-    WantedBy=multi-user.target
-
-Change the line `ExecStart=/usr/bin/npm start` to match the npm path you noted down earlier.
-
-Enable the service
-
-    sudo systemctl enable pxltbl.service
-   
-Start the service
-
-    sudo systemctl start pxltbl.service
-    
-If you want to view the logs
-
-    journalctl -u pxltbl
 
 ## Install
 
@@ -93,5 +56,24 @@ libudev-dev:
 
 * Setup Chromium kiosk and auto boot
 * Disable touch screen for X11
-* Disable screen blanking and pointer 
+## Disable screen blanking and pointer 
+    sudo apt-get install unclutter xscreensaver
+    
+## Enable auto run as service
+
+Copy service file
+
+    sudo cp /home/pi/pxltbl/scripts/pxltbl.service /etc/systemd/system/pxltbl.service
+
+Enable the service
+
+    sudo systemctl enable pxltbl.service
+   
+Start the service
+
+    sudo systemctl start pxltbl.service
+    
+If you want to view the logs
+
+    journalctl -u pxltbl
         
