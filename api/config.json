@@ -1,0 +1,20 @@
+{
+  "hid" : {
+    "enabled" : "true",
+    "ids" : [
+      "abc123",
+      "xyz456"
+    ]
+  },
+  "serial" : {
+    "enabled" : "true",
+    "devices" : [
+      "/dev/ttyS0"
+    ],
+    "baud" : 1000000
+  },
+  "pixels" : {
+    "width" : 32,
+    "height" : 18
+  }
+}

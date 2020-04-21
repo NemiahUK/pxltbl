@@ -1,9 +1,22 @@
-
+html {
+    margin: 0;
+    padding: 0;
+}
 
 body {
   background-color: #333;
   color:#eee;
   font-family: sans-serif;
+}
+
+body.fullscreen {
+    margin:0;
+    padding:0;
+    height: 100vh;
+    width:100vw;
+    overflow: hidden;
+    background-color: #000;
+
 }
 
 #console {
@@ -20,6 +33,10 @@ body {
     margin-right: 20px;
 }
 
+.fullscreen #console {
+    display: none;
+}
+
 #console p {
     padding:0 10px;
     margin: 0;
@@ -27,6 +44,14 @@ body {
 
 #console .error {
     color: #ff8888;
+}
+
+#stats {
+
+}
+
+.fullscreen #stats {
+    display: none;
 }
 
 .center {
@@ -52,6 +77,13 @@ body {
 
 }
 
+.fullscreen #pxlTbl {
+    position: unset;
+    display: block;
+    padding:0;
+    margin:0;
+}
+
 
 
 #pxlTbl button {
@@ -64,6 +96,10 @@ body {
 
 }
 
+.fullscreen #pxlTbl button {
+    display: none;
+}
+
 
 #display {
 
@@ -71,6 +107,16 @@ body {
     background: #000;
     border-radius: 2vmin;
 
+}
+
+.fullscreen #display {
+    position: absolute;
+    top:12px;
+    left:0;
+    width:100vw;
+    height:100vh;
+    border-radius: 0;
+    padding: 0;
 }
 
 #display ul {
@@ -86,15 +132,18 @@ body {
 
 #display li {
     list-style:none;
-    margin:0 1px;
+    margin:0 1px 0 0;
     padding:0;
     display: inline-block;
     width:1.5vmin;
     height:1.5vmin;
-    background-color:#fff;
+    background-color:#000;
 
 
 }
+
+
+
 
 #rotate-padding {
     height: 0;

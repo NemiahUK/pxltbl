@@ -23,7 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-const HID = require('node-hid');
+
 //these consts need moving to the api class
 
 
@@ -83,10 +83,11 @@ var pxltblApi = new function() {
 
     //these should probably be private
     this.serial;
-    this.serialPath = '/dev/ttyS0';
+    this.serialPath = '/dev/ttyS0';  //TODO this should be loaded from JSON file
     this.buffer = Buffer.alloc((this.numLeds) * 3);  //add empty buffer for future use. This will be table border and RGB buttons. Also makes total divisible by 8 for Teensy Octo
     this.frameStart = Buffer.from([0x1, 0x2]);
     this.gotParams = false;
+    this.paramTries = 0;
 
 
     this.startTime = new Date().getTime();
@@ -122,7 +123,7 @@ var pxltblApi = new function() {
 
     //HID device
     this.touchPanel;                //the touch panel device reference
-    this.hidPath = '/dev/hidraw1';
+    this.hidPath = '/dev/hidraw0';  //TODO this should be loaded from config file
 
     //defined - touch panel params
     this.touchMaxX = 32767;     //int16
@@ -169,16 +170,11 @@ var pxltblApi = new function() {
                 console.log('Raspberry Pi detected, booting...');
                 this.isRasPi = true;
 
+                //TODO only load this is serial is enabled in config.json
                 const Serial = require('raspi-serial').Serial;
+
+                //load GPIO
                 var gpio = require('rpi-gpio');
-
-
-                //start keyboard input
-                //TODO the 3 lines below erorr if running in service mode becasue there is no STDIN, need to check and enable if possible
-                //readline.emitKeypressEvents(process.stdin);
-                //process.stdin.setRawMode(true);
-                //process.stdin.on('keypress', pxltblApi.keyPress);
-
 
                 //start button input
                 //TODO use buttonmap object once implimented
@@ -193,13 +189,12 @@ var pxltblApi = new function() {
                 gpio.setup(31, gpio.DIR_IN, gpio.EDGE_BOTH); //Home
 
                 gpio.on('change', function(channel, value) {
-
                     pxltblApi.setButton(channel,value);
-
                 });
 
 
                 //start serial
+                //TODO this should loop through the available serial devices in config.json and query the device.
                 pxltblApi.serial = new Serial({
                     portId: pxltblApi.serialPath,
                     baudRate: pxltblApi.baud
@@ -207,6 +202,7 @@ var pxltblApi = new function() {
 
                 pxltblApi.serial.open(() => {
                     console.log('Serial port '+pxltblApi.serialPath+' open at '+pxltblApi.baud+' baud.');
+                    //Setup incoming serial data handler
                     pxltblApi.serial.on('data', (data) => {
                         pxltblApi.handleSerial(data);
                     });
@@ -215,11 +211,13 @@ var pxltblApi = new function() {
                     //this.show();
                 });
 
-                //setup SPI Rx events
-                //TODO - here we need functions to handle SPI commands recieved form the arduino, such as 'booted', 'etc'
+
 
 
                 //setup HID touch
+                //TODO only if use HID is set to true
+                const HID = require('node-hid');
+                //TODO This should loop through the HID devices listed in config.json
                 this.touchPanel = new HID.HID(this.hidPath);
                 this.touchPanel.setNonBlocking(true);
                 //this.touchPanel.on("data", this.readTouchPanel);
@@ -255,31 +253,16 @@ var pxltblApi = new function() {
     };
 
     this.reboot = function () {
-        //reboots arduino
+        //reboots Teensy
 
 
     };
 
-    this.resetLeds = function () {
-        //tells arduino to power cycle the LED strip (for fixing stuck pixels)
 
-
-    };
-
-    this.booted = function () {
-        //once the arduino has booted - configure hardware via SPI
-
-    };
-
-    this.spiRx = function () {
-        //handle commands received from the arduino
-
-    };
 
     this.debug = function (data) {
         if(this.webClients) {
             this.webIo.emit('debug', data);
-
         }
 
     };
@@ -287,7 +270,6 @@ var pxltblApi = new function() {
     this.error = function (data) {
         if(this.webClients) {
             this.webIo.emit('error', data);
-
         }
 
     };
@@ -444,7 +426,6 @@ var pxltblApi = new function() {
         }
 
         //set virtual buttons
-
         this.buttons.top = this.buttons.topLeft || this.buttons.topRight;
         this.buttons.bottom = this.buttons.bottomLeft || this.buttons.bottomRight;
         this.buttons.left = this.buttons.leftTop || this.buttons.leftBottom;
@@ -471,7 +452,6 @@ var pxltblApi = new function() {
 
     this.touchUp = function(location) {
         this.touchWeb[location] = false;
-
     };
 
     this.getTouch = function(persist) {
@@ -491,6 +471,7 @@ var pxltblApi = new function() {
 
         return touches;
     };
+
 
     this.isTouchInBounds = function(x,y,w,h) {
 
@@ -593,6 +574,12 @@ var pxltblApi = new function() {
             this.serial.write(Buffer.from([0x1,0x3]), function () {
 
                 //nothing to do here other than wait for reply
+                pxltblApi.paramTries++;
+                if(pxltblApi.paramTries === 5) {
+                    pxltblApi.gotParams = true;
+                    pxltblApi.paramTries = 0;
+                    pxltblApi.show();
+                }
                 process.stdout.write('.');
                 setTimeout(function() {
                     if(!pxltblApi.gotParams) pxltblApi.getParams();
@@ -624,7 +611,7 @@ var pxltblApi = new function() {
     };
 
     this.show = function () {
-        //pushes the buffer to the Arduino via UART.
+        //pushes the buffer to the Teensy via UART.
 
         //debug overlay
         /*
@@ -670,7 +657,7 @@ var pxltblApi = new function() {
             //todo add RGB => GRB conversion, brightness etc
         }
 
-        //remove 1s form serpantine buffer
+        //remove 1s from serpantine buffer (a value of 1 is our end of frame character)
         for (var i = 0; i < serpantineBuffer.length; i++) {
             if(serpantineBuffer[i] === 1) serpantineBuffer[i] = 0;
         }
@@ -685,8 +672,7 @@ var pxltblApi = new function() {
 
         try {
             //sent to serial
-            if(this.isRasPi) {
-                //console.log(serpantineBuffer);
+            if(this.isRasPi) { //TODO  and serial is enabled
                 this.serial.write(Buffer.concat([this.frameStart, serpantineBuffer]), function () {
                     pxltblApi.loop();
 

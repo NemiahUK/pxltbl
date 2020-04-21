@@ -1,20 +1,21 @@
+# How to build the PxlTbl mini
+
 # RasPi Setup
-## Enable audio over I2S
+## Enable audio over I2S (check this still applies)
 
 Follow the instructions here: https://learn.adafruit.com/adafruit-max98357-i2s-class-d-mono-amp/raspberry-pi-usage
 
 
 ## Set screen res to 1024x600
-Why? becasue this is the resolution of the PxlTbl mini touch screen and we don't need a big desktop for anything anyway.
 
-add the following to /boot/config.txt: 
+Add the following to /boot/config.txt: 
 
     hdmi_cvt=1024 600 60 3 0 0 0
     hdmi_group=2
     hdmi_mode=87
 
 
-## RasPi config:
+## Using RasPi config:
 
 * Enable SSH
 * Enable VNC
@@ -69,7 +70,7 @@ If you want to view the logs
 
 ## Install
 
-### Prerequisites for node-hid (if you want to use a touchscreen)
+### Prerequisites for node-hid 
 
 Compilation tools: 
 
@@ -87,21 +88,10 @@ libudev-dev:
 
     sudo apt-get install libudev-dev
 
-## The following is no-longer used as we are using Teensy... (need to update)
-### Arduino (in future this may be handled by node)
 
-    sudo apt-get install arduino
+## Next...
 
-### Arduino auto-reset script (in future this may be handled by node)
-
-    cd ~
-    wget https://github.com/SpellFoundry/avrdude-rpi/archive/master.zip
-    sudo unzip master.zip
-    cd ./avrdude-rpi-master/
-    sudo cp autoreset /usr/bin
-    sudo cp avrdude-autoreset /usr/bin
-    sudo mv /usr/bin/avrdude /usr/bin/avrdude-original
-    sudo ln -s /usr/bin/avrdude-autoreset /usr/bin/avrdude
-
-
- 
+* Setup Chromium kiosk and auto boot
+* Disable touch screen for X11
+* Disable screen blanking and pointer 
+        

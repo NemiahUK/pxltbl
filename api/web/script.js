@@ -39,6 +39,7 @@ socket.on('frameData', function(data){
         pxlH = data.pxlH;
 
         pxlSize = (75 / pxlW) + 'vmin';
+        if($('body').hasClass('fullscreen'))  pxlSize = (96 / pxlW) + 'vw';
 
         //init LEDs
         for (var y = 0; y < pxlH; y++) {
