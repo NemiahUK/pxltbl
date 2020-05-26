@@ -1,10 +1,7 @@
 {
   "hid" : {
     "enabled" : "true",
-    "ids" : [
-      "abc123",
-      "xyz456"
-    ]
+    "device" : "/dev/hidraw1"
   },
   "serial" : {
     "enabled" : "true",

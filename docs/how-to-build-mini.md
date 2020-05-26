@@ -54,10 +54,9 @@ libudev-dev:
 
 ## Next...
 
-* Setup Chromium kiosk and auto boot
+
 * Disable touch screen for X11
-## Disable screen blanking and pointer 
-    sudo apt-get install unclutter xscreensaver
+
     
 ## Enable auto run as service
 
@@ -76,4 +75,17 @@ Start the service
 If you want to view the logs
 
     journalctl -u pxltbl
-        
+    
+## Disable screen blanking and pointer 
+    sudo apt-get install unclutter xscreensaver        
+  
+##  Setup Chromium kiosk and auto boot  
+Edit LXDE autostart
+    
+    sudo nano /etc/xdg/lxsession/LXDE-pi/autostart
+
+add line
+    
+    @bash /home/pi/pxltbl/scripts/pxltbl-mini.sh
+    
+Change desktop background

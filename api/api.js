@@ -68,7 +68,6 @@ var pxltblApi = new function() {
     this.originalPxlW = 32;
     this.originalPxlH = 18;
     this.numLeds = this.originalPxlW * this.originalPxlH; //This could be more than the size of the screen as it includes button LEDs etc.
-    this.baud = 1000000;
     this.stripSerpantine = false;
     this.stripStart = 'TL';  //TODO not implimented yet can be TL, TR, BL, BR
     this.rgbOrder = 'RGB'; //TODO not implimented yet
@@ -83,7 +82,10 @@ var pxltblApi = new function() {
 
     //these should probably be private
     this.serial;
-    this.serialPath = '/dev/ttyS0';  //TODO this should be loaded from JSON file
+    this.serialEnabled = false;
+    this.baud;
+    this.serialDevices = [];
+    this.serialPath;
     this.buffer = Buffer.alloc((this.numLeds) * 3);  //add empty buffer for future use. This will be table border and RGB buttons. Also makes total divisible by 8 for Teensy Octo
     this.frameStart = Buffer.from([0x1, 0x2]);
     this.gotParams = false;
@@ -122,8 +124,10 @@ var pxltblApi = new function() {
     this.touchWeb = new Array(this.pxlCount);   //the touch data from the web interface
 
     //HID device
+    this.hidEnabled = false;
     this.touchPanel;                //the touch panel device reference
-    this.hidPath = '/dev/hidraw0';  //TODO this should be loaded from config file
+    this.hidPath;
+    this.touchParams = {};
 
     //defined - touch panel params
     this.touchMaxX = 32767;     //int16
@@ -153,13 +157,21 @@ var pxltblApi = new function() {
     this.start = function (options) {
 
 
+
         //setup callbacks
         this.cbLoop = options.callbackLoop;
 
-        if(options.consoleData !== undefined) this.consoleData = options.consoleData;
+        //setup config
+        const config = require('./config.json');
+
+        this.serialEnabled = config.serial.enabled;
+        this.serialDevices = config.serial.devices;
+        this.baud = config.serial.baud;
+        this.hidEnabled = config.hid.enabled;
+        this.hidPath = config.hid.device;
 
         //setup options
-
+        if(options.consoleData !== undefined) this.consoleData = options.consoleData;
         if(options.fpsLimit !== undefined) this.fpsLimit = parseInt(options.fpsLimit);
 
         try {
@@ -168,13 +180,11 @@ var pxltblApi = new function() {
             raspi.init(() => {
 
                 console.log('Raspberry Pi detected, booting...');
-                this.isRasPi = true;
+                pxltblApi.isRasPi = true;
 
-                //TODO only load this is serial is enabled in config.json
-                const Serial = require('raspi-serial').Serial;
 
                 //load GPIO
-                var gpio = require('rpi-gpio');
+                const gpio = require('rpi-gpio');
 
                 //start button input
                 //TODO use buttonmap object once implimented
@@ -192,42 +202,73 @@ var pxltblApi = new function() {
                     pxltblApi.setButton(channel,value);
                 });
 
+                //setup HID touch
+
+                if(pxltblApi.hidEnabled) {
+                    const HID = require('node-hid');
+                    const hidConfig = require('./hid-config');
+
+                    const devices = HID.devices();
+
+                    for (let i = 0; i < devices.length; i++) {
+                        if(devices[i].path === pxltblApi.hidPath) {
+                            for (let j = 0; j < hidConfig.length; j++) {
+                                if(hidConfig[j].vendorId === devices[i].vendorId && hidConfig[j].productId === devices[i].productId) {
+                                    pxltblApi.touchParams = hidConfig[j];
+                                }
+                            }
+                        }
+                    }
+
+                    if(pxltblApi.touchParams.name !== undefined) {
+                        console.log("Found HID device: "+pxltblApi.touchParams.name);
+                        pxltblApi.touchPanel = new HID.HID(pxltblApi.hidPath);
+                        pxltblApi.touchPanel.setNonBlocking(true);
+                    } else {
+                        console.log("HID device at "+pxltblApi.hidPath+" did not match any devices in hid-config.json.");
+                        console.log(devices);
+                    }
+
+                }
 
                 //start serial
                 //TODO this should loop through the available serial devices in config.json and query the device.
-                pxltblApi.serial = new Serial({
-                    portId: pxltblApi.serialPath,
-                    baudRate: pxltblApi.baud
-                });
-
-                pxltblApi.serial.open(() => {
-                    console.log('Serial port '+pxltblApi.serialPath+' open at '+pxltblApi.baud+' baud.');
-                    //Setup incoming serial data handler
-                    pxltblApi.serial.on('data', (data) => {
-                        pxltblApi.handleSerial(data);
+                if(pxltblApi.serialEnabled) {
+                    const Serial = require('raspi-serial').Serial;
+                    pxltblApi.serialPath = pxltblApi.serialDevices[0];
+                    pxltblApi.serial = new Serial({
+                        portId: pxltblApi.serialPath,
+                        baudRate: pxltblApi.baud
                     });
-                    process.stdout.write('Querying pxltable hardware...');
-                    pxltblApi.getParams();
-                    //this.show();
-                });
+
+                    pxltblApi.serial.open(() => {
+                        console.log('Serial port ' + pxltblApi.serialPath + ' open at ' + pxltblApi.baud + ' baud.');
+                        //Setup incoming serial data handler
+                        pxltblApi.serial.on('data', (data) => {
+                            pxltblApi.handleSerial(data);
+                        });
+                        process.stdout.write('Querying pxltable hardware...');
+                        pxltblApi.getParams();
+
+                    });
+                } else {
+                    console.log('Serial is disabled.');
+                    console.log('*** STARTUP COMPLETE ***');
+                    pxltblApi.show();
+                }
 
 
 
 
-                //setup HID touch
-                //TODO only if use HID is set to true
-                const HID = require('node-hid');
-                //TODO This should loop through the HID devices listed in config.json
-                this.touchPanel = new HID.HID(this.hidPath);
-                this.touchPanel.setNonBlocking(true);
-                //this.touchPanel.on("data", this.readTouchPanel);
+
 
 
             });
 
 
         } catch (err) {
-            console.log('This isn\'t a Raspberry Pi!?? That\'s OK though, I\'ll carry on...');
+            console.log('This isn\'t a Raspberry Pi!?? That\'s OK though, I\'ll carry on in software/web only mode...');
+            console.log('*** STARTUP COMPLETE ***');
             this.show();
         }
 
@@ -356,6 +397,7 @@ var pxltblApi = new function() {
             });
         });
         this.webServer.listen(3000);
+        console.log('Webserver started on port: 3000');
     };
 
     this.setButtonByName = function(name,value) {
@@ -513,28 +555,7 @@ var pxltblApi = new function() {
     };
 
     this.readTouchPanel = function () {
-
-        //Touchpanel driver config
-
-        const touchParams = {
-            touchPacketSize: 8,
-            numPoints: 10,
-            checkPos: 7,
-            checkValue: 0x30,
-            coordPos: 3,
-            maxX: 4096,
-            maxY: 4096
-        };
-        /*
-        const touchParams = {
-            touchPacketSize: 10,
-            numPoints: 10,
-            checkPos: 1,
-            checkValue: 0x07,
-            coordPos: 2,
-            maxX: 32767,
-            maxY: 32767
-        };*/
+        
 
         let dataArray, lastDataArray;
 
@@ -557,14 +578,14 @@ var pxltblApi = new function() {
                     pxltblApi.touch = Array(pxltblApi.pxlCount);
 
                     for (let point = 0; point < 10; point++) {
-                        if (data[point*touchParams.touchPacketSize+touchParams.checkPos] === touchParams.checkValue) {
-                            const thisPoint = data.slice(point * touchParams.touchPacketSize + touchParams.coordPos, point * touchParams.touchPacketSize + touchParams.coordPos + 4);
+                        if (data[point*pxltblApi.touchParams.touchPacketSize+pxltblApi.touchParams.checkPos] === pxltblApi.touchParams.checkValue) {
+                            const thisPoint = data.slice(point * pxltblApi.touchParams.touchPacketSize + pxltblApi.touchParams.coordPos, point * pxltblApi.touchParams.touchPacketSize + pxltblApi.touchParams.coordPos + 4);
                             let touchX = thisPoint[0] | (thisPoint[1] << 8);
                             let touchY = thisPoint[2] | (thisPoint[3] << 8);
 
                             //convert position to same scale as table
-                            touchX = this.touchMaxX * (touchX/touchParams.maxX);
-                            touchY = this.touchMaxY * (touchY/touchParams.maxY);
+                            touchX = this.touchMaxX * (touchX/pxltblApi.touchParams.maxX);
+                            touchY = this.touchMaxY * (touchY/pxltblApi.touchParams.maxY);
 
 
                             //workout which pixel is being touched...
@@ -633,6 +654,7 @@ var pxltblApi = new function() {
         this.pxlH = this.originalPxlH;
         this.pxlCount = this.pxlW*this.pxlH;
 
+        console.log('*** STARTUP COMPLETE ***');
         this.show();
     };
 
@@ -698,7 +720,7 @@ var pxltblApi = new function() {
 
         try {
             //sent to serial
-            if(this.isRasPi) { //TODO  and serial is enabled
+            if(this.isRasPi && this.serialEnabled) {
                 this.serial.write(Buffer.concat([this.frameStart, serpantineBuffer]), function () {
                     pxltblApi.loop();
 
@@ -879,11 +901,12 @@ var pxltblApi = new function() {
 
     this.getPixel = function(x,y) {
 
-        const pixel = y * this.originalPxlW + x;
+        const pixel = Math.round(y) * this.originalPxlW + Math.round(x);
+
         return {
           r: this.buffer[pixel*3],
-          g: this.buffer[pixel*3],
-          b: this.buffer[pixel*3]
+          g: this.buffer[pixel*3+1],
+          b: this.buffer[pixel*3+2]
         }
     };
 

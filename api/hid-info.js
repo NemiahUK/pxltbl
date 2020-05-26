@@ -9,6 +9,7 @@ console.log(devices);
 const lastDevice = devices.pop();
 const touchPanel = new HID.HID(lastDevice.path);
 
+
 touchPanel.on('data',readTouch);
 
 const touchParams = {

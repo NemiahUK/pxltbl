@@ -1,0 +1,28 @@
+[
+  {
+    "name": "'USB2IIC_CTP_CONTROL'",
+    "comment": "Sunfounder 7 touch panel (PxlTbl mini)",
+    "vendorId": 8746,
+    "productId": 1,
+    "touchPacketSize": 8,
+    "numPoints": 10,
+    "checkPos": 7,
+    "checkValue": 48,
+    "coordPos": 3,
+    "maxX": 4096,
+    "maxY": 4096
+  },
+  {
+    "name": "Multi touch overlay device",
+    "comment": "IR 50in touch frame",
+    "vendorId": 43756,
+    "productId": 49185,
+    "touchPacketSize": 10,
+    "numPoints": 10,
+    "checkPos": 1,
+    "checkValue": 7,
+    "coordPos": 2,
+    "maxX": 32767,
+    "maxY": 32767
+  }
+]

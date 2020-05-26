@@ -24,7 +24,7 @@ var prog;
     api.start({
         callbackLoop: loop,
         fpsLimit: 30,
-        consoleData: true
+        consoleData: false
     });
 
 
@@ -130,6 +130,7 @@ function home() {
         if (api.buttons.left || api.buttons.right || touchEnter) {
             if (curProg === progs.length - 1) {
                 api.clearInputs();
+                return; //disabled for now
                 textScroll = 0;
                 gotProgs = false;
                 screen = 'settings';
