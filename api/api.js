@@ -1,5 +1,7 @@
 //overloading error object to return JSON object - should this go soemwhere else?
 
+
+
 if (!('toJSON' in Error.prototype))
     Object.defineProperty(Error.prototype, 'toJSON', {
         value: function () {
@@ -176,90 +178,97 @@ var pxltblApi = new function() {
 
         try {
             const raspi = require('raspi');
+            const board = require('raspi-board');
+
 
             raspi.init(() => {
 
-                console.log('Raspberry Pi detected, booting...');
-                pxltblApi.isRasPi = true;
+                if(board.getBoardRevision() !== 'unknown') {
+
+                    console.log('Raspberry Pi version: '+board.getBoardRevision()+' detected, booting...');
+                    pxltblApi.isRasPi = true;
 
 
-                //load GPIO
-                const gpio = require('rpi-gpio');
+                    //load GPIO
+                    const gpio = require('rpi-gpio');
 
-                //start button input
-                //TODO use buttonmap object once implimented
-                gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Top
-                gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Right
-                gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Bottom
-                gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Left
-                gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Top
-                gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Left
-                gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Bottom
-                gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Right
-                gpio.setup(31, gpio.DIR_IN, gpio.EDGE_BOTH); //Home
+                    //start button input
+                    //TODO use buttonmap object once implimented
+                    gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Top
+                    gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Right
+                    gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Bottom
+                    gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Left
+                    gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Top
+                    gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Left
+                    gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Bottom
+                    gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Right
+                    gpio.setup(31, gpio.DIR_IN, gpio.EDGE_BOTH); //Home
 
-                gpio.on('change', function(channel, value) {
-                    pxltblApi.setButton(channel,value);
-                });
+                    gpio.on('change', function (channel, value) {
+                        pxltblApi.setButton(channel, value);
+                    });
 
-                //setup HID touch
+                    //setup HID touch
 
-                if(pxltblApi.hidEnabled) {
-                    const HID = require('node-hid');
-                    const hidConfig = require('./hid-config');
+                    if (pxltblApi.hidEnabled) {
+                        const HID = require('node-hid');
+                        const hidConfig = require('./hid-config');
 
-                    const devices = HID.devices();
+                        const devices = HID.devices();
 
-                    for (let i = 0; i < devices.length; i++) {
-                        if(devices[i].path === pxltblApi.hidPath) {
-                            for (let j = 0; j < hidConfig.length; j++) {
-                                if(hidConfig[j].vendorId === devices[i].vendorId && hidConfig[j].productId === devices[i].productId) {
-                                    pxltblApi.touchParams = hidConfig[j];
+                        for (let i = 0; i < devices.length; i++) {
+                            if (devices[i].path === pxltblApi.hidPath) {
+                                for (let j = 0; j < hidConfig.length; j++) {
+                                    if (hidConfig[j].vendorId === devices[i].vendorId && hidConfig[j].productId === devices[i].productId) {
+                                        pxltblApi.touchParams = hidConfig[j];
+                                    }
                                 }
                             }
                         }
+
+                        if (pxltblApi.touchParams.name !== undefined) {
+                            console.log("Found HID device: " + pxltblApi.touchParams.name);
+                            pxltblApi.touchPanel = new HID.HID(pxltblApi.hidPath);
+                            pxltblApi.touchPanel.setNonBlocking(true);
+                        } else {
+                            console.log("HID device at " + pxltblApi.hidPath + " did not match any devices in hid-config.json.");
+                            console.log(devices);
+                        }
+
                     }
 
-                    if(pxltblApi.touchParams.name !== undefined) {
-                        console.log("Found HID device: "+pxltblApi.touchParams.name);
-                        pxltblApi.touchPanel = new HID.HID(pxltblApi.hidPath);
-                        pxltblApi.touchPanel.setNonBlocking(true);
-                    } else {
-                        console.log("HID device at "+pxltblApi.hidPath+" did not match any devices in hid-config.json.");
-                        console.log(devices);
-                    }
-
-                }
-
-                //start serial
-                //TODO this should loop through the available serial devices in config.json and query the device.
-                if(pxltblApi.serialEnabled) {
-                    const Serial = require('raspi-serial').Serial;
-                    pxltblApi.serialPath = pxltblApi.serialDevices[0];
-                    pxltblApi.serial = new Serial({
-                        portId: pxltblApi.serialPath,
-                        baudRate: pxltblApi.baud
-                    });
-
-                    pxltblApi.serial.open(() => {
-                        console.log('Serial port ' + pxltblApi.serialPath + ' open at ' + pxltblApi.baud + ' baud.');
-                        //Setup incoming serial data handler
-                        pxltblApi.serial.on('data', (data) => {
-                            pxltblApi.handleSerial(data);
+                    //start serial
+                    //TODO this should loop through the available serial devices in config.json and query the device.
+                    if (pxltblApi.serialEnabled) {
+                        const Serial = require('raspi-serial').Serial;
+                        pxltblApi.serialPath = pxltblApi.serialDevices[0];
+                        pxltblApi.serial = new Serial({
+                            portId: pxltblApi.serialPath,
+                            baudRate: pxltblApi.baud
                         });
-                        process.stdout.write('Querying pxltable hardware...');
-                        pxltblApi.getParams();
 
-                    });
+                        pxltblApi.serial.open(() => {
+                            console.log('Serial port ' + pxltblApi.serialPath + ' open at ' + pxltblApi.baud + ' baud.');
+                            //Setup incoming serial data handler
+                            pxltblApi.serial.on('data', (data) => {
+                                pxltblApi.handleSerial(data);
+                            });
+                            process.stdout.write('Querying pxltable hardware...');
+                            pxltblApi.getParams();
+
+                        });
+                    } else {
+                        console.log('Serial is disabled.');
+                        console.log('*** STARTUP COMPLETE ***');
+                        pxltblApi.show();
+                    }
+
+
                 } else {
-                    console.log('Serial is disabled.');
+                    console.log('This isn\'t a Raspberry Pi!?? That\'s OK though, I\'ll carry on in software/web only mode...');
                     console.log('*** STARTUP COMPLETE ***');
-                    pxltblApi.show();
+                    this.show();
                 }
-
-
-
-
 
 
 
