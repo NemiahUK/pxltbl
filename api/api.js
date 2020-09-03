@@ -31,8 +31,6 @@ const http = require('http');
 
 
 
-
-
 var pxltblApi = new function() {
 
 
@@ -47,7 +45,7 @@ var pxltblApi = new function() {
     this.colorB = 255;
     this.colorA = 1;
     this.goHome = false; //used to signal intent to return to main menu
-
+    this.idleTimetToScreensaver = 1000 * 60 * 5;
 
     //these can be set at any point (public read/write)
     this.rotation = 0;
@@ -128,9 +126,12 @@ var pxltblApi = new function() {
     //HID device
     this.hidEnabled = false;
     this.touchPanel;                //the touch panel device reference
+    this.touchPanel;                //the touch panel device reference
     this.hidPath;
     this.touchParams = {};
 
+
+    // Replaced buy driver/config file----------------------------------------------------
     //defined - touch panel params
     this.touchMaxX = 32767;     //int16
     this.touchMaxY = 32767;     //int16
@@ -144,6 +145,7 @@ var pxltblApi = new function() {
     this.touchPixelHeight = (this.touchBRpixelY - this.touchTLpixelY) / (this.pxlH - 1);
     this.touchPixelStartX = this.touchTLpixelX - (this.touchPixelWidth / 2);
     this.touchPixelStartY = this.touchTLpixelY - (this.touchPixelHeight / 2);
+    //---------------------------------------------------------------------------------
 
     //touch reading data
     this.touchReadingData = false;
@@ -153,7 +155,8 @@ var pxltblApi = new function() {
     this.touchPacketsPerRead = 0;
 
 
-
+    this.lastInputTime  = new Date().getTime();
+    this.screenSaverDisplayed = false;
 
 
     this.start = function (options) {
@@ -253,7 +256,7 @@ var pxltblApi = new function() {
                             pxltblApi.serial.on('data', (data) => {
                                 pxltblApi.handleSerial(data);
                             });
-                            process.stdout.write('Querying pxltable hardware...');
+                            process.stdout.write('Querying pxltbl hardware...');
                             pxltblApi.getParams();
 
                         });
@@ -276,7 +279,7 @@ var pxltblApi = new function() {
 
 
         } catch (err) {
-            console.log('This isn\'t a Raspberry Pi!?? That\'s OK though, I\'ll carry on in software/web only mode...');
+            console.log('There was an error setting up the Raspberry Pi. That\'s OK though, I\'ll carry on in software/web only mode...');
             console.log('*** STARTUP COMPLETE ***');
             this.show();
         }
@@ -307,6 +310,20 @@ var pxltblApi = new function() {
 
 
     };
+
+    // Used when receiving input to both check if the screensaver is up (return
+    // true if it is) and update the last input variables.
+    this.checkToggleScreensaver = function() {
+        // This should only be called when there has been input, so update the variable.
+        this.lastInputTime = new Date().getTime();
+
+        if (this.screenSaverDisplayed) {
+            this.screenSaverDisplayed = false
+            return false;
+        }
+
+        return true;
+    }
 
 
 
@@ -414,66 +431,70 @@ var pxltblApi = new function() {
     };
 
     this.setButton = function(channel,value) {
-        switch (channel) {
-            case 22:
-                if(this.rotation == 0) this.buttons.leftTop = value;
-                if(this.rotation == 90) this.buttons.bottomLeft = value;
-                if(this.rotation == 180) this.buttons.rightBottom = value;
-                if(this.rotation == 270) this.buttons.topRight = value;
 
-                break;
-            case 37:
-                if(this.rotation == 0) this.buttons.topLeft = value;
-                if(this.rotation == 90) this.buttons.leftBottom = value;
-                if(this.rotation == 180) this.buttons.bottomRight = value;
-                if(this.rotation == 270) this.buttons.rightTop = value;
+        //if screensaver running, discard this event
+        if (this.checkToggleScreensaver()) {
+            switch (channel) {
+                case 22:
+                    if(this.rotation == 0) this.buttons.leftTop = value;
+                    if(this.rotation == 90) this.buttons.bottomLeft = value;
+                    if(this.rotation == 180) this.buttons.rightBottom = value;
+                    if(this.rotation == 270) this.buttons.topRight = value;
 
-                break;
-            case 15:
-                if(this.rotation == 0) this.buttons.topRight = value;
-                if(this.rotation == 90) this.buttons.leftTop = value;
-                if(this.rotation == 180) this.buttons.bottomLeft = value;
-                if(this.rotation == 270) this.buttons.rightBottom = value;
+                    break;
+                case 37:
+                    if(this.rotation == 0) this.buttons.topLeft = value;
+                    if(this.rotation == 90) this.buttons.leftBottom = value;
+                    if(this.rotation == 180) this.buttons.bottomRight = value;
+                    if(this.rotation == 270) this.buttons.rightTop = value;
 
-                break;
-            case 13:
-                if(this.rotation == 0) this.buttons.rightTop = value;
-                if(this.rotation == 90) this.buttons.topLeft = value;
-                if(this.rotation == 180) this.buttons.leftBottom = value;
-                if(this.rotation == 270) this.buttons.bottomRight = value;
+                    break;
+                case 15:
+                    if(this.rotation == 0) this.buttons.topRight = value;
+                    if(this.rotation == 90) this.buttons.leftTop = value;
+                    if(this.rotation == 180) this.buttons.bottomLeft = value;
+                    if(this.rotation == 270) this.buttons.rightBottom = value;
 
-                break;
-            case 36:
-                if(this.rotation == 0) this.buttons.rightBottom = value;
-                if(this.rotation == 90) this.buttons.topRight = value;
-                if(this.rotation == 180) this.buttons.leftTop = value;
-                if(this.rotation == 270) this.buttons.bottomLeft = value;
+                    break;
+                case 13:
+                    if(this.rotation == 0) this.buttons.rightTop = value;
+                    if(this.rotation == 90) this.buttons.topLeft = value;
+                    if(this.rotation == 180) this.buttons.leftBottom = value;
+                    if(this.rotation == 270) this.buttons.bottomRight = value;
 
-                break;
-            case 32:
-                if(this.rotation == 0) this.buttons.bottomRight = value;
-                if(this.rotation == 90) this.buttons.rightTop = value;
-                if(this.rotation == 180) this.buttons.topLeft = value;
-                if(this.rotation == 270) this.buttons.leftBottom = value;
+                    break;
+                case 36:
+                    if(this.rotation == 0) this.buttons.rightBottom = value;
+                    if(this.rotation == 90) this.buttons.topRight = value;
+                    if(this.rotation == 180) this.buttons.leftTop = value;
+                    if(this.rotation == 270) this.buttons.bottomLeft = value;
 
-                break;
-            case 18:
-                if(this.rotation == 0) this.buttons.bottomLeft = value;
-                if(this.rotation == 90) this.buttons.rightBottom = value;
-                if(this.rotation == 180) this.buttons.topRight = value;
-                if(this.rotation == 270) this.buttons.leftTop = value;
+                    break;
+                case 32:
+                    if(this.rotation == 0) this.buttons.bottomRight = value;
+                    if(this.rotation == 90) this.buttons.rightTop = value;
+                    if(this.rotation == 180) this.buttons.topLeft = value;
+                    if(this.rotation == 270) this.buttons.leftBottom = value;
 
-                break;
-            case 16:
-                if(this.rotation == 0) this.buttons.leftBottom = value;
-                if(this.rotation == 90) this.buttons.bottomRight = value;
-                if(this.rotation == 180) this.buttons.rightTop = value;
-                if(this.rotation == 270) this.buttons.topLeft = value;
+                    break;
+                case 18:
+                    if(this.rotation == 0) this.buttons.bottomLeft = value;
+                    if(this.rotation == 90) this.buttons.rightBottom = value;
+                    if(this.rotation == 180) this.buttons.topRight = value;
+                    if(this.rotation == 270) this.buttons.leftTop = value;
 
-                break;
-            case 31:
-                if(value) this.exit();
-                break;
+                    break;
+                case 16:
+                    if(this.rotation == 0) this.buttons.leftBottom = value;
+                    if(this.rotation == 90) this.buttons.bottomRight = value;
+                    if(this.rotation == 180) this.buttons.rightTop = value;
+                    if(this.rotation == 270) this.buttons.topLeft = value;
+
+                    break;
+                case 31:
+                    if(value) this.exit();
+                    break;
+            }
         }
 
         //set virtual buttons
@@ -485,24 +506,32 @@ var pxltblApi = new function() {
         this.buttons.any = this.buttons.top || this.buttons.bottom || this.buttons.left || this.buttons.right;
     };
 
+    //button event fired from web
     this.buttonDown = function(channel) {
         pxltblApi.setButton(channel,true);
 
     };
 
+    //button event fired from web
     this.buttonUp = function(channel) {
         pxltblApi.setButton(channel,false);
 
     };
 
 
+    //touch event fired from web
     //TODO - make these work with arrays (multi touch)
     this.touchDown = function(location) {
-        this.touchWeb[location] = true;
+        if (this.checkToggleScreensaver()) {
+            this.touchWeb[location] = true;
+        }
     };
 
+    //touch event fired from web
     this.touchUp = function(location) {
-        this.touchWeb[location] = false;
+        if (this.checkToggleScreensaver()) {
+            this.touchWeb[location] = false;
+        }
     };
 
     this.getTouch = function(persist) {
@@ -556,6 +585,7 @@ var pxltblApi = new function() {
 
     };
 
+    //not used any more
     this.keyPress = function (str, key) {
         //this logs console keyboard input for debugging
         if (key.ctrl && key.name === 'c') {
@@ -566,7 +596,8 @@ var pxltblApi = new function() {
     this.readTouchPanel = function () {
         
 
-        let dataArray, lastDataArray;
+        let dataArray;
+        const lastTouchArray = pxltblApi.touch;
 
         const now = new Date().getTime();
         pxltblApi.touchReadTime = now - pxltblApi.touchLastRead;
@@ -617,11 +648,16 @@ var pxltblApi = new function() {
         } while(dataArray.length > 0);
 
 
+        //check to see if touchData has changed
+        for (let i = 0; i < pxltblApi.touch.length; ++i ) {
+            if (pxltblApi.touch[i] !== lastTouchArray[i]) {
+                // Touch data changed:
+                this.checkToggleScreensaver();
+                pxltblApi.touch = lastTouchArray;
 
-
-
-
-
+                break;
+            }
+        }
 
     };
 
@@ -680,8 +716,10 @@ var pxltblApi = new function() {
         this.text(this.touchReadTime,0,11);
         */
 
+        var buffer = this.buffer;
         var serpantineBuffer = Buffer.alloc((this.numLeds) * 3);
 
+        if(this.screenSaverDisplayed === true) buffer = Buffer.alloc((this.numLeds) * 3);
         //TODO - this assumes stripStart = 'TL'  - it needs to take this into account.
 
 
@@ -691,25 +729,25 @@ var pxltblApi = new function() {
                     for (var x = 0; x < this.originalPxlW; x++) {
                         var i = y * this.originalPxlW + x;
                         var iReverse = y * this.originalPxlW + (this.originalPxlW - x) - 1;
-                        serpantineBuffer[i * 3] = (this.buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r);
-                        serpantineBuffer[i * 3 + 1] = (this.buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g);
-                        serpantineBuffer[i * 3 + 2] = (this.buffer[iReverse * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b);
+                        serpantineBuffer[i * 3] = (buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r);
+                        serpantineBuffer[i * 3 + 1] = (buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g);
+                        serpantineBuffer[i * 3 + 2] = (buffer[iReverse * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b);
                     }
                 } else { //even row
                     for (var x = 0; x < this.originalPxlW; x++) {
                         var i = y * this.originalPxlW + x;
-                        serpantineBuffer[i * 3] = (this.buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r);
-                        serpantineBuffer[i * 3 + 1] = (this.buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g);
-                        serpantineBuffer[i * 3 + 2] = (this.buffer[i * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b);
+                        serpantineBuffer[i * 3] = (buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r);
+                        serpantineBuffer[i * 3 + 1] = (buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g);
+                        serpantineBuffer[i * 3 + 2] = (buffer[i * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b);
                     }
 
                 }
             }
         } else {
             for (var i = 0; i < this.pxlCount; i++) {
-                serpantineBuffer[i * 3] = (this.buffer[i * 3] * (this.brightness / 255) * this.whiteBalance.r);
-                serpantineBuffer[i * 3 + 1] = (this.buffer[i * 3 + 1] * (this.brightness / 255) * this.whiteBalance.g);
-                serpantineBuffer[i * 3 + 2] = (this.buffer[i * 3 + 2] * (this.brightness / 255) * this.whiteBalance.b);
+                serpantineBuffer[i * 3] = (buffer[i * 3] * (this.brightness / 255) * this.whiteBalance.r);
+                serpantineBuffer[i * 3 + 1] = (buffer[i * 3 + 1] * (this.brightness / 255) * this.whiteBalance.g);
+                serpantineBuffer[i * 3 + 2] = (buffer[i * 3 + 2] * (this.brightness / 255) * this.whiteBalance.b);
             }
             //todo add RGB => GRB conversion, brightness etc
         }
@@ -719,11 +757,11 @@ var pxltblApi = new function() {
             if(serpantineBuffer[i] === 1) serpantineBuffer[i] = 0;
         }
 
-        
-        
+
+
         //send to web
         if(this.webClients) {
-            this.webIo.volatile.emit('leds', this.buffer);
+            this.webIo.volatile.emit('leds', buffer);
 
         }
 
@@ -1172,6 +1210,19 @@ var pxltblApi = new function() {
 
 
 
+        // Check idle time/screensaver
+        let sSaverTime = new Date().getTime() - this.lastInputTime;
+
+
+        if (sSaverTime >= this.idleTimetToScreensaver) {
+            this.screenSaverDisplayed = true;
+        }
+
+
+
+
+
+
         var curTime = new Date().getTime();
         this.frameTime = curTime - this.lastLoopTime;
 
@@ -1185,7 +1236,7 @@ var pxltblApi = new function() {
         this.frames++;
         this.lastLoopTime = new Date().getTime();
 
-        //update the console every 500ms
+        //update the console every 1000ms
         if (curTime - this.lastStatsTime > 1000) {
 
             this.fps = Math.floor(this.frames * 1000 / (curTime - this.lastStatsTime));
@@ -1210,7 +1261,7 @@ var pxltblApi = new function() {
 
                 console.log('Touch read time: ' + this.touchReadTime);
                 console.log('Touch packets per read: ' + this.touchPacketsPerRead);
-                //console.log('Touch: ' + this.touch);
+                console.log('Touch: ' + this.touch);
                 //console.log(Buffer.concat([this.frameStart, this.buffer]));
                 /*
                 for (var i = 0; i < this.buffer.length; i++) {
@@ -1235,7 +1286,8 @@ var pxltblApi = new function() {
                     length: this.buffer.length,
                     pxlW: this.originalPxlW,
                     pxlH: this.originalPxlH,
-                    rotation: this.rotation
+                    rotation: this.rotation,
+                    sSaverTime: sSaverTime
                 });
             }
 
@@ -1246,7 +1298,7 @@ var pxltblApi = new function() {
         //run the external loop function - this is where all the user code is
         this.cbLoop(this);
 
-        //debug overlay
+
 
 
 

@@ -23,7 +23,7 @@
     "raspi-i2c": "^6.2.4",
     "raspi-io": "^11.0.0",
     "raspi-serial": "^6.0.0",
-    "raspi-board": "^7.3.1",
+    "raspi-board": "^7.3.3",
     "rpi-gpio": "^2.1.5",
     "node-hid": "^1.2.0"
   }
