@@ -2,13 +2,15 @@
 <html lang="en">
     <head>
     <meta charset="utf-8">
-        <script
-                src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
                 integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
                 crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/js/bootstrap.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="/script.js"></script>
 
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css" rel="stylesheet">
         <link href="styles.css" rel="stylesheet">
 
         <title>Pixel Table</title>
@@ -19,7 +21,7 @@
     </head>
 
     <body class="">
-        <div class="center">
+        <div class="text-center">
             <div id="pxlTbl">
                 <button class="push--flat" data-cmd="37" style="top:0; left:8vmin;"></button>
                 <button class="push--flat" data-cmd="15" style="top:0; right: 8vmin;"></button>
@@ -40,7 +42,12 @@
         </div>
         <div id="rotate-padding"></div>
 
-        <div id="console">
+        <div class="tab">
+            <button class="tablinks btn btn-dark active" onclick="openTab(event, 'console')">Console</button>
+            <button class="tablinks btn btn-dark" onclick="openTab(event, 'prog-manager')">Prog Manager</button>
+        </div>
+
+        <div id="console" class="tab-content">
             <p>Connecting...</p>
         </div>
         <ul id="stats">
