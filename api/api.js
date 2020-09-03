@@ -65,6 +65,7 @@ var pxltblApi = new function() {
     this.consoleData = true;
     //callback function
     this.cbLoop;
+    this.emulationOnly = false;
 
     //these should be gotten from the firmware or overridden for no-pi emulation
     this.originalPxlW = 32;
@@ -170,7 +171,7 @@ var pxltblApi = new function() {
         this.serialDevices = config.serial.devices;
         this.baud = config.serial.baud;
         this.hidEnabled = config.hid.enabled;
-        this.hidPath = config.hid.device;
+
 
         //setup options
         if(options.consoleData !== undefined) this.consoleData = options.consoleData;

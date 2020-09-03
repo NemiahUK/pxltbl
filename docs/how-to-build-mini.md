@@ -1,10 +1,6 @@
 # How to build the PxlTbl mini
 
 # RasPi Setup
-## Enable audio over I2S (check this still applies)
-
-Follow the instructions here: https://learn.adafruit.com/adafruit-max98357-i2s-class-d-mono-amp/raspberry-pi-usage
-
 
 ## Set screen res to 1024x600
 
@@ -30,8 +26,16 @@ Disable boot info (this is usually already done), edit this file: `/boot/cmdline
 Delete the `console=serail0,115200` part.
 
 
+## Setup audio shield
+
+TODO
+
 
 ## Install
+
+### Install node/npm
+
+TODO
 
 ### Prerequisites for node-hid 
 
@@ -50,14 +54,12 @@ libusb-1.0-0 w/headers:
 libudev-dev: 
 
     sudo apt-get install libudev-dev
-
-
-## Next...
-
-
-* Disable touch screen for X11
-
     
+## Configure pxltbl
+
+Edit config.json and set `serialEnabled : false`
+
+
 ## Enable auto run as service
 
 Copy service file

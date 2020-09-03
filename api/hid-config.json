@@ -1,6 +1,6 @@
 [
   {
-    "name": "'USB2IIC_CTP_CONTROL'",
+    "name": "USB2IIC_CTP_CONTROL",
     "comment": "Sunfounder 7 touch panel (PxlTbl mini)",
     "vendorId": 8746,
     "productId": 1,

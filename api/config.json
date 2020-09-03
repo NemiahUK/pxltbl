@@ -1,10 +1,9 @@
 {
   "hid" : {
-    "enabled" : "true",
-    "device" : "/dev/hidraw1"
+    "enabled" : true,
   },
   "serial" : {
-    "enabled" : "true",
+    "enabled" : true,
     "devices" : [
       "/dev/ttyS0"
     ],
