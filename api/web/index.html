@@ -43,13 +43,18 @@
         <div id="rotate-padding"></div>
 
         <div class="tab">
-            <button class="tablinks btn btn-dark active" onclick="openTab(event, 'console')">Console</button>
-            <button class="tablinks btn btn-dark" onclick="openTab(event, 'prog-manager')">Prog Manager</button>
+            <button class="tab__link btn btn-dark active" onclick="openTab(event, 'console')">Console</button>
+            <button class="tab__link btn btn-dark" onclick="openTab(event, 'prog-manager')">Prog Manager</button>
         </div>
 
-        <div id="console" class="tab-content">
+        <div id="console" class="tab__content">
             <p>Connecting...</p>
         </div>
+
+        <div id="prog-manager" class="tab__content">
+            <p>Connecting...</p>
+        </div>
+
         <ul id="stats">
 
         </ul>
