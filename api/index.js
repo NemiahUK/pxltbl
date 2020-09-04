@@ -80,7 +80,7 @@ function home() {
         fs.readdir(path, function(err, items) {
 
 
-            for (var i=0; i<items.length; i++) {
+            for (let i = 0; i < items.length; i++) {
                 progs.push(items[i].substr(0,items[i].length-3));
 
             }
