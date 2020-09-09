@@ -86,39 +86,7 @@ function home() {
         progs = [];
 
 
-        // const { lstatSync, readdirSync } = require('fs')
-        // const { join } = require('path')
-        //
-        // const isDirectory = source => lstatSync(source).isDirectory()
-        // const getDirectories = source =>
-        //     readdirSync(source).map(name => join(source, name)).filter(isDirectory);
-        //
-        // const directories = getDirectories(path);
-        // api.debug(path);
-        //
-        //
-        //
-        // for (let i = 0; i < directories.length; i++) {
-        //     api.debug(directories[i]);
-        //     try {
-        //         if (fs.existsSync(path + '/' + directories[i] + '/main.js')) {
-        //             progs.push(directories[i])
-        //         }
-        //     } catch(err) {
-        //         console.error(err)
-        //     }
-        // }
-        //
-        // progs.push('Settings');
-        // textScroll = 0;
-        // preTextScroll = api.pxlW;
-        // if (curProg >= progs.length) curProg = 0;
-        // gettingProgs = false;
-        // gotProgs = true;
-
-
         fs.readdir(path, function(err, items) {
-
 
             for (let i = 0; i < items.length; i++) {
 
@@ -129,39 +97,6 @@ function home() {
                 } catch(err) {
                     console.error(err)
                 }
-
-
-
-                // if (items[i].substr(items[i].length - 3, items[i].length) === ".js") {
-                //     api.debug(items[i]);
-                //     progs.push(items[i].substr(0, items[i].length - 3));
-                // }
-                // else {
-                //     fs.readdir(path + '/' + items[i], function(err, files) {
-                //         for (let i = 0; i < files.length; i++) {
-                //             if (files[i] === 'main.js') {
-                //                 progs.push(items[i]);
-                //                 break;
-                //             }
-                //         }
-                //     });
-                // }
-
-
-
-
-                // if (!(items[i].substr(items[i].length - 3, items[i].length) === ".js")) {
-                //     fs.readdir(path + '/' + items[i], function(err, files) {
-                //         for (let j = 0; j < files.length; j++) {
-                //             api.debug(files[j]);
-                //             if (files[j] === 'main.js') {
-                //                 progs.push(items[i]);
-                //                 break;
-                //             }
-                //         }
-                //     });
-                // }
-
             }
 
             progs.push('Settings');
