@@ -18,6 +18,7 @@ const http = require('http');                               // HTTP tools
 const log = require('fancy-log');                           // Better debug messaging a support for colors
 const c = require('ansi-colors');                           // Easily switch between different ANSI colors, great for console logging.
 
+
 /**
  * This function is used to set up a singleton instance of our API class.
  *
@@ -97,6 +98,8 @@ const pxlTbl = ( function() {
         #touchPanel = null;                                 // The touch panel device reference
         #hidPath = '';                                      // TODO I think this needs removing - Ste
         #touchParams = {};
+
+        // Sounds
 
 
         /* --- Options --- */
@@ -1354,47 +1357,49 @@ const pxlTbl = ( function() {
 
         /* --- Sounds --- */
 
+        /**
+         * TODO: JS Docs
+         *
+         * @param freq
+         * @param duration
+         * @param waveform
+         */
         beep = (freq, duration, waveform) => {
-            //plays a sound
+
 
         };
 
         playWav = function (fileName,loop) {
+            // var player = require('node-wav-player');
+            //
+            // if(loop === undefined) loop = false;
+            //
+            //
+            // player.play({
+            //     path: './wav/'+fileName+'.wav',
+            //     loop: loop
+            // }).then(() => {
+            //
+            // }).catch((error) => {
+            //     pxltblApi.error('Could not load wav: '+fileName);
+            // });
+            //
+            // return player;
 
 
-            var player = require('node-wav-player');
+            // const file = fs.createReadStream('wav/'+fileName+'.wav');
+            // const reader = new wav.Reader();
+            //
+            // // the "format" event gets emitted at the end of the WAVE header
+            // reader.on('format', function (format) {
+            //
+            //     // the WAVE header is stripped from the output of the reader
+            //     reader.pipe(new Speaker(format));
+            // });
+            //
+            // // pipe the WAVE file to the Reader instance
+            // file.pipe(reader);
 
-            if(loop === undefined) loop = false;
-
-
-            player.play({
-                path: './wav/'+fileName+'.wav',
-                loop: loop
-            }).then(() => {
-
-            }).catch((error) => {
-                pxltblApi.error('Could not load wav: '+fileName);
-            });
-
-            return player;
-
-            /*
-
-            var file = fs.createReadStream('wav/'+fileName+'.wav');
-            var reader = new wav.Reader();
-
-            // the "format" event gets emitted at the end of the WAVE header
-            reader.on('format', function (format) {
-
-                // the WAVE header is stripped from the output of the reader
-                reader.pipe(new Speaker(format));
-            });
-
-            // pipe the WAVE file to the Reader instance
-            file.pipe(reader);
-
-
-            */
 
 
         };
