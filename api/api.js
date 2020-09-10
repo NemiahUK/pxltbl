@@ -51,16 +51,18 @@ const pxlTbl = ( function() {
 
 
         #isRasPi = false;                                   // Is true when the API is running on a physical PxlTbl, false when using the web emulator
-        #frameTime = 0;                                     // ???
-        #millis = 0;                                        // ???
-        #frames = 0;                                        // ???
-        #fps = 0;                                           // Current FPS (frame per second) count???
+        #frameTime = 0;                                     // The frame time of the last frame rendered
+        #millis = 0;                                        // Number of ms since start
+        #frames = 0;                                        // Number of frames rendered
+        #fps = 0;                                           // Current frames per second
+
+
         #colorR = 255;                                      // Color red channel
         #colorG = 255;                                      // Color green channel
         #colorB = 255;                                      // Color blue channel
         #colorA = 1;                                        // Color alpha channel (transparency)
         #goHome = false;                                    // Used to signal intent to return to main menu
-        #paused = false;                                    // TODO: Not implemented
+        #screenSaverDisplayed = false;                      // Is the screensaver being displayed
         #idleTimeLimit = 1000 * 60 * 5;                     // Amount of time in milliseconds until a screensaver is displayed
         #rotation = 0;
         #brightness = 200;                                  // Brightness setting for the screen
@@ -83,6 +85,7 @@ const pxlTbl = ( function() {
         #startTime = null;                                  // ???
         #lastLoopTime = null;                               // ???
         #lastStatsTime = null;                              // ???
+        #lastInputTime = null;
 
         #webServer = '';                                    // ???
         #webIo = '';                                        // ???
@@ -92,7 +95,7 @@ const pxlTbl = ( function() {
         //HID device
         #hidEnabled = false;
         #touchPanel = null;                                 // The touch panel device reference
-        #hidPath = '';
+        #hidPath = '';                                      // TODO I think this needs removing - Ste
         #touchParams = {};
 
 
@@ -105,7 +108,7 @@ const pxlTbl = ( function() {
         #fpsLimit = 30;                                     // Limit the frames per second so we won't over work the hardware rendering useless frame. Good values would be 30 or 60
         #cbLoop = null;                                     // This is a place holder for the user's main loop. Users will pass a loop function into the API before run time and it can be called though this variable.
         #emulationOnly = false;                             // ???
-
+        #screenSaverDelay = 10000;                          // Time in ms before screensaver starts
 
         // TODO: The following should be gotten from the firmware or overridden for no-pi emulation
 
@@ -203,112 +206,7 @@ const pxlTbl = ( function() {
 
             if(!settings.hasOwnProperty('fpsLimit')) this.#fpsLimit = parseInt(settings.fpsLimit);
 
-            // Check if we are running on a Raspberry Pi
-            // try {
-            //     const raspi = require('raspi');
-            //     const board = require('raspi-board');
-            //
-            //
-            //     raspi.init(() => {
-            //
-            //
-            //         if(board.getBoardRevision() !== 'unknown') {
-            //
-            //             console.log('Raspberry Pi version: '+board.getBoardRevision()+' detected, booting...');
-            //             pxltblApi.isRasPi = true;
-            //
-            //
-            //             //load GPIO
-            //             const gpio = require('rpi-gpio');
-            //
-            //             //start button input
-            //             //TODO use buttonmap object once implimented
-            //             gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Top
-            //             gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Right
-            //             gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Bottom
-            //             gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Left
-            //             gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Top
-            //             gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Left
-            //             gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Bottom
-            //             gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Right
-            //             gpio.setup(31, gpio.DIR_IN, gpio.EDGE_BOTH); //Home
-            //
-            //             gpio.on('change', function (channel, value) {
-            //                 pxltblApi.setButton(channel, value);
-            //             });
-            //
-            //             //setup HID touch
-            //
-            //             if (this.#hidEnabled) {
-            //                 const HID = require('node-hid');
-            //                 const hidConfig = require('./hid-config');
-            //
-            //                 const devices = HID.devices();
-            //
-            //                 for (let i = 0; i < devices.length; i++) {
-            //                     if (devices[i].path === pxltblApi.hidPath) {
-            //                         for (let j = 0; j < hidConfig.length; j++) {
-            //                             if (hidConfig[j].vendorId === devices[i].vendorId && hidConfig[j].productId === devices[i].productId) {
-            //                                 pxltblApi.touchParams = hidConfig[j];
-            //                             }
-            //                         }
-            //                     }
-            //                 }
-            //
-            //                 if (pxltblApi.touchParams.name !== undefined) {
-            //                     console.log("Found HID device: " + pxltblApi.touchParams.name);
-            //                     pxltblApi.touchPanel = new HID.HID(pxltblApi.hidPath);
-            //                     pxltblApi.touchPanel.setNonBlocking(true);
-            //                 } else {
-            //                     console.log("HID device at " + pxltblApi.hidPath + " did not match any devices in hid-config.json.");
-            //                     console.log(devices);
-            //                 }
-            //
-            //             }
-            //
-            //             //start serial
-            //             //TODO this should loop through the available serial devices in config.json and query the device.
-            //             if (pxltblApi.serialEnabled) {
-            //                 const Serial = require('raspi-serial').Serial;
-            //                 pxltblApi.serialPath = pxltblApi.serialDevices[0];
-            //                 pxltblApi.serial = new Serial({
-            //                     portId: pxltblApi.serialPath,
-            //                     baudRate: pxltblApi.baud
-            //                 });
-            //
-            //                 pxltblApi.serial.open(() => {
-            //                     console.log('Serial port ' + pxltblApi.serialPath + ' open at ' + pxltblApi.baud + ' baud.');
-            //                     //Setup incoming serial data handler
-            //                     pxltblApi.serial.on('data', (data) => {
-            //                         pxltblApi.handleSerial(data);
-            //                     });
-            //                     process.stdout.write('Querying pxltbl hardware...');
-            //                     pxltblApi.getParams();
-            //
-            //                 });
-            //             } else {
-            //                 console.log('Serial is disabled.');
-            //                 console.log('*** STARTUP COMPLETE ***');
-            //                 pxltblApi.show();
-            //             }
-            //
-            //
-            //         } else {
-            //             console.log('This isn\'t a Raspberry Pi!?? That\'s OK though, I\'ll carry on in software/web only mode...');
-            //             console.log('*** STARTUP COMPLETE ***');
-            //             this.show();
-            //         }
-            //
-            //
-            //
-            //     });
-            //
-            //
-            // } catch (err) {
-            //     console.log('There was an error setting up the Raspberry Pi. That\'s OK though, I\'ll carry on in software/web only mode...');
-            //     console.log('*** STARTUP COMPLETE ***');
-            //     this.show();
-            // }
+
 
 
             //start web server
@@ -317,11 +215,123 @@ const pxlTbl = ( function() {
             // TODO: Port hosted from should be a setting. Make the port displayed in the address here dynamic too when implemented.
             if(!this.#consoleData) console.log('Console display disabled, visit http://127.0.0.1:3000 to view stats.');
 
+            //Go go go!
+            this.start();
+
+
+
         }
 
         /* --- Internal methods  --- */
 
         start() {
+            // Check if we are running on a Raspberry Pi
+            try {
+                const raspi = require('raspi');
+                const board = require('raspi-board');
+
+
+                raspi.init(() => {
+
+
+                    if(board.getBoardRevision() !== 'unknown') {
+
+                        console.log('Raspberry Pi version: '+board.getBoardRevision()+' detected, booting...');
+                        this.#isRasPi = true;
+
+
+                        //load GPIO
+                        const gpio = require('rpi-gpio');
+
+                        //start button input
+                        //TODO use buttonmap object once implimented
+                        gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Top
+                        gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Right
+                        gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Bottom
+                        gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Left
+                        gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Top
+                        gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Left
+                        gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Bottom
+                        gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Right
+                        gpio.setup(31, gpio.DIR_IN, gpio.EDGE_BOTH); //Home
+
+                        gpio.on('change',  (channel, value) => {
+                            this.setButton(channel, value);
+                        });
+
+                        //setup HID touch
+
+                        if (this.#hidEnabled) {
+                            const HID = require('node-hid');
+                            const hidConfig = require('./hid-config');
+
+                            const devices = HID.devices();
+
+                            for (let i = 0; i < devices.length; i++) {
+                                if (devices[i].path === this.#hidPath) { //TODO I'm not sure why we are checking the path here. We should jsut be looking for mathing HD device on any path
+                                    for (let j = 0; j < hidConfig.length; j++) {
+                                        if (hidConfig[j].vendorId === devices[i].vendorId && hidConfig[j].productId === devices[i].productId) {
+                                            this.#touchParams = hidConfig[j];
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (this.#touchParams.name !== undefined) {
+                                console.log("Found HID device: " + this.#touchParams.name);
+                                this.#touchPanel = new HID.HID(pxltblApi.hidPath);
+                                this.#touchPanel.setNonBlocking(true);
+                            } else {
+                                //TODO display this a bit better
+                                console.log("HID device at " + this.#hidPath + " did not match any devices in hid-config.json.");
+                                console.log(devices);
+                            }
+
+                        }
+
+                        //start serial
+                        //TODO this should loop through the available serial devices in config.json and query the device.
+                        if (this.#serialEnabled) {
+                            const Serial = require('raspi-serial').Serial;
+                            this.#serialPath = this.#serialDevices[0];
+                            this.#serial = new Serial({
+                                portId: this.#serialPath,
+                                baudRate: this.#baud
+                            });
+
+                            this.#serial.open(() => {
+                                console.log('Serial port ' + this.#serialPath + ' open at ' + this.#baud + ' baud.');
+                                //Setup incoming serial data handler
+                                this.#serial.on('data', (data) => {
+                                    this.handleSerial(data);
+                                });
+                                process.stdout.write('Querying pxltbl hardware...');
+                                this.getParams();
+
+                            });
+                        } else {
+                            console.log('Serial is disabled.');
+                            console.log('*** STARTUP COMPLETE ***');
+                            this.show();
+                        }
+
+
+                    } else {
+                        console.log('This isn\'t a Raspberry Pi!?? That\'s OK though, I\'ll carry on in software/web only mode...');
+                        console.log('*** STARTUP COMPLETE ***');
+                        this.show();
+                    }
+
+
+
+                });
+
+
+            } catch (err) {
+                console.log('There was an error setting up the Raspberry Pi. That\'s OK though, I\'ll carry on in software/web only mode...');
+                console.log('*** STARTUP COMPLETE ***');
+                this.show();
+            }
 
         }
 
@@ -415,64 +425,78 @@ const pxlTbl = ( function() {
 
         loop() {
 
-            //the main loop
-
-            this.readTouchPanel();
-
+            //read touch data (if HID connected)
+            //this.readTouchPanel();
 
 
             // Check idle time/screensaver
-            let sSaverTime = new Date().getTime() - this.lastInputTime;
+            let sSaverTime = new Date().getTime() - this.#lastInputTime;
 
-
-            if (sSaverTime >= this.idleTimetToScreensaver) {
-                this.screenSaverDisplayed = true;
+            if (sSaverTime >= this.#screenSaverDelay) {
+                this.#screenSaverDisplayed = true;
             }
 
+            let curTime = new Date().getTime();
+            this.#frameTime = curTime - this.#lastLoopTime;
 
 
-
-
-
-            var curTime = new Date().getTime();
-            this.frameTime = curTime - this.lastLoopTime;
-
-            while (this.fpsLimit > 0 && this.frameTime < Math.floor(1000 / this.fpsLimit)) {
+            //delay if we are exceeding max FPS
+            while (this.#fpsLimit > 0 && this.#frameTime < Math.floor(1000 / this.#fpsLimit)) {
                 curTime = new Date().getTime();
-                this.frameTime = curTime - this.lastLoopTime;
+                this.#frameTime = curTime - this.#lastLoopTime;
             }
 
-            this.millis = curTime - this.startTime;
+            this.#millis = curTime - this.#startTime;
+            this.#frames++;
+            this.#lastLoopTime = new Date().getTime();
 
-            this.frames++;
-            this.lastLoopTime = new Date().getTime();
+            //push runtime stats to console and web
+            this.showStats();
 
-            //update the console every 1000ms
-            if (curTime - this.lastStatsTime > 1000) {
 
-                this.fps = Math.floor(this.frames * 1000 / (curTime - this.lastStatsTime));
-                this.lastStatsTime = curTime;
-                this.frames = 0;
+            //run the external loop function - this is where all the user code is
+            if(typeof this.#cbLoop == "function") this.#cbLoop(this);
 
-                var minFrameTime = Math.round(1000 / this.fpsLimit);
 
-                if(this.consoleData) {
+            //update display and start again
+            this.show();
+
+
+        }
+
+
+        /**
+         * Show stats on console/web
+         */
+
+        showStats() {
+            //update the web/console every 1000ms
+            let curTime = new Date().getTime();
+            if (curTime - this.#lastStatsTime > 1000) { //TODO replace 1000 with const
+
+                this.#fps = Math.floor(this.frames * 1000 / (curTime - this.#lastStatsTime));
+                this.#lastStatsTime = curTime;
+                this.#frames = 0;
+
+                const minFrameTime = Math.round(1000 / this.#fpsLimit);
+
+                if(this.#consoleData) {
                     console.clear();
-                    console.log('Is RasPi: ' + this.isRasPi);
-                    console.log('Web Clients: ' + this.webClients);
-                    console.log('Millis: ' + this.millis);
-                    console.log('Game FPS: ' + this.fps);
-                    console.log('FPS limit: ' + this.fpsLimit);
-                    console.log('Frame time: ' + this.frameTime);
+                    console.log('Is RasPi: ' + this.#isRasPi);
+                    console.log('Web Clients: ' + this.#webClients);
+                    console.log('Millis: ' + this.#millis);
+                    console.log('Game FPS: ' + this.#fps);
+                    console.log('FPS limit: ' + this.#fpsLimit);
+                    console.log('Frame time: ' + this.#frameTime);
                     console.log('Min frame time: ' + minFrameTime);
-                    console.log('Screen size: ' + this.pxlW+'x'+this.pxlH+' ('+this.pxlW*this.pxlH+')');
-                    console.log('Total num of pixels: ' + this.buffer.length/3);
-                    console.log('Frame size: ' + (this.buffer.length + this.frameStart.length) + ' bytes');
-                    console.log('Bandwidth: ' + Math.round((this.buffer.length+this.frameStart.length) * this.fps * 8 / 1024) +' kbps (Available: '+this.baud / 1000 +' kbps)');
+                    console.log('Screen size: ' + this.#pxlW+'x'+this.#pxlH+' ('+this.#pxlW*this.#pxlH+')');
+                    console.log('Total num of pixels: ' + this.#buffer.length/3);
+                    console.log('Frame size: ' + (this.#buffer.length + this.#frameStart.length) + ' bytes');
+                    console.log('Bandwidth: ' + Math.round((this.#buffer.length+this.#frameStart.length) * this.#fps * 8 / 1024) +' kbps (Available: '+this.#baud / 1000 +' kbps)');
 
-                    console.log('Touch read time: ' + this.touchReadTime);
-                    console.log('Touch packets per read: ' + this.touchPacketsPerRead);
-                    console.log('Touch: ' + this.touch);
+                    //console.log('Touch read time: ' + this.#touchReadTime);
+                    //console.log('Touch packets per read: ' + this.#touchPacketsPerRead);
+                    console.log('Touch: ' + this.#touch);
                     //console.log(Buffer.concat([this.frameStart, this.buffer]));
                     /*
                     for (var i = 0; i < this.buffer.length; i++) {
@@ -485,36 +509,23 @@ const pxlTbl = ( function() {
                 //this.dump();
 
                 //send to web
-                if(this.webClients) {
-                    this.webIo.emit('frameData', {
-                        webClients: this.webClients,
-                        millis: this.millis,
-                        fps: + this.fps,
-                        fpsLimit: this.fpsLimit,
-                        frameTime: this.frameTime,
+                if(this.#webClients) {
+                    this.#webIo.emit('frameData', {
+                        webClients: this.#webClients,
+                        millis: this.#millis,
+                        fps: + this.#fps,
+                        fpsLimit: this.#fpsLimit,
+                        frameTime: this.#frameTime,
                         minFrameTime: minFrameTime,
-                        length: this.buffer.length,
-                        pxlW: this.originalPxlW,
-                        pxlH: this.originalPxlH,
-                        rotation: this.rotation,
-                        sSaverTime: sSaverTime
+                        length: this.#buffer.length,
+                        pxlW: this.#originalPxlW,
+                        pxlH: this.#originalPxlH,
+                        rotation: this.#rotation
                     });
                 }
 
 
             }
-
-
-            //run the external loop function - this is where all the user code is
-            this.cbLoop(this);
-
-
-
-
-
-            //update display and start again
-            if (!this.paused) this.show();
-
 
         }
 
@@ -524,18 +535,176 @@ const pxlTbl = ( function() {
          */
 
         show() {
+            //pushes the buffer to the Teensy via UART and web.
+
+            //touch debug overlay
+            /*
+            for (let i = 0; i < this.touch.length; i++) {
+                if(this.touch[i]) this.buffer[i*3] = 255;
+            }
+            this.setColor(255,0,255);
+            this.text(this.touchRawDataLength,0,0);
+            this.text(this.touchReadTime,0,11);
+            */
+
+            let buffer = this.#buffer;
+            let serialBuffer = Buffer.alloc((this.#numLeds) * 3);
+
+            //if screensaver is active then blank the buffer
+            if(this.#screenSaverDisplayed === true) buffer = Buffer.alloc((this.#numLeds) * 3);
+
+
+            //TODO - this assumes stripStart = 'TL'  - it needs to take this into account.
+            //TODO add RGB => GRB conversion etc
+            if (this.stripSerpantine === true) {
+                for (let y = 0; y < this.originalPxlH; y++) {
+                    if (y % 2) { //odd row
+                        for (let x = 0; x < this.originalPxlW; x++) {
+                            let i = y * this.originalPxlW + x;
+                            let iReverse = y * this.originalPxlW + (this.originalPxlW - x) - 1;
+                            serialBuffer[i * 3] = (buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r);
+                            serialBuffer[i * 3 + 1] = (buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g);
+                            serialBuffer[i * 3 + 2] = (buffer[iReverse * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b);
+                        }
+                    } else { //even row
+                        for (let x = 0; x < this.originalPxlW; x++) {
+                            let i = y * this.originalPxlW + x;
+                            serialBuffer[i * 3] = (buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r);
+                            serialBuffer[i * 3 + 1] = (buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g);
+                            serialBuffer[i * 3 + 2] = (buffer[i * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b);
+                        }
+
+                    }
+                }
+            } else {
+                for (let i = 0; i < this.pxlCount; i++) {
+                    serialBuffer[i * 3] = (buffer[i * 3] * (this.brightness / 255) * this.whiteBalance.r);
+                    serialBuffer[i * 3 + 1] = (buffer[i * 3 + 1] * (this.brightness / 255) * this.whiteBalance.g);
+                    serialBuffer[i * 3 + 2] = (buffer[i * 3 + 2] * (this.brightness / 255) * this.whiteBalance.b);
+                }
+
+            }
+
+            //remove 1s from serial buffer (a value of 1 is our end of frame character)
+            for (let i = 0; i < serialBuffer.length; i++) {
+                if(serialBuffer[i] === 1) serialBuffer[i] = 0;
+            }
+
+
+
+            //send to web
+            if(this.#webClients) {
+                this.#webIo.volatile.emit('leds', buffer);
+
+            }
+
+            try {
+                //send to serial
+                if(this.#isRasPi && this.#serialEnabled) {
+                    this.#serial.write(Buffer.concat([this.#frameStart, serialBuffer]), () => {
+                        this.loop();
+
+                    });
+                } else {
+                    setTimeout(() => {
+                        this.loop();
+                    },1);
+
+                }
+
+
+            } catch (err) {
+                this.error(err);
+            }
 
         }
 
 
 
+        /**
+         * Used when receiving input to both check if the screensaver is up (return
+         * true if it is) and update the last input variables.
+         */
+
+        checkToggleScreensaver() {
+            // This should only be called when there has been input, so update the variable.
+            this.#lastInputTime = new Date().getTime();
+
+            if (this.#screenSaverDisplayed) {
+                this.#screenSaverDisplayed = false
+                return false;
+            }
+
+            return true;
+        }
+
+        /**
+         * Reads touch panel data andpopulates touch variables
+         */
+        readTouchPanel() {
+
+        }
+
+        /**
+         * Sends serial data to the Teensy to get it to respond with it's hardware params
+         */
+        getParams() {
+
+        }
+
+        /**
+         * Handles any serial data sent back form the teensy (i.e. hardware params)
+         */
+        handleSerial() {
+
+        }
 
 
+        /* --- Web / interaction methods --- */
+
+        /**
+         * Used to set a button state
+         */
+        setButtonByName(name,value) {
+
+        };
+
+        /**
+         * Used to set a button state
+         */
+        setButton(channel,value) {
+
+        };
+
+        buttonDown(channel) {
 
 
+        };
 
 
+        /**
+         * button event fired from web
+         */
+        buttonUp(channel) {
 
+
+        };
+
+
+        /**
+         * touch event fired from web
+         */
+        touchDown(location) {
+            //TODO - make these work with arrays (multi touch)
+
+        };
+
+        /**
+         * touch event fired from web
+         */
+        touchUp(location) {
+
+        };
 
 
         /* --- API methods --- */
@@ -543,7 +712,7 @@ const pxlTbl = ( function() {
         /**
          * Exits and shuts down the PxlTbl
          */
-        quit() {
+        shutdown() {
             this.debug('Closing...');
             // TODO: this.#serial.close(function(){process.exit();});
         };
