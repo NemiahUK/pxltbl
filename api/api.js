@@ -65,6 +65,7 @@ const pxlTbl = ( function() {
         #idleTimeLimit = 1000 * 60 * 5;                     // Amount of time in milliseconds until a screensaver is displayed
         #orientation = 0;
         #brightness = 200;                                  // Brightness setting for the screen
+        #fontArray = [];                                    // Holds the font that is used when calling `text()` and similar methods.
         #whiteBalance = {
             r: 1.0,
             g: 0.9,
@@ -103,7 +104,7 @@ const pxlTbl = ( function() {
         // These are the defaults, overridden by the settings object passed into `pxlTbl.setup()`.
 
         #debugging = false;                                 // When true, the API will output TODO: should we grab a default value from an environment/config file?
-        #consoleDisplay = false;                               // When true, a graphical representqtion of the PxlTbl data is displayed in the console window.
+        #consoleDisplay = false;                            // When true, a graphical representation of the PxlTbl data is displayed in the console window.
         #fpsLimit = 30;                                     // Limit the frames per second so we won't over work the hardware rendering useless frame. Good values would be 30 or 60
         #cbLoop = null;                                     // This is a place holder for the user's main loop. Users will pass a loop function into the API before run time and it can be called though this variable.
         #emulationOnly = false;                             // ???
@@ -168,6 +169,9 @@ const pxlTbl = ( function() {
 
             this.#originalPxlW = config.pixels.width; // TODO: Get from config/hardware
             this.#originalPxlH = config.pixels.height; // TODO: Get from config/hardware
+
+            // Set the font
+            this.setFont(); // TODO: need to be able to
 
 
             /* --- Derived values --- */
@@ -716,10 +720,6 @@ const pxlTbl = ( function() {
         /**********************************************************************
          * List of API methods for reference:
          *
-         * - debug(msg)
-         * - warn(msg)
-         * - error(msg)
-         *
          * - quit()
          * - exit()
          *
@@ -741,14 +741,16 @@ const pxlTbl = ( function() {
          * --- Drawing methods ---
          *
          * - blank(r, g, b)
-         * - setDrawColor(r, g, b, a(optional)) was setcolor() ***
-         * - setDrawColor(hexColorString) was setcolor() ***
-         * - setDrawColor(array) was setColor() ***
-         * - setDrawColor({colorRgb}) was setColor() ***
-         * - setDrawColorHsl(h, s, l, a) was setColorHsl() ***
-         * - setDrawColorHsv(h, s, v, a) was setColorHsv() ***
-         * - fillBox(x, y, w, h) ***
-         * - setFont() NEW ***
+         * - setDrawColor(r, g, b, a(optional)) was setcolor()
+         * - setDrawColor(hexColorString) was setcolor()
+         * - setDrawColor(array) was setColor()
+         * - setDrawColor({colorRgb}) was setColor()
+         * - setDrawColorRGB(r, g, b, a(optional)) was setColor()
+         * - setDrawColorHsl(h, s, l, a) was setColorHsl()
+         * - setDrawColorHsv(h, s, v, a) was setColorHsv()
+         * - setPixel()
+         * - fillBox(x, y, w, h)
+         * - setFont() NEW
          * - text(text, x, y)
          * - textBounds(text)
          *
@@ -761,6 +763,19 @@ const pxlTbl = ( function() {
          *
          * - playWav(file, loop) ***
          *
+         * --- Helper FUnction ---
+         *
+         * - debug(msg)
+         * - warn(msg)
+         * - error(msg)
+         *
+         * - hslToRgb()
+         * - hsvToRgb()
+         * - rgbToHsl()
+         * - rgbToHsv()
+         * - hslToHsv()
+         * - hsvToHsl()
+         * - hexToRgb(hexColorString)
          *
          * TODO:
          *
@@ -932,10 +947,292 @@ const pxlTbl = ( function() {
             }
         }
 
+        setDrawColor = (r, g, b, a = 1) => {
+            if(typeof r === 'object' && r.hasOwnProperty('r') && r.hasOwnProperty('g') && r.hasOwnProperty('b')) {
+                // Have we been passed an object of RGB?
+                a = (r.hasOwnProperty('a')) ? r.a : 1;
+                b = r.b;
+                g = r.g;
+                r = r.r;
+            } else if(typeof r === 'object' && r.hasOwnProperty('h') && r.hasOwnProperty('s') && r.hasOwnProperty('l')) {
+                // Have we been passed an object of HSL?
+                a = (r.hasOwnProperty('a')) ? r.a : 1;
+
+                const rgb = this.hslToRgb(r.h,r.s,r.l);
+
+                r = rgb.r;
+                g = rgb.g;
+                b = rgb.b;
+
+            } else if(typeof r === 'object' && r.hasOwnProperty('h') && r.hasOwnProperty('s') && r.hasOwnProperty('v')) {
+                // Have we been passed an object of HSV?
+                a = (r.hasOwnProperty('a')) ? r.a : 1;
+
+                const rgb = this.hsvToRgb(r.h,r.s,r.v);
+
+                r = rgb.r;
+                g = rgb.g;
+                b = rgb.b;
+            } else if(Array.isArray(r) && r[0] !== undefined && r[1] !== undefined && r[2] !== undefined) {
+                // Have we been passed an array?
+                if(r.length > 3) a = r[3]; else a = 1;
+                b = r[2];
+                g = r[1];
+                r = r[0];
+            } else if(typeof r === 'string') {
+                //have we been passed a hex string?
+                //TODO - convert string to values
+            }
+
+            this.#colorR = Math.round(r);
+            this.#colorG = Math.round(g);
+            this.#colorB = Math.round(b);
+            this.#colorA = a;
+        }
 
 
+        /**
+         * TODO: Description
+         *
+         * @param r
+         * @param g
+         * @param b
+         * @param a
+         */
+        setDrawColorRgb = (r, g, b, a = 1) => {
+            this.setDrawColor(r,g,b,a);
+        }
+
+        /**
+         * TODO: Description
+         *
+         * @param h
+         * @param s
+         * @param l
+         * @param a
+         */
+        setDrawColorHsl = (h, s, l, a = 1) => {
+            const hsl = {
+                h: h,
+                s: s,
+                l: l,
+                a: a
+            };
+
+            this.setDrawColor(hsl);
+        }
+
+        /**
+         * TODO: Description
+         *
+         * @param h
+         * @param s
+         * @param v
+         * @param a
+         */
+        setDrawColorHsv = (h, s, v, a = 1) => {
+            const hsv = {
+                h: h,
+                s: s,
+                v: v,
+                a: a
+            };
+
+            this.setDrawColor(hsv);
+        }
+
+        /**
+         * Set an individual pixel.
+         *
+         * @param x
+         * @param y
+         */
+        setPixel = (inX, inY) => {
+            inX = Math.round(inX);
+            inY = Math.round(inY);
+
+            let x = 0;
+            let y = 0;
+
+            switch(this.#orientation) {
+                case 0:
+                    x = inX;
+                    y = inY;
+                    break;
+                case 90:
+                    x = this.#pxlH - inY - 1;
+                    y = inX;
+                    break;
+                case 180:
+                    x = this.#pxlW - inX - 1;
+                    y = this.#pxlH - inY - 1;
+                    break;
+                case 270:
+                    x = inY;
+                    y = this.#pxlW - inX - 1;
+                    break;
+            }
+
+            if(x < 0 || y < 0 || x >= this.#originalPxlW || y >= this.#originalPxlH) return false;
+
+            const pixel = y * this.#originalPxlW + x;
+
+            this.#buffer[pixel * 3] = this.#buffer[pixel * 3] * (1-this.#colorA) + this.#colorA * this.#colorR;
+            this.#buffer[pixel * 3 + 1] = this.#buffer[pixel * 3 + 1] * (1-this.#colorA) + this.#colorA * this.#colorG;
+            this.#buffer[pixel * 3 + 2] = this.#buffer[pixel * 3 + 2] * (1-this.#colorA) + this.#colorA * this.#colorB;
+        }
+
+        /**
+         * Returns the color of a given pixel.
+         *
+         * @param {number} x - TODO:
+         * @param {number} y - TODO:
+         * @returns {{r: {number}, b: {number}, g: {number}}} colorRgb
+         */
+        getPixel = (x, y) => {
+            const pixel = Math.round(y) * this.#originalPxlW + Math.round(x);
+
+            return {
+                r: this.#buffer[pixel * 3],
+                g: this.#buffer[pixel * 3 + 1],
+                b: this.#buffer[pixel * 3 + 2]
+            }
+        }
+
+        /**
+         * Draws a filled box at location `x, y` of width `w` and height `h`.
+         *
+         * @param x
+         * @param y
+         * @param w
+         * @param h
+         */
+        fillBox = (x, y, w, h) => {
+            x = Math.round(x);
+            y = Math.round(y);
+            w = Math.round(w);
+            h = Math.round(h);
+
+            for (let i = 0; i < h; i++) {
+                for (let j = 0; j < w && j + x < this.#originalPxlW; j++) {
+                    this.setPixel(x + j, y + i);
+                }
+            }
+        }
+
+        /**
+         * Gets the font array TODO: this is hard coded in, can we load a file
+         *
+         * @returns {fontArray}
+         */
+        setFont = (fontName = 'default') => {
+            //TODO check to see if file exists first...
+            const newFont = require('./fonts/'+fontName+'.js');
+
+            this.#fontArray = []; // Reset existing
+            this.#fontArray = newFont;
+        }
+
+        text = (text, x, y) => {
+            // Sanitize data
+            text = '' + text;
+            x = Math.round(x);
+            y = Math.round(y);
+
+            let cursor = 0;
+            let biggestY = 0;
+
+            for (let i = 0; i < text.length; i++) {
+                const character = this.#fontArray[text.charCodeAt(i)];
+                const len = character.length;
+
+                for (let col = 0;  col < len; col++) {
+                    let column = character[col];
+
+                    let bit = 0;
+                    let lower = 0;
+
+                    while (bit < 8) {
+                        if(bit == 0 && column & 0x01) {
+                            //lower the whole letter but dont set any pixels
+                            lower = 2;
+                        } else {
+
+                            if (column & 0x01) {
+                                if(bit + lower > biggestY) biggestY = bit + lower;
+                                this.setPixel(x + cursor, (bit - 1 + y) + lower);
+                            }
+                        }
+
+                        bit++;
+                        column = column >> 1;
+                    }
+                    cursor++;
+                }
+                cursor++;
+            }
+
+            return {w: cursor-1, h: biggestY};
+        }
+
+        /**
+         * Returns the height and width of a string if it were to be drawn in the current font.
+         *
+         * @param {string} text - The string to be measured.
+         * @returns {{w: number, h: number}} -
+         */
+        textBounds = (text) => {
+            //TODO - instead of calling text, do something more efficient!
+            return this.text(text, 100, 100);
+        }
 
 
+        /* --- Sounds --- */
+
+        beep = (freq, duration, waveform) => {
+            //plays a sound
+
+        };
+
+        playWav = function (fileName,loop) {
+
+
+            var player = require('node-wav-player');
+
+            if(loop === undefined) loop = false;
+
+
+            player.play({
+                path: './wav/'+fileName+'.wav',
+                loop: loop
+            }).then(() => {
+
+            }).catch((error) => {
+                pxltblApi.error('Could not load wav: '+fileName);
+            });
+
+            return player;
+
+            /*
+
+            var file = fs.createReadStream('wav/'+fileName+'.wav');
+            var reader = new wav.Reader();
+
+            // the "format" event gets emitted at the end of the WAVE header
+            reader.on('format', function (format) {
+
+                // the WAVE header is stripped from the output of the reader
+                reader.pipe(new Speaker(format));
+            });
+
+            // pipe the WAVE file to the Reader instance
+            file.pipe(reader);
+
+
+            */
+
+
+        };
 
         /* --- Generic Helper methods --- */
 
@@ -991,8 +1288,13 @@ const pxlTbl = ( function() {
         }
 
         /**
-         * Returns ansi codes for RGB values
+         * Input and rga value and get it's closest ANSI color.
+         * Useful for older consoles so we can still color and format our output.
          *
+         * @param {number} r - Red color channel value from 0 to 255
+         * @param {number} g - Green color channel value from 0 to 255
+         * @param {number} b - Blue color channel value from 0 to 255
+         * @returns {number} ansiColor - A Standard ANSI color code
          */
         rgbToAnsi256(r, g, b) {
             // we use the extended greyscale palette here, with the exception of
@@ -1013,11 +1315,193 @@ const pxlTbl = ( function() {
                 + (36 * Math.round(r / 255 * 5))
                 + (6 * Math.round(g / 255 * 5))
                 + Math.round(b / 255 * 5);
-
-
         }
 
+        hslToRgb = (h, s, l) => {
+            let r = 0;
+            let g = 0;
+            let b = 0;
 
+            h /= 360;
+            s /= 255;
+            l /= 255;
+
+            if (s === 0) {
+                r = g = b = l; // achromatic
+            } else {
+                function hue2rgb(p, q, t) {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                }
+
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+
+            return [ Math.round(r * 255), Math.round(g * 255), Math.round(b * 255) ];
+        }
+
+        /**
+         * TODO: Description
+         *
+         * @param {number} h - TODO: Description
+         * @param {number} s - TODO: Description
+         * @param {number} v - TODO: Description
+         * @returns {{r: number, b: number, g: number}} colorRgb -
+         */
+        hsvToRgb = (h, s, v) => {
+            let r = 0;
+            let g = 0;
+            let b = 0;
+
+            h /= 360;
+            s /= 255;
+            v /= 255;
+
+            const i = Math.floor(h * 6);
+            const f = h * 6 - i;
+            const p = v * (1 - s);
+            const q = v * (1 - f * s);
+            const t = v * (1 - (1 - f) * s);
+
+            switch (i % 6) {
+                case 0: r = v; g = t; b = p; break;
+                case 1: r = q; g = v; b = p; break;
+                case 2: r = p; g = v; b = t; break;
+                case 3: r = p; g = q; b = v; break;
+                case 4: r = t; g = p; b = v; break;
+                case 5: r = v; g = p; b = q; break;
+                default: break;
+            }
+
+            return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
+        }
+
+        /**
+         * TODO: Description
+         *
+         * @param {number} r - Red color channel value from 0 to 255
+         * @param {number} g - Green color channel value from 0 to 255
+         * @param {number} b - Blue color channel value from 0 to 255
+         * @returns {{s: number, h: number, l: number}}
+         */
+        rgbToHsl = (r, g, b) => {
+            // Convert RGB values from 0-255 range to 0-1 range.
+            r /= 255;
+            g /= 255;
+            b /= 255;
+
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0; // achromatic
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                    default: break;
+                }
+
+                h /= 6;
+            }
+
+            return { h: Math.round(360 * h), s: Math.round(255 * s), l: Math.round(255 * l) };
+        }
+
+        /**
+         * TODO: Description
+         *
+         * @param {number} r - Red color channel value from 0 to 255
+         * @param {number} g - Green color channel value from 0 to 255
+         * @param {number} b - Blue color channel value from 0 to 255
+         * @returns {{s: number, h: number, v: number}}
+         */
+        rgbToHsv = (r, g, b) => {
+            // Convert RGB values from 0-255 range to 0-1 range.
+            r /= 255;
+            g /= 255;
+            b /= 255;
+
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, v = max;
+
+            const d = max - min;
+            s = max === 0 ? 0 : d / max;
+
+            if (max === min) {
+                h = 0; // achromatic
+            } else {
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                    default: break;
+                }
+
+                h /= 6;
+            }
+
+            return { h: Math.round(360*h), s: Math.round(255*s), v: Math.round(255*v) };
+        }
+
+        /**
+         * Convert a HSL color into a HSV color.
+         *
+         * @param {number} h - TODO: Description for tooltips.
+         * @param {number} s - TODO: Description for tooltips.
+         * @param {number} l - TODO: Description for tooltips.
+         * @returns {{s: number, h: number, v: number}}
+         */
+        hslToHsv = (h, s, l) => {
+            let colorObj = this.hslToRgb(h, s, l);
+            colorObj = this.rgbToHsv(colorObj.r, colorObj.g, colorObj.b);
+
+            return { h: colorObj.h, s: colorObj.s, v: colorObj.v }
+        }
+
+        /**
+         * Convert a HSV color into a HSL color.
+         *
+         * @param {number} h - TODO: Description for tooltips.
+         * @param {number} s - TODO: Description for tooltips.
+         * @param {number} v - TODO: Description for tooltips.
+         * @returns {{s: number, h: number, l: number}}
+         */
+        hsvToHsl = (h, s, v) => {
+            let colorObj = this.hsvToRgb(h, s, v);
+            colorObj = this.rgbToHsl(colorObj.r, colorObj.g, colorObj.b);
+
+            return { h: colorObj.h, s: colorObj.s, l: colorObj.l }
+        }
+
+        /**
+         * Takes a color's hex value as a sting and converts it into an colorRgb object.
+         *
+         * @param hexColorSting
+         * @returns {{r: number, b: number, g: number}|null}
+         */
+        hexToRga = (hexColorSting) => {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexColorSting);
+
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
 
     } /* End of API class */
 
