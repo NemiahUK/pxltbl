@@ -103,7 +103,7 @@ const pxlTbl = ( function() {
         // These are the defaults, overridden by the settings object passed into `pxlTbl.setup()`.
 
         #debugging = false;                                 // When true, the API will output TODO: should we grab a default value from an environment/config file?
-        #consoleData = false;                               // When true, a graphical representqtion of the PxlTbl data is displayed in the console window.
+        #consoleDisplay = false;                               // When true, a graphical representqtion of the PxlTbl data is displayed in the console window.
         #fpsLimit = 30;                                     // Limit the frames per second so we won't over work the hardware rendering useless frame. Good values would be 30 or 60
         #cbLoop = null;                                     // This is a place holder for the user's main loop. Users will pass a loop function into the API before run time and it can be called though this variable.
         #emulationOnly = false;                             // ???
@@ -163,7 +163,7 @@ const pxlTbl = ( function() {
          * @param {Object} settings - Custom settings for the API sotored in a key value paired object.
          */
         constructor(settings) {
-            if(settings.hasOwnProperty('consoleData')) this.#consoleData = settings.consoleData;
+            if(settings.hasOwnProperty('consoleDisplay')) this.#consoleDisplay = settings.consoleDisplay;
             if (settings.hasOwnProperty('debugging')) this.#debugging = settings.debugging;
 
             this.#originalPxlW = 32; // TODO: Get from config/hardware
@@ -203,7 +203,7 @@ const pxlTbl = ( function() {
             this.#touchRead = new Array(this.#pxlCount);
             this.#touchWeb = new Array(this.#pxlCount);
 
-            if(!settings.hasOwnProperty('fpsLimit')) this.#fpsLimit = parseInt(settings.fpsLimit);
+            if(settings.hasOwnProperty('fpsLimit')) this.#fpsLimit = parseInt(settings.fpsLimit);
 
 
 
@@ -212,7 +212,7 @@ const pxlTbl = ( function() {
             this.startWebServer();
 
             // TODO: Port hosted from should be a setting. Make the port displayed in the address here dynamic too when implemented.
-            if(!this.#consoleData) this.log('Console display disabled, visit http://127.0.0.1:3000 to view stats.');
+            if(!this.#consoleDisplay) this.log('Console display disabled, visit http://127.0.0.1:3000 to view stats.');
 
             //Go go go!
             this.start();
@@ -479,7 +479,7 @@ const pxlTbl = ( function() {
 
                 const minFrameTime = Math.round(1000 / this.#fpsLimit);
 
-                if(this.#consoleData) {
+                if(this.#consoleDisplay) {
                     console.clear();
                     console.log('Is RasPi: ' + this.#isRasPi);
                     console.log('Web Clients: ' + this.#webClients);
@@ -553,7 +553,7 @@ const pxlTbl = ( function() {
             let serialBuffer = Buffer.alloc((this.#numLeds) * 3);
 
             //if screensaver is active then blank the buffer
-            if(this.#screenSaverDisplayed === true) buffer = Buffer.alloc((this.#numLeds) * 3);
+            //if(this.#screenSaverDisplayed === true) buffer = Buffer.alloc((this.#numLeds) * 3); TODO Make sure SSaver only fires when needed, then uncomment this line
 
 
             //TODO - this assumes stripStart = 'TL'  - it needs to take this into account.
@@ -597,7 +597,6 @@ const pxlTbl = ( function() {
             //send to web
             if(this.#webClients) {
                 this.#webIo.volatile.emit('leds', buffer);
-
             }
 
             try {
