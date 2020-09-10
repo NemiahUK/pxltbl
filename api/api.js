@@ -62,7 +62,7 @@ const pxlTbl = ( function() {
         #goHome = false;                                    // Used to signal intent to return to main menu
         #paused = false;                                    // TODO: Not implemented
         #idleTimeLimit = 1000 * 60 * 5;                     // Amount of time in milliseconds until a screensaver is displayed
-        #rotation = 0;
+        #orientation = 0;
         #brightness = 200;                                  // Brightness setting for the screen
         #whiteBalance = {
             r: 1.0,
@@ -540,6 +540,74 @@ const pxlTbl = ( function() {
 
         /* --- API methods --- */
 
+        /**********************************************************************
+         * List of API methods for reference:
+         *
+         * - debug(msg)
+         * - warn(msg)
+         * - error(msg)
+         *
+         * - quit()
+         * - exit()
+         *
+         * - getFps()
+         * - getFpsLimit()
+         * - setFpsLimit(fpsLimit)
+         * - getFrameTime() * was frameTime
+         * - getRunTime() * was milis
+         * - getOrientation()
+         * - setOrientation(angle)
+         * - getPxlCount() * was pxlCount
+         * - getScreenWidth() * was pxlW
+         * - getScreenHeight() * was pxlH
+         * - getWhiteBalance()
+         * - setWhiteBalance(r, g, b)
+         *
+         * - isRasPi()
+         *
+         * --- Drawing Methods ---
+         *
+         * - blank(r, g, b)
+         *
+         *
+         * TODO:
+         *
+         * - Should we be returning and accepting classes like `ColorRgb`,
+         *   `ColorCky`, etc. This was return values can be passed straight
+         *   into other methods.
+         *
+         *********************************************************************/
+
+        /**
+         * Prints basic debug messaging to the console window is debugging messages are enabled.
+         *
+         * @param msg - The message to be output tot he console.
+         */
+        debug(msg) {
+            // TODO: Fancy logs, ANSI colors?
+            if(this.#debugging) console.log('DEBUG: ' + msg);
+        }
+
+        /**
+         * Prints basic warning messages to the console window.
+         *
+         * @param {String} msg - The message to be output tot he console.
+         */
+        warn(msg) {
+            // TODO: Fancy logs, ANSI colors?
+            if(this.#debugging) console.log('DEBUG: ' + msg);
+        }
+
+        /**
+         * Prints basic error messages to the console window.
+         *
+         * @param {String} msg - The message to be output tot he console.
+         */
+        error(msg) {
+            // TODO: Fancy logs, ANSI colors?
+            console.log('ERROR: ' + msg);
+        }
+
         /**
          * Exits and shuts down the PxlTbl
          */
@@ -557,67 +625,116 @@ const pxlTbl = ( function() {
         };
 
         /**
-         * Prints basic debug messaging to the console window.
+         * Get the current FPS of the app.
          *
-         * @param msg - The message to be output tot he console.
+         * @returns {number}
          */
-        debug(msg) {
-            // TODO: Fancy logs, ANSI colors?
-            if(this.#debugging) console.log('DEBUG: ' + msg);
+        getFps() {
+            return this.#fps;
         }
 
         /**
-         * Prints basic warning messages to the console window.
+         * Ge the FPSs limit for the App
          *
-         * @param {String} msg - The message to be output tot he console.
+         * @returns {number} fpsLimit - The amount of frames per second the API will attempt to maintain
          */
-        warn(msg) {
-            // TODO: Fancy logs, ANSI colors?
-            if(this.#debugging) console.log('DEBUG: ' + msg); // TODO: Warn even if `debugging` is false???
+        getFpsLimit() {
+            // TODO: Sanity check?
+            return this.#fpsLimit
         }
 
         /**
-         * Prints basic error messages to the console window.
+         * Set the FPSs limit for the App
          *
-         * @param {String} msg - The message to be output tot he console.
+         * @param {number} fpsLimit - The amount of frames per second the API will attempt to maintain
          */
-        error(msg) {
-            // TODO: Fancy logs, ANSI colors?
-            console.log('ERROR: ' + msg);
+        setFpsLimit(fpsLimit) {
+            // TODO: Sanity check?
+            this.#fpsLimit = fpsLimit;
+        }
+
+        /**
+         * Get the time it tok to render the last frame in milliseconds.
+         *
+         * @returns {number} frameTime - Frame time in milliseconds
+         */
+        getFrameTime() {
+            return this.#frameTime;
+        }
+
+        /**
+         * Get the white balance of the screen.
+         *
+         * @returns {{r: number, b: number, g: number}} colorRgb - RGB representation of the screen white balance
+         */
+        getWhiteBalance() {
+            // TODO: Sanity check?
+            return this.#whiteBalance;
+        }
+
+        /**
+         * Get the current orientation of the screen in degrees.
+         *
+         * @returns {number} orientation - Screen rotation in degrees
+         */
+        getOrientation() {
+            return this.#orientation;
+        }
+
+        /**
+         * Set the current orientation of the screen in degrees.
+         *
+         * @param {number} angle - Angle to set the screen orientation to in degrees
+         */
+        setOrientation(angle) {
+            if(angle === 0 || angle === 180) {
+                this.#orientation = angle;
+                this.#pxlW = this.#originalPxlW;
+                this.#pxlH = this.#originalPxlH;
+            }
+
+            if(angle === 90 || angle === 270) {
+                this.#orientation = angle;
+                this.#pxlW = this.#originalPxlH;
+                this.#pxlH = this.#originalPxlW;
+            }
+
+            this.blank();
         }
 
         /**
          * Set the white balance of the screen.
          *
-         * @param {Number} r - Red value from 0 to 255
-         * @param {Number} g - Green value from 0 to 255
-         * @param {Number} b - Blue value from 0 to 255
+         * @param {number} r - Red value from 0 to 255
+         * @param {number} g - Green value from 0 to 255
+         * @param {number} b - Blue value from 0 to 255
          */
         setWhiteBalance(r, g, b) {
+            // TODO: Sanity check?
             this.#whiteBalance.r = r;
             this.#whiteBalance.g = g;
             this.#whiteBalance.b = b;
         }
 
-
-
-
-
+        // --- Drawing Methods ------------------------------------------------
 
         /**
-         * Only used for testing ATM. TODO: probably should be removed when no longer needed.
+         * Fill the screen with the color r, g and b;
+         *
+         * @param r {number} r - Red value from 0 to 255
+         * @param g {number} g - Green value from 0 to 255
+         * @param b {number} b - Blue value from 0 to 255
          */
-        printFiles() {
-
-            this.debug('Reading files...');
-
-            fs.readdir(path, (err, files) => {
-                for (let i = 0; i < files.length; i++) {
-                    this.debug(files[i]);
-                }
-            });
+        blank(r = 0, g = 0, b = 0) {
+            for (let i = 0; i < this.#pxlCount; i++) {
+                this.#buffer[i * 3] = r;
+                this.#buffer[i * 3 + 1] = g;
+                this.#buffer[i * 3 + 2] = b;
+            }
         }
-    }
+
+
+    } /* End of API class */
 
     return {
         /**
