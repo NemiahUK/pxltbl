@@ -667,6 +667,8 @@ const pxlTbl = ( function() {
 
         /* --- Web / interaction methods --- */
 
+
+
         /**
          * Used to set a button state
          */
@@ -677,39 +679,117 @@ const pxlTbl = ( function() {
         /**
          * Used to set a button state
          */
-        setButton(channel,value) {
+        setButton = (channel,value) => {
+            //if screensaver running, discard this event
+            if (this.checkToggleScreensaver()) {
+                switch (channel) {
+                    case 22:
+                        if(this.#orientation === 0) this.#buttons.leftTop = value;
+                        if(this.#orientation === 90) this.#buttons.bottomLeft = value;
+                        if(this.#orientation === 180) this.#buttons.rightBottom = value;
+                        if(this.#orientation === 270) this.#buttons.topRight = value;
+
+                        break;
+                    case 37:
+                        if(this.#orientation === 0) this.#buttons.topLeft = value;
+                        if(this.#orientation === 90) this.#buttons.leftBottom = value;
+                        if(this.#orientation === 180) this.#buttons.bottomRight = value;
+                        if(this.#orientation === 270) this.#buttons.rightTop = value;
+
+                        break;
+                    case 15:
+                        if(this.#orientation === 0) this.#buttons.topRight = value;
+                        if(this.#orientation === 90) this.#buttons.leftTop = value;
+                        if(this.#orientation === 180) this.#buttons.bottomLeft = value;
+                        if(this.#orientation === 270) this.#buttons.rightBottom = value;
+
+                        break;
+                    case 13:
+                        if(this.#orientation === 0) this.#buttons.rightTop = value;
+                        if(this.#orientation === 90) this.#buttons.topLeft = value;
+                        if(this.#orientation === 180) this.#buttons.leftBottom = value;
+                        if(this.#orientation === 270) this.#buttons.bottomRight = value;
+
+                        break;
+                    case 36:
+                        if(this.#orientation === 0) this.#buttons.rightBottom = value;
+                        if(this.#orientation === 90) this.#buttons.topRight = value;
+                        if(this.#orientation === 180) this.#buttons.leftTop = value;
+                        if(this.#orientation === 270) this.#buttons.bottomLeft = value;
+
+                        break;
+                    case 32:
+                        if(this.#orientation === 0) this.#buttons.bottomRight = value;
+                        if(this.#orientation === 90) this.#buttons.rightTop = value;
+                        if(this.#orientation === 180) this.#buttons.topLeft = value;
+                        if(this.#orientation === 270) this.#buttons.leftBottom = value;
+
+                        break;
+                    case 18:
+                        if(this.#orientation === 0) this.#buttons.bottomLeft = value;
+                        if(this.#orientation === 90) this.#buttons.rightBottom = value;
+                        if(this.#orientation === 180) this.#buttons.topRight = value;
+                        if(this.#orientation === 270) this.#buttons.leftTop = value;
+
+                        break;
+                    case 16:
+                        if(this.#orientation === 0) this.#buttons.leftBottom = value;
+                        if(this.#orientation === 90) this.#buttons.bottomRight = value;
+                        if(this.#orientation === 180) this.#buttons.rightTop = value;
+                        if(this.#orientation === 270) this.#buttons.topLeft = value;
+
+                        break;
+                    case 31:
+                        if(value) this.exit();
+                        break;
+                }
+            }
+
+            //set virtual buttons
+            this.#buttons.top = this.#buttons.topLeft || this.#buttons.topRight;
+            this.#buttons.bottom = this.#buttons.bottomLeft || this.#buttons.bottomRight;
+            this.#buttons.left = this.#buttons.leftTop || this.#buttons.leftBottom;
+            this.#buttons.right = this.#buttons.rightTop || this.#buttons.rightBottom;
+
+            this.#buttons.any = this.#buttons.top || this.#buttons.bottom || this.#buttons.left || this.#buttons.right;
+
 
         };
 
-        buttonDown(channel) {
-
-
+        buttonDown = (channel) => {
+            this.setButton(channel,true);
         };
 
 
         /**
          * button event fired from web
          */
-        buttonUp(channel) {
-
-
+        buttonUp = (channel) => {
+            this.setButton(channel,false);
         };
 
 
         /**
          * touch event fired from web
          */
-        touchDown(location) {
+        touchDown = (location) => {
             //TODO - make these work with arrays (multi touch)
-
+            if (this.checkToggleScreensaver()) {
+                this.#touchWeb[location] = true;
+            }
         };
 
         /**
          * touch event fired from web
          */
-        touchUp(location) {
-
+        touchUp = (location) => {
+            //TODO - make these work with arrays (multi touch)
+            if (this.checkToggleScreensaver()) {
+                this.#touchWeb[location] = false;
+            }
         };
+
+
 
 
 
@@ -805,6 +885,24 @@ const pxlTbl = ( function() {
             // Go to home screen
             this.#goHome = true;
         };
+
+        /**
+         * Get the current goHome flag.
+         *
+         * @returns {boolean}
+         */
+        getGoHome = () => {
+            return this.#goHome;
+        }
+
+        /**
+         * Set the current goHome flag.
+         *
+         * @returns {boolean}
+         */
+        setGoHome = (value) => {
+            this.#goHome = value;
+        }
 
         /**
          * Get the current FPS of the app.
@@ -1187,6 +1285,73 @@ const pxlTbl = ( function() {
         }
 
 
+        /* --- Input --- */
+
+        /**
+         * Clear touch and button data
+         */
+
+        clearInputs = () => {
+            //stops button presses persisting between apps.
+            this.getTouch();
+
+            this.#buttons = {
+                topLeft: false,
+                leftTop: false,
+                topRight: false,
+                rightTop: false,
+                rightBottom: false,
+                bottomRight: false,
+                bottomLeft: false,
+                leftBottom: false
+            };
+
+        };
+
+
+
+        /**
+         * get touch data
+         */
+
+        getButtons = () => {
+            return this.#buttons;
+        }
+
+        getTouch = (persist = false) => {
+            let touches = [];
+
+
+            for (let i = 0; i < this.#pxlCount; i++) {
+                if((this.#touch[i] || this.#touchWeb[i]) && (!this.#touchRead[i] || persist)) {
+                    var x = i % this.#pxlW;
+                    var y = Math.floor(i / this.#pxlW);
+                    touches.push({ x: x, y: y });
+                }
+            }
+
+            if(!persist) this.#touchRead = this.#touch || this.#touchWeb;
+
+            return touches;
+        };
+
+        isTouchInBounds = (x,y,w,h) => {
+
+            for (let i = 0; i < this.#pxlCount; i++) {
+
+                let curX = i % this.#pxlW;
+                let curY = Math.floor(i / this.#pxlW);
+
+                if((this.#touch[i] || this.#touchWeb[i]) && curX >= x && curX < x+w && curY >= y && curY < y+h) return true;
+
+            }
+
+            return false;
+
+        };
+
+
+
         /* --- Sounds --- */
 
         beep = (freq, duration, waveform) => {
@@ -1233,6 +1398,10 @@ const pxlTbl = ( function() {
 
 
         };
+
+
+
+
 
         /* --- Generic Helper methods --- */
 
