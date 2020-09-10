@@ -319,68 +319,7 @@ const pxlTbl = ( function() {
 
         }
 
-
-        /* --- API --- */
-
-        /**
-         * Exits and shuts down the PxlTbl
-         */
-        quit() {
-            this.debug('Closing...');
-            // TODO: this.#serial.close(function(){process.exit();});
-        };
-
-        /**
-         * Exits a prog and returns to the main menu
-         */
-        exit() {
-            // Go to home screen
-            this.#goHome = true;
-        };
-
-        /**
-         * Prints basic debug messaging to the console window.
-         *
-         * @param msg - The message to be output tot he console.
-         */
-        debug(msg) {
-            // TODO: Fancy logs, ANSI colors?
-            if(this.#debugging) console.log('DEBUG: ' + msg);
-        }
-
-        /**
-         * Prints basic warning messages to the console window.
-         *
-         * @param {String} msg - The message to be output tot he console.
-         */
-        warn(msg) {
-            // TODO: Fancy logs, ANSI colors?
-            if(this.#debugging) console.log('DEBUG: ' + msg); // TODO: Warn even if `debugging` is false???
-        }
-
-        /**
-         * Prints basic error messages to the console window.
-         *
-         * @param {String} msg - The message to be output tot he console.
-         */
-        error(msg) {
-            // TODO: Fancy logs, ANSI colors?
-            console.log('ERROR: ' + msg);
-        }
-
-        /**
-         * Set the white balance of the screen.
-         *
-         * @param {Number} r - Red value from 0 to 255
-         * @param {Number} g - Green value from 0 to 255
-         * @param {Number} b - Blue value from 0 to 255
-         */
-        setWhiteBalance(r, g, b) {
-            this.#whiteBalance.r = r;
-            this.#whiteBalance.g = g;
-            this.#whiteBalance.b = b;
-        }
-
+        /* --- Internal methods  --- */
 
         start() {
 
@@ -468,6 +407,201 @@ const pxlTbl = ( function() {
 
 
         }
+
+
+        /**
+         * Main loop
+         */
+
+        loop() {
+
+            //the main loop
+
+            this.readTouchPanel();
+
+
+
+            // Check idle time/screensaver
+            let sSaverTime = new Date().getTime() - this.lastInputTime;
+
+
+            if (sSaverTime >= this.idleTimetToScreensaver) {
+                this.screenSaverDisplayed = true;
+            }
+
+
+
+
+
+
+            var curTime = new Date().getTime();
+            this.frameTime = curTime - this.lastLoopTime;
+
+            while (this.fpsLimit > 0 && this.frameTime < Math.floor(1000 / this.fpsLimit)) {
+                curTime = new Date().getTime();
+                this.frameTime = curTime - this.lastLoopTime;
+            }
+
+            this.millis = curTime - this.startTime;
+
+            this.frames++;
+            this.lastLoopTime = new Date().getTime();
+
+            //update the console every 1000ms
+            if (curTime - this.lastStatsTime > 1000) {
+
+                this.fps = Math.floor(this.frames * 1000 / (curTime - this.lastStatsTime));
+                this.lastStatsTime = curTime;
+                this.frames = 0;
+
+                var minFrameTime = Math.round(1000 / this.fpsLimit);
+
+                if(this.consoleData) {
+                    console.clear();
+                    console.log('Is RasPi: ' + this.isRasPi);
+                    console.log('Web Clients: ' + this.webClients);
+                    console.log('Millis: ' + this.millis);
+                    console.log('Game FPS: ' + this.fps);
+                    console.log('FPS limit: ' + this.fpsLimit);
+                    console.log('Frame time: ' + this.frameTime);
+                    console.log('Min frame time: ' + minFrameTime);
+                    console.log('Screen size: ' + this.pxlW+'x'+this.pxlH+' ('+this.pxlW*this.pxlH+')');
+                    console.log('Total num of pixels: ' + this.buffer.length/3);
+                    console.log('Frame size: ' + (this.buffer.length + this.frameStart.length) + ' bytes');
+                    console.log('Bandwidth: ' + Math.round((this.buffer.length+this.frameStart.length) * this.fps * 8 / 1024) +' kbps (Available: '+this.baud / 1000 +' kbps)');
+
+                    console.log('Touch read time: ' + this.touchReadTime);
+                    console.log('Touch packets per read: ' + this.touchPacketsPerRead);
+                    console.log('Touch: ' + this.touch);
+                    //console.log(Buffer.concat([this.frameStart, this.buffer]));
+                    /*
+                    for (var i = 0; i < this.buffer.length; i++) {
+                        if(i % (this.pxlW * 3) === 0) process.stdout.write('\n');
+                        process.stdout.write(this.buffer[i].toString(16).padStart(2, '0'));
+                    }
+                    */
+                }
+
+                //this.dump();
+
+                //send to web
+                if(this.webClients) {
+                    this.webIo.emit('frameData', {
+                        webClients: this.webClients,
+                        millis: this.millis,
+                        fps: + this.fps,
+                        fpsLimit: this.fpsLimit,
+                        frameTime: this.frameTime,
+                        minFrameTime: minFrameTime,
+                        length: this.buffer.length,
+                        pxlW: this.originalPxlW,
+                        pxlH: this.originalPxlH,
+                        rotation: this.rotation,
+                        sSaverTime: sSaverTime
+                    });
+                }
+
+
+            }
+
+
+            //run the external loop function - this is where all the user code is
+            this.cbLoop(this);
+
+
+
+
+
+            //update display and start again
+            if (!this.paused) this.show();
+
+
+        }
+
+
+        /**
+         * Push display buffer to serial/web
+         */
+
+        show() {
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+        /* --- API methods --- */
+
+        /**
+         * Exits and shuts down the PxlTbl
+         */
+        quit() {
+            this.debug('Closing...');
+            // TODO: this.#serial.close(function(){process.exit();});
+        };
+
+        /**
+         * Exits a prog and returns to the main menu
+         */
+        exit() {
+            // Go to home screen
+            this.#goHome = true;
+        };
+
+        /**
+         * Prints basic debug messaging to the console window.
+         *
+         * @param msg - The message to be output tot he console.
+         */
+        debug(msg) {
+            // TODO: Fancy logs, ANSI colors?
+            if(this.#debugging) console.log('DEBUG: ' + msg);
+        }
+
+        /**
+         * Prints basic warning messages to the console window.
+         *
+         * @param {String} msg - The message to be output tot he console.
+         */
+        warn(msg) {
+            // TODO: Fancy logs, ANSI colors?
+            if(this.#debugging) console.log('DEBUG: ' + msg); // TODO: Warn even if `debugging` is false???
+        }
+
+        /**
+         * Prints basic error messages to the console window.
+         *
+         * @param {String} msg - The message to be output tot he console.
+         */
+        error(msg) {
+            // TODO: Fancy logs, ANSI colors?
+            console.log('ERROR: ' + msg);
+        }
+
+        /**
+         * Set the white balance of the screen.
+         *
+         * @param {Number} r - Red value from 0 to 255
+         * @param {Number} g - Green value from 0 to 255
+         * @param {Number} b - Blue value from 0 to 255
+         */
+        setWhiteBalance(r, g, b) {
+            this.#whiteBalance.r = r;
+            this.#whiteBalance.g = g;
+            this.#whiteBalance.b = b;
+        }
+
+
+
+
 
 
         /**
