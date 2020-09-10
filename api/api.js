@@ -1368,22 +1368,19 @@ const pxlTbl = ( function() {
 
         };
 
-        playWav = function (fileName,loop) {
-            // var player = require('node-wav-player');
-            //
-            // if(loop === undefined) loop = false;
-            //
-            //
-            // player.play({
-            //     path: './wav/'+fileName+'.wav',
-            //     loop: loop
-            // }).then(() => {
-            //
-            // }).catch((error) => {
-            //     pxltblApi.error('Could not load wav: '+fileName);
-            // });
-            //
-            // return player;
+        playWav = (fileName,loop = false) => {
+            const player = require('node-wav-player');
+
+            player.play({
+                path: './wav/'+fileName+'.wav',
+                loop: loop
+            }).then(() => {
+
+            }).catch((error) => {
+                this.error('Could not load wav: '+fileName);
+            });
+
+            return player;
 
 
             // const file = fs.createReadStream('wav/'+fileName+'.wav');
