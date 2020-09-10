@@ -13,13 +13,13 @@ exports.setup = function(api) {
 exports.loop = function(api) {
 
     // Set the drawing colour.
-    api.setColor(0, 255, 0);
+    api.setDrawColor(0, 255, 0);
 
     // Print some text.
     api.text(message, 1,2);
 
     // If fire button pressed then exit back to home screen.
-    if(api.buttons.any) api.exit();
+    if(api.getButtons().any) api.exit();
 
 };
 

@@ -10,7 +10,7 @@ var lastMove;
 var x,y;
 var appleX, appleY;
 
-var snake = [];
+var main = [];
 
 
 var gameStatus = 0;
@@ -35,7 +35,7 @@ exports.setup = function(api) {
     y = Math.floor(api.pxlH/2);
 
     for(let i=5; i>=0; i--) {
-        snake.push({x: x-i, y:y});
+        main.push({x: x-i, y:y});
     }
 
     spawnApple(api);
@@ -74,7 +74,7 @@ exports.loop = function(api) {
                 x--;
                 break;
         }
-        snake.push({x: x, y: y});
+        main.push({x: x, y: y});
 
 
         //if snake has eaten the apple
@@ -87,7 +87,7 @@ exports.loop = function(api) {
             score+=100;
         } else {
             //keep the snake the same length
-            snake.shift();
+            main.shift();
         }
 
 
@@ -107,9 +107,9 @@ exports.loop = function(api) {
 
     //draw the snake
     api.setColor(0,255,255);
-    for(let i=0; i < snake.length; i++) {
-        if(i === snake.length - 1) api.setColor(255,255,255);
-        api.setPixel(snake[i].x,snake[i].y);
+    for(let i=0; i < main.length; i++) {
+        if(i === main.length - 1) api.setColor(255,255,255);
+        api.setPixel(main[i].x,main[i].y);
     }
 };
 
@@ -119,8 +119,8 @@ function gameOver(api) {
 }
 
 function checkCollisionWithSnake(x, y, api) {
-    for(let i = 1; i < snake.length - 1; i++) {
-        if(snake[i].x === x && snake[i].y === y) return true;
+    for(let i = 1; i < main.length - 1; i++) {
+        if(main[i].x === x && main[i].y === y) return true;
     }
 
     return false;

@@ -35,7 +35,7 @@ function loop() {
 
     if(api.getGoHome()) {
         screen = 'home';
-        api.setGoHome(false);
+        api.goneHome();
         api.clearInputs();
         api.setFpsLimit(30);
         api.setOrientation(0);

@@ -670,8 +670,6 @@ const pxlTbl = ( function() {
 
         /* --- Web / interaction methods --- */
 
-
-
         /**
          * Used to set a button state
          */
@@ -794,6 +792,12 @@ const pxlTbl = ( function() {
 
 
 
+        /**
+         * Set the  goHome flag to false.
+         */
+        goneHome = () => {
+            this.#goHome = false;
+        }
 
 
 
@@ -889,6 +893,8 @@ const pxlTbl = ( function() {
             this.#goHome = true;
         };
 
+
+
         /**
          * Get the current goHome flag.
          *
@@ -898,14 +904,7 @@ const pxlTbl = ( function() {
             return this.#goHome;
         }
 
-        /**
-         * Set the current goHome flag.
-         *
-         * @returns {boolean}
-         */
-        setGoHome = (value) => {
-            this.#goHome = value;
-        }
+
 
         /**
          * Get the current FPS of the app.
@@ -1430,7 +1429,7 @@ const pxlTbl = ( function() {
          * @param msg - The message to be output tot he console.
          */
         log(msg) {
-            log(c.cyan(msg));
+            log(c.cyanBright(msg));
             if(this.#webClients) {
                 this.#webIo.emit('info', msg);
             }
@@ -1455,8 +1454,27 @@ const pxlTbl = ( function() {
          * @param {String} msg - The message to be output tot he console.
          */
         error(msg) {
+            let suggestion = '';
 
             if(typeof msg == 'object' && msg.stack && msg.message) {
+                if(msg.message.includes('setColor')) suggestion = 'Did you mean api.setDrawColor()?';
+                if(msg.message.includes('pxlW')) suggestion = 'Did you mean api.getScreenWidth()?';
+                if(msg.message.includes('pxlH')) suggestion = 'Did you mean api.getScreenHeight()?';
+
+                if(msg.message.includes('Cannot read property \'topLeft\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'topRight\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'rightTop\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'rightBottom\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'bottomRight\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'bottomLeft\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'leftBottom\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'leftTop\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'top\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'bottom\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'left\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'right\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+                if(msg.message.includes('Cannot read property \'any\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
+
                 msg =  msg.stack;
             }
 
@@ -1464,6 +1482,7 @@ const pxlTbl = ( function() {
             if(this.#webClients) {
                 this.#webIo.emit('error', msg);
             }
+            if(suggestion.length) this.log(suggestion);
         }
 
         /**
