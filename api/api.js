@@ -15,9 +15,8 @@ const fs = require('fs');                                   // FileSystem includ
 const path = require('path');                               // Gets the path of a file or directory.
 const http = require('http');                               // HTTP tools
 
-// TODO? const http = require('fancy-logs');                         // Better debug messaging a support for colors
-// TODO? const http = require('ansi-colors');                        // Easily switch between different ANSI colors, great for console logging.
-
+const log = require('fancy-log');                           // Better debug messaging a support for colors
+const c = require('ansi-colors');                           // Easily switch between different ANSI colors, great for console logging.
 
 /**
  * This function is used to set up a singleton instance of our API class.
@@ -213,7 +212,7 @@ const pxlTbl = ( function() {
             this.startWebServer();
 
             // TODO: Port hosted from should be a setting. Make the port displayed in the address here dynamic too when implemented.
-            if(!this.#consoleData) console.log('Console display disabled, visit http://127.0.0.1:3000 to view stats.');
+            if(!this.#consoleData) this.log('Console display disabled, visit http://127.0.0.1:3000 to view stats.');
 
             //Go go go!
             this.start();
@@ -236,7 +235,7 @@ const pxlTbl = ( function() {
 
                     if(board.getBoardRevision() !== 'unknown') {
 
-                        console.log('Raspberry Pi version: '+board.getBoardRevision()+' detected, booting...');
+                        this.log('Raspberry Pi version: '+board.getBoardRevision()+' detected, booting...');
                         this.#isRasPi = true;
 
 
@@ -278,13 +277,13 @@ const pxlTbl = ( function() {
                             }
 
                             if (this.#touchParams.name !== undefined) {
-                                console.log("Found HID device: " + this.#touchParams.name);
+                                this.log("Found HID device: " + this.#touchParams.name);
                                 this.#touchPanel = new HID.HID(pxltblApi.hidPath);
                                 this.#touchPanel.setNonBlocking(true);
                             } else {
                                 //TODO display this a bit better
-                                console.log("HID device at " + this.#hidPath + " did not match any devices in hid-config.json.");
-                                console.log(devices);
+                                this.warn("HID device at " + this.#hidPath + " did not match any devices in hid-config.json.");
+                                this.debug(devices);
                             }
 
                         }
@@ -300,7 +299,7 @@ const pxlTbl = ( function() {
                             });
 
                             this.#serial.open(() => {
-                                console.log('Serial port ' + this.#serialPath + ' open at ' + this.#baud + ' baud.');
+                                this.log('Serial port ' + this.#serialPath + ' open at ' + this.#baud + ' baud.');
                                 //Setup incoming serial data handler
                                 this.#serial.on('data', (data) => {
                                     this.handleSerial(data);
@@ -310,15 +309,15 @@ const pxlTbl = ( function() {
 
                             });
                         } else {
-                            console.log('Serial is disabled.');
-                            console.log('*** STARTUP COMPLETE ***');
+                            this.log('Serial is disabled.');
+                            this.log('*** STARTUP COMPLETE ***');
                             this.show();
                         }
 
 
                     } else {
-                        console.log('This isn\'t a Raspberry Pi!?? That\'s OK though, I\'ll carry on in software/web only mode...');
-                        console.log('*** STARTUP COMPLETE ***');
+                        this.warn('This isn\'t a Raspberry Pi!?? That\'s OK though, I\'ll carry on in software/web only mode...');
+                        this.log('*** STARTUP COMPLETE ***');
                         this.show();
                     }
 
@@ -328,15 +327,15 @@ const pxlTbl = ( function() {
 
 
             } catch (err) {
-                console.log('There was an error setting up the Raspberry Pi. That\'s OK though, I\'ll carry on in software/web only mode...');
-                console.log('*** STARTUP COMPLETE ***');
+                this.warn('There was an error setting up the Raspberry Pi. That\'s OK though, I\'ll carry on in software/web only mode...');
+                this.log('*** STARTUP COMPLETE ***');
                 this.show();
             }
 
         }
 
         startWebServer() {
-            console.log('Setting up web server...');
+            this.log('Setting up web server...');
 
             this.#webServer = http.createServer((request, response) => {
                 let filePath = this.#webRoot + request.url;
@@ -413,7 +412,7 @@ const pxlTbl = ( function() {
             });
 
             this.#webServer.listen(3000);
-            console.log('Webserver started on port: 3000');
+            this.log('Webserver started on port: 3000');
 
 
         }
@@ -500,10 +499,12 @@ const pxlTbl = ( function() {
                     //console.log(Buffer.concat([this.#frameStart, this.#buffer]));
 
 
-                    for (var i = 0; i < this.#buffer.length; i++) {
-                        if(i % (this.pxlW * 3) === 0) process.stdout.write('\n');
-                        process.stdout.write(this.#buffer[i].toString(16).padStart(2, '0'));
+                    for (let i = 0; i < this.#buffer.length; i+=3) {
+                        if(i % (this.#pxlW * 3) === 0) process.stdout.write('\n');
+                        process.stdout.write('\x1b[38;2;'+this.#buffer[i]+';'+this.#buffer[i+1]+';'+this.#buffer[i+2]+'m▄ ');
                     }
+
+                    process.stdout.write('\x1b[0m');
 
                 }
 
@@ -708,6 +709,9 @@ const pxlTbl = ( function() {
         };
 
 
+
+
+
         /* --- API methods --- */
 
         /**********************************************************************
@@ -748,41 +752,13 @@ const pxlTbl = ( function() {
          *
          *********************************************************************/
 
-        /**
-         * Prints basic debug messaging to the console window is debugging messages are enabled.
-         *
-         * @param msg - The message to be output tot he console.
-         */
-        debug(msg) {
-            // TODO: Fancy logs, ANSI colors?
-            if(this.#debugging) console.log('DEBUG: ' + msg);
-        }
 
-        /**
-         * Prints basic warning messages to the console window.
-         *
-         * @param {String} msg - The message to be output tot he console.
-         */
-        warn(msg) {
-            // TODO: Fancy logs, ANSI colors?
-            if(this.#debugging) console.log('DEBUG: ' + msg);
-        }
-
-        /**
-         * Prints basic error messages to the console window.
-         *
-         * @param {String} msg - The message to be output tot he console.
-         */
-        error(msg) {
-            // TODO: Fancy logs, ANSI colors?
-            console.log('ERROR: ' + msg);
-        }
 
         /**
          * Exits and shuts down the PxlTbl
          */
         shutdown() {
-            this.debug('Closing...');
+            this.log('Closing...');
             // TODO: this.#serial.close(function(){process.exit();});
             //for now just kill the process
             process.exit(1);
@@ -904,6 +880,92 @@ const pxlTbl = ( function() {
                 this.#buffer[i * 3 + 2] = b;
             }
         }
+
+
+
+
+
+
+        /* --- Generic Helper methods --- */
+
+        /**
+         * Prints basic debug messaging to the console window if debugging messages are enabled.
+         *
+         * @param msg - The message to be output tot he console.
+         */
+        debug(msg) {
+            if(this.#debugging) {
+                log('DEBUG: ' + msg);
+                if(this.#webClients) {
+                    this.#webIo.emit('debug', msg);
+                }
+            }
+        }
+
+        /**
+         * Prints info messaging to the console window.
+         *
+         * @param msg - The message to be output tot he console.
+         */
+        log(msg) {
+            log(c.cyan(msg));
+            if(this.#webClients) {
+                this.#webIo.emit('info', msg);
+            }
+        }
+
+
+        /**
+         * Prints basic warning messages to the console window.
+         *
+         * @param {String} msg - The message to be output tot he console.
+         */
+        warn(msg) {
+            log.warn(c.yellow('WARNING: ' + msg));
+            if(this.#webClients) {
+                this.#webIo.emit('warn', msg);
+            }
+        }
+
+        /**
+         * Prints basic error messages to the console window.
+         *
+         * @param {String} msg - The message to be output tot he console.
+         */
+        error(msg) {
+            log.error(c.red('ERROR: ' + msg));
+            if(this.#webClients) {
+                this.#webIo.emit('error', msg);
+            }
+        }
+
+        /**
+         * Returns ansi codes for RGB values
+         *
+         */
+        rgbToAnsi256(r, g, b) {
+            // we use the extended greyscale palette here, with the exception of
+            // black and white. normal palette only has 4 greyscale shades.
+            if (r === g && g === b) {
+                if (r < 8) {
+                    return 16;
+                }
+
+                if (r > 248) {
+                    return 231;
+                }
+
+                return Math.round(((r - 8) / 247) * 24) + 232;
+            }
+
+            return 16
+                + (36 * Math.round(r / 255 * 5))
+                + (6 * Math.round(g / 255 * 5))
+                + Math.round(b / 255 * 5);
+
+
+        }
+
 
 
     } /* End of API class */
