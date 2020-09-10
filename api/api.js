@@ -103,7 +103,7 @@ const pxlTbl = ( function() {
 
         // These are the defaults, overridden by the settings object passed into `pxlTbl.setup()`.
 
-        #debugging = false;                                 // When true, the API will output TODO: should we grab a default value from an environment/config file?
+        #debugging = false;                                  // When true, the API will output TODO: should we grab a default value from an environment/config file?
         #consoleData = false;                               // When true, a graphical representqtion of the PxlTbl data is displayed in the console window.
         #fpsLimit = 30;                                     // Limit the frames per second so we won't over work the hardware rendering useless frame. Good values would be 30 or 60
         #cbLoop = null;                                     // This is a place holder for the user's main loop. Users will pass a loop function into the API before run time and it can be called though this variable.
@@ -781,17 +781,17 @@ const pxlTbl = ( function() {
         /**
          * Exits and shuts down the PxlTbl
          */
-        shutdown() {
+        shutdown = () => {
             this.debug('Closing...');
             // TODO: this.#serial.close(function(){process.exit();});
-            //for now just kill the process
+            // For now just kill the process
             process.exit(1);
         };
 
         /**
          * Exits a prog and returns to the main menu
          */
-        exit() {
+        exit = () => {
             // Go to home screen
             this.#goHome = true;
         };
@@ -801,7 +801,7 @@ const pxlTbl = ( function() {
          *
          * @returns {number}
          */
-        getFps() {
+        getFps = () => {
             return this.#fps;
         }
 
@@ -810,7 +810,7 @@ const pxlTbl = ( function() {
          *
          * @returns {number} fpsLimit - The amount of frames per second the API will attempt to maintain
          */
-        getFpsLimit() {
+        getFpsLimit = () => {
             return this.#fpsLimit;
         }
 
@@ -819,7 +819,7 @@ const pxlTbl = ( function() {
          *
          * @param {number} fpsLimit - The amount of frames per second the API will attempt to maintain
          */
-        setFpsLimit(fpsLimit) {
+        setFpsLimit = (fpsLimit) => {
             // TODO: Sanity check?
             this.#fpsLimit = fpsLimit;
         }
@@ -829,7 +829,7 @@ const pxlTbl = ( function() {
          *
          * @returns {number} frameTime - Frame time in milliseconds
          */
-        getFrameTime() {
+        getFrameTime = () => {
             return this.#frameTime;
         }
 
@@ -838,7 +838,7 @@ const pxlTbl = ( function() {
          *
          * @returns {number} orientation - Screen rotation in degrees
          */
-        getOrientation() {
+        getOrientation = () => {
             return this.#orientation;
         }
 
@@ -847,7 +847,7 @@ const pxlTbl = ( function() {
          *
          * @param {number} angle - Angle to set the screen orientation to in degrees
          */
-        setOrientation(angle) {
+        setOrientation = (angle) => {
             // TODO: Sanity check?
             if(angle === 0 || angle === 180) {
                 this.#orientation = angle;
@@ -869,7 +869,7 @@ const pxlTbl = ( function() {
          *
          * @returns {{r: number, b: number, g: number}} colorRgb - RGB representation of the screen white balance
          */
-        getWhiteBalance() {
+        getWhiteBalance = () => {
             return this.#whiteBalance;
         }
 
@@ -880,7 +880,7 @@ const pxlTbl = ( function() {
          * @param {number} g - Green value from 0 to 255
          * @param {number} b - Blue value from 0 to 255
          */
-        setWhiteBalance(r, g, b) {
+        setWhiteBalance = (r, g, b) => {
             // TODO: Sanity check?
             this.#whiteBalance.r = r;
             this.#whiteBalance.g = g;
@@ -896,7 +896,7 @@ const pxlTbl = ( function() {
          * @param g {number} g - Green value from 0 to 255
          * @param b {number} b - Blue value from 0 to 255
          */
-        blank(r = 0, g = 0, b = 0) {
+        blank = (r = 0, g = 0, b = 0) => {
             for (let i = 0; i < this.#pxlCount; i++) {
                 this.#buffer[i * 3] = r;
                 this.#buffer[i * 3 + 1] = g;
@@ -918,7 +918,7 @@ const pxlTbl = ( function() {
          *
          * @returns {API}
          */
-        setup: function(settings){
+        setup: (settings) => {
             // TODO: should we do some validation/sanity checking of the passed settings first? eg if(!(type0f(settings) = 'object'));
 
             // check if instance is available

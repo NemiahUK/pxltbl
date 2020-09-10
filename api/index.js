@@ -2,6 +2,7 @@
 const PxlTbl = require('./api.js');
 
 const api = PxlTbl.setup({
+    debugging: true,
     consoleData: false,
     loop: loop,
 });
@@ -12,12 +13,8 @@ const api = PxlTbl.setup({
 
 function loop() {
     api.blank(255,0,0);
-    console.log(api);
+    api.debug('message');
     api.shutdown();
     //api.setColor(0, 255, 0);
     //api.setPixel(1,1);
-
-
-
-    api.shutdown();
 }
