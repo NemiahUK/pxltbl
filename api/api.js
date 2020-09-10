@@ -729,7 +729,7 @@ const pxlTbl = ( function() {
          * - getPxlCount() * was pxlCount
          * - getScreenWidth() * was pxlW
          * - getScreenHeight() * was pxlH
-         * - getWhiteBalance()
+         * - getWhiteBalance() *
          * - setWhiteBalance(r, g, b)
          *
          * - isRasPi()
@@ -808,8 +808,7 @@ const pxlTbl = ( function() {
          * @returns {number} fpsLimit - The amount of frames per second the API will attempt to maintain
          */
         getFpsLimit() {
-            // TODO: Sanity check?
-            return this.#fpsLimit
+            return this.#fpsLimit;
         }
 
         /**
@@ -832,16 +831,6 @@ const pxlTbl = ( function() {
         }
 
         /**
-         * Get the white balance of the screen.
-         *
-         * @returns {{r: number, b: number, g: number}} colorRgb - RGB representation of the screen white balance
-         */
-        getWhiteBalance() {
-            // TODO: Sanity check?
-            return this.#whiteBalance;
-        }
-
-        /**
          * Get the current orientation of the screen in degrees.
          *
          * @returns {number} orientation - Screen rotation in degrees
@@ -856,6 +845,7 @@ const pxlTbl = ( function() {
          * @param {number} angle - Angle to set the screen orientation to in degrees
          */
         setOrientation(angle) {
+            // TODO: Sanity check?
             if(angle === 0 || angle === 180) {
                 this.#orientation = angle;
                 this.#pxlW = this.#originalPxlW;
@@ -869,6 +859,15 @@ const pxlTbl = ( function() {
             }
 
             this.blank();
+        }
+
+        /**
+         * Get the white balance of the screen.
+         *
+         * @returns {{r: number, b: number, g: number}} colorRgb - RGB representation of the screen white balance
+         */
+        getWhiteBalance() {
+            return this.#whiteBalance;
         }
 
         /**

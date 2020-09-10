@@ -14,4 +14,8 @@ function loop(api) {
     //api.blank(0,0,0);
     //api.setColor(0, 255, 0);
     //api.setPixel(1,1);
+
+
+
+    api.shutdown();
 }
