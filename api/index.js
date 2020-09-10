@@ -20,6 +20,8 @@ function loop() {
 
     api.text('Test!', 5, 5)
 
+    api.beep();
+
     // const context = new AudioContext()
     // const o = context.createOscillator()
     // const  g = context.createGain()
