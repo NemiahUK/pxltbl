@@ -1,25 +1,27 @@
 const PxlTbl = require('./api.js');
 const fs = require('fs');
+const loudness = require('loudness');
 
-var screen = 'home';
+let screen = 'home';
 
-var path = './progs';
-var progs = [];
-var gotProgs = false;
-var gettingProgs = false;
-var curProg = 0;
-var textScroll = 0.0;
-var preTextScroll = 0.0;
-var menuScroll = 0.0;
+const path = './progs';
+let progs = [];
+let gotProgs = false;
+let gettingProgs = false;
+let curProg = 0;
 
-var btnDownPressed;
-var btnUpPressed;
+let textScroll = 0.0;
+let preTextScroll = 0.0;
+let menuScroll = 0.0;
 
-var prog;
+let btnDownPressed = false;
+let btnUpPressed = false;
+
+let prog;
 
 
 const api = PxlTbl.setup({
-    consoleDisplay: false,
+    consoleDisplay: true,
     debugging: true,
     loop: loop,
     fpsLimit: 30
@@ -49,8 +51,14 @@ function loop() {
         case 'settings':
             settings();
             break;
+        case 'volume':
+            volume();
+            break;
         case 'brightness':
             brightness();
+            break;
+        case 'ip':
+            ip();
             break;
         case 'prog':
             try {
@@ -64,21 +72,35 @@ function loop() {
 
 }
 
+
+
+
+
+
+
 function home() {
 
     if(!gotProgs && !gettingProgs) {
         gettingProgs = true;
         progs = [];
+
+
         fs.readdir(path, function(err, items) {
 
+            for (let i = 0; i < items.length; i++) {
 
-            for (var i=0; i<items.length; i++) {
-                progs.push(items[i].substr(0,items[i].length-3));
-
+                try {
+                    if (fs.existsSync(path + '/' + items[i] + '/main.js')) {
+                        progs.push(items[i])
+                    }
+                } catch(err) {
+                    console.error(err)
+                }
             }
+
             progs.push('Settings');
             textScroll = 0;
-            preTextScroll = api.pxlW;
+            preTextScroll = api.getScreenWidth();
             if (curProg >= progs.length) curProg = 0;
             gettingProgs = false;
             gotProgs = true;
@@ -104,7 +126,7 @@ function home() {
         if ((buttons.bottom || touchDown) && !btnDownPressed) {
             curProg++;
             textScroll = 0;
-            preTextScroll = api.pxlW;
+            preTextScroll = api.getScreenWidth();
             if (curProg >= progs.length) curProg = progs.length-1;
             btnDownPressed = true;
         }
@@ -112,7 +134,7 @@ function home() {
         if ((buttons.top || touchUp) && !btnUpPressed) {
             curProg--;
             textScroll = 0;
-            preTextScroll = api.pxlW;
+            preTextScroll = api.getScreenWidth();
             if (curProg < 0) curProg = 0;
             btnUpPressed = true;
         }
@@ -124,7 +146,6 @@ function home() {
         if (buttons.left || buttons.right || touchEnter) {
             if (curProg === progs.length - 1) {
                 api.clearInputs();
-                return; //disabled for now
                 textScroll = 0;
                 gotProgs = false;
                 screen = 'settings';
@@ -167,11 +188,11 @@ function home() {
                     api.setDrawColor(0, 255, 255);
                     const textSize = api.text(progs[i], -100,0);
                     let textPos = 0;
-                    if(textSize.w > api.pxlW) textPos = Math.round(textScroll);
-                    api.text(progs[i], textPos, i*10 + menuScroll + api.pxlH/2 - 5);
-                    if (textScroll < 0 - textSize.w) textScroll = api.pxlW;
+                    if(textSize.w > api.getScreenWidth()) textPos = Math.round(textScroll);
+                    api.text(progs[i], textPos, i*10 + menuScroll + api.getScreenHeight()/2 - 5);
+                    if (textScroll < 0 - textSize.w) textScroll = api.getScreenWidth();
                 } else {
-                    api.text(progs[i], 0, i*10 + menuScroll + api.pxlH/2 - 5);
+                    api.text(progs[i], 0, i*10 + menuScroll + api.getScreenHeight()/2 - 5);
                 }
 
 
@@ -182,14 +203,18 @@ function home() {
 
         /*  green rotation arrows - maybe have diagonal opposite corners or somethign instead?
         api.setDrawColor(0,255,0,0.2);
-        api.fillBox(api.pxlW/2-2,api.pxlH-1,4,1);
-        api.fillBox(api.pxlW/2-1,api.pxlH-2,2,1);
-        api.fillBox(api.pxlW/2-2,0,4,1);
-        api.fillBox(api.pxlW/2-1,1,2,1);
-        api.fillBox(0,api.pxlH/2-2,1,4);
-        api.fillBox(1,api.pxlH/2-1,1,2);
-        api.fillBox(api.pxlW-1,api.pxlH/2-2,1,4);
-        api.fillBox(api.pxlW-2,api.pxlH/2-1,1,2);
+
+        api.fillBox(api.getScreenWidth()/2-2,api.getScreenHeight()-1,4,1);
+        api.fillBox(api.getScreenWidth()/2-1,api.getScreenHeight()-2,2,1);
+
+        api.fillBox(api.getScreenWidth()/2-2,0,4,1);
+        api.fillBox(api.getScreenWidth()/2-1,1,2,1);
+
+        api.fillBox(0,api.getScreenHeight()/2-2,1,4);
+        api.fillBox(1,api.getScreenHeight()/2-1,1,2);
+
+        api.fillBox(api.getScreenWidth()-1,api.getScreenHeight()/2-2,1,4);
+        api.fillBox(api.getScreenWidth()-2,api.getScreenHeight()/2-1,1,2);
         */
     }
 
@@ -210,53 +235,212 @@ function err() {
     api.text('Err',3,2);
 }
 
-function settings() {
-    const buttons = api.getButtons();
-    if(buttons.bottomLeft && !btnDownPressed) {
-        //no other menu items yet
 
+const settingsMenu = [
+    'Volume',
+    'Brightness',
+    'IP'
+]
+let curSetting = 0;
+let gotSettings = false;
+
+function settings() {
+    if (!gotSettings) {
+
+        textScroll = 0;
+        preTextScroll = api.getScreenWidth();
+        curSetting = 0;
+
+        gotSettings = true;
+    }
+
+    const touches = api.getTouch();
+    const buttons = api.getButtons();
+
+    let touchDown, touchUp, touchEnter;
+
+    if (touches.length) {
+        for (let i = 0; i < touches.length; i++) {
+            touchUp = touches[0].y < 4;
+            touchDown = touches[0].y > 14;
+            touchEnter = touches[0].y > 4 && touches[0].y < 14;
+        }
+    }
+
+    if ((buttons.bottom || touchDown) && !btnDownPressed) {
+
+        curSetting++;
+        textScroll = 0;
+        preTextScroll = api.getScreenWidth();
+        if (curSetting >= settingsMenu.length) curSetting = settingsMenu.length - 1;
         btnDownPressed = true;
     }
 
-    if(buttons.rightBottom) {
-        //only one thing to do
+    if ((buttons.top || touchUp) && !btnUpPressed) {
+
+        curSetting--;
+        textScroll = 0;
+        preTextScroll = api.getScreenWidth();
+        if (curSetting < 0) curSetting = 0;
+        btnUpPressed = true;
+    }
+
+    if (!buttons.bottom && !touchDown) btnDownPressed = false;
+    if (!buttons.top && !touchUp) btnUpPressed = false;
+
+    if (buttons.left || buttons.right || touchEnter) {
         api.clearInputs();
-        screen = 'brightness';
+        textScroll = 0;
+
+        screen = settingsMenu[curSetting].toLowerCase();
         return;
     }
 
-    if(!buttons.bottomLeft) btnDownPressed = false;
+    // Display the settingsMenu list now that it's filled with our settings
+    // Refactor this into it's own function as it's used multiple times
+    api.setDrawColor(255, 255, 0);
+    api.fillBox(1, 1, 3, 4);
+    api.setPixel(2, 0);
+    api.setPixel(0, 2);
+    api.setPixel(4, 2);
+    api.setDrawColor(0, 0, 0);
+    api.setPixel(2, 4);
+
+    if (settingsMenu.length) {
+        api.blank(0, 0, 0);
+
+        if (menuScroll > curSetting * -10) menuScroll--;
+        if (menuScroll < curSetting * -10) menuScroll++;
+        if (preTextScroll > 0) {
+            preTextScroll--;
+        } else {
+            textScroll--;
+        }
+        for (let i = 0; i < settingsMenu.length; i++) {
+            api.setDrawColor(100, 100, 100);
+
+            if (i === curSetting) {
+                api.setDrawColor(0, 255, 255);
+                const textSize = api.text(settingsMenu[i], -100, 0);
+                let textPos = 0;
+                if (textSize.w > api.getScreenWidth()) textPos = Math.round(textScroll);
+                api.text(settingsMenu[i], textPos, i * 10 + menuScroll + api.getScreenHeight() / 2 - 5);
+                if (textScroll < 0 - textSize.w) textScroll = api.getScreenWidth();
+            } else {
+                api.text(settingsMenu[i], 0, i * 10 + menuScroll + api.getScreenHeight() / 2 - 5);
+            }
+        }
+        if (curSetting === settingsMenu.length - 1) api.setDrawColor(50, 0, 255);
+    }
+}
 
 
-    api.blank(0,0,0);
-    api.setDrawColor(50,0,255);
-    var txtSize=api.text('Brightness',Math.round(textScroll),1);
-    textScroll = textScroll - 0.7;
-    if (textScroll < -txtSize.w) textScroll = api.pxlW;
 
+async function volume() {
+    const step = 100 / api.getScreenWidth();
+    const curVol = await loudness.getVolume()
+    let setVol = curVol;
+    const maxVol = 100;
+    const minVol = 0;
+    const oldVol = curVol;
+
+    let barWidthPercent = curVol / maxVol;
+    let barWidth = Math.round(api.getScreenWidth() * barWidthPercent);
+
+    const buttons = api.getButtons();
+
+    if(buttons.leftBottom) {
+        setVol = curVol - step;
+        setVol = Math.max(setVol, minVol);
+        --barWidth;
+        barWidth = Math.max(barWidth, 0);
+    }
+
+    if(buttons.rightBottom) {
+        setVol = curVol + step;
+        setVol = Math.min(setVol, maxVol);
+        ++barWidth;
+        barWidth = Math.min(barWidth, api.getScreenWidth())
+    }
+
+    if (setVol !== oldVol) {
+        loudness.setVolume(setVol)
+    }
+
+
+    api.blank(255,255,255);
+    api.setDrawColor(255,0,55);
+    api.fillBox(0,0, barWidth, api.getScreenHeight());
 }
 
 function brightness() {
+    const step = 4;
     const buttons = api.getButtons();
-    var step = 4;
-    if(buttons.leftBottom && api.brightness > 1+step) api.brightness-=step;
-    if(buttons.rightBottom && api.brightness < 255-step ) api.brightness+=step;
+
+    if(buttons.leftBottom)
+    {
+        api.brightness-=step;
+    }
+
+    if(buttons.rightBottom) {
+        api.brightness += step;
+    }
 
     api.blank(255,255,255);
     api.setDrawColor(50,0,255);
-    api.fillBox(0,10,api.brightness/10,1);
+    api.fillBox(0,0,api.brightness/10, api.getScreenHeight());
+}
 
+function ip() {
+    const _interfaces = require('os').networkInterfaces();
+
+    let foundIp = false;
+    let ip = "0.0.0.0";
+
+    for (let _deviceName in _interfaces) {
+        let _interface = _interfaces[_deviceName];
+
+        for (let i = 0; i < _interface.length; i++) {
+            let alias = _interface[i];
+            if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+                ip = alias.address;
+                foundIp = true;
+
+                break;
+            }
+
+            if (foundIp) break;
+        }
+
+        if (foundIp) break;
+    }
+
+
+    api.blank(0,0,0);
+    api.setDrawColor(0,255,255);
+
+
+    if(preTextScroll > 0) {
+        preTextScroll--;
+    } else {
+        textScroll--;
+    }
+
+    const textSize = api.text(ip, -100,0);
+    let textPos = 0;
+    if(textSize.w > api.getScreenWidth()) textPos = Math.round(textScroll);
+    api.text(ip, textPos, api.getScreenHeight()/2 -3);
+    if (textScroll < 0 - textSize.w) textScroll = api.getScreenWidth();
 }
 
 function loadProg(file) {
-    purgeCache(path+'/'+file+'.js');
-    prog = require(path+'/'+file+'.js');
+    purgeCache(path+'/'+file+'/main.js');
+    prog = require(path+'/'+file+'/main.js');
     try {
         prog.setup(api);
     } catch (err) {
         screen = 'err';
     }
-
 }
 
 
