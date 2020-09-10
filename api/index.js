@@ -10,7 +10,7 @@ const api = PxlTbl.setup({
 
 
 
-function loop(api) {
+function loop() {
     //api.blank(0,0,0);
     //api.setColor(0, 255, 0);
     //api.setPixel(1,1);

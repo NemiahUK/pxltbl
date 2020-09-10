@@ -520,7 +520,7 @@ const pxlTbl = ( function() {
                         length: this.#buffer.length,
                         pxlW: this.#originalPxlW,
                         pxlH: this.#originalPxlH,
-                        rotation: this.#rotation
+                        orientation: this.#orientation
                     });
                 }
 
