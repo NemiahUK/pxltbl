@@ -10,8 +10,8 @@ If you just want to use the web-based emulator instead of building your own Pixe
 Pixel Table is designed to run on a Raspberry Pi 3+, but it should run on any platform that Node supports. We've tested it on Windows 10.
 
 * Check to see if Node is already installed by typing `node -v` into the console
-* If needed, Install Node.js you want the LTS version (currently 8.12.0) https://nodejs.org/en/download/ or 
-in Ubuntu you can run the following command in terminal to install automatically `curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -` then `sudo apt-get install -y nodejs npm` 
+* If needed, Install Node.js you want the LTS version (currently v12) https://nodejs.org/en/download/ or 
+in Ubuntu you can run the following command in terminal to install automatically `curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -` then `sudo apt-get install -y nodejs npm` 
 * *EITHER* install git (if needed) the clone the repo by typing  `git clone https://github.com/TmpR/pxltbl.git`
 * *OR* Download the zip file from https://github.com/TmpR/pxltbl/archive/master.zip and extract it
 * Navigate to the project directory and enter the sub-folder `api/` 

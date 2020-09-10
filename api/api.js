@@ -8,8 +8,8 @@
  * Dependencies
  *---------------------------------------------------------------------------*/
 
-const pkg = require("./package.json")                       // Including our `package.json` file so we can access the data
-const config = require("./config.json")                     // Grab the config file so we can access the data
+const pkg = require("../package.json");                       // Including our `package.json` file so we can access the data
+const config = require("./config.json");                     // Grab the config file so we can access the data
 
 const fs = require('fs');                                   // FileSystem included with Node.js
 const path = require('path');                               // Gets the path of a file or directory.
@@ -33,46 +33,43 @@ const pxlTbl = ( function() {
      * The PxlTbl API. Using an instance of this class, you and control and access the data of a PxlTbl in your code.
      */
     class API {
-        /* --- Data --- */
-        // TODO: Grab defaults from a config file?
+
 
         /* --- Constants --- */
 
         // TODO: Find other values that should be constant and add here?
         // TODO: Constant inside a `constants` object and freeze it to make values read only.
 
-        //defined - touch panel params TODO: Should be set by driver/config file
-        #touchMaxX = 32767;                                 // int16 ???
-        #touchMaxY = 32767;                                 // int16 ???
-        #touchTlPixelX = 903;                               // X value from the touch panel of the top left corner of the top left pixel
-        #touchTlPixelY = 1713;                              // Y value from the touch panel of the top left corner of the top left pixel
-        #touchBrPixelX = 31652;                             // X value from the touch panel of the bottom right corner of the bottom pixel
-        #touchBrPixelY = 31710;                             // Y value from the touch panel of the bottom right corner of the bottom pixel
 
-
+        // API / User Data
         #isRasPi = false;                                   // Is true when the API is running on a physical PxlTbl, false when using the web emulator
         #frameTime = 0;                                     // The frame time of the last frame rendered
         #millis = 0;                                        // Number of ms since start
         #frames = 0;                                        // Number of frames rendered
         #fps = 0;                                           // Current frames per second
-
-
-        #colorR = 255;                                      // Color red channel
-        #colorG = 255;                                      // Color green channel
-        #colorB = 255;                                      // Color blue channel
-        #colorA = 1;                                        // Color alpha channel (transparency)
-        #goHome = false;                                    // Used to signal intent to return to main menu
-        #screenSaverDisplayed = false;                      // Is the screensaver being displayed
-        #screenSaverDelay = 1000 * 60 * 5;                  // Amount of time in milliseconds until a screensaver is displayed
         #orientation = 0;
         #brightness = 200;                                  // Brightness setting for the screen
-        #fontArray = [];                                    // Holds the font that is used when calling `text()` and similar methods.
         #whiteBalance = {
             r: 1.0,
             g: 0.9,
             b: 0.5
         };                                                  // White balance setting for the screen.
+        #colorR = 255;                                      // Color red channel
+        #colorG = 255;                                      // Color green channel
+        #colorB = 255;                                      // Color blue channel
+        #colorA = 1;                                        // Color alpha channel (transparency)
 
+        // Internal vars
+        #goHome = false;                                    // Used to signal intent to return to main menu
+        #screenSaverDisplayed = false;                      // Is the screensaver being displayed
+        #fontArray = [];                                    // Holds the font that is used when calling `text()` and similar methods.
+        #startTime = null;                                  // ???
+        #lastLoopTime = null;                               // ???
+        #lastStatsTime = null;                              // ???
+        #lastInputTime = null;
+
+
+        // Serial HW config
         #serial = null;                                     // ???
         #serialEnabled = false;                             // ???
         #baud = 0;                                          // ???
@@ -83,59 +80,14 @@ const pxlTbl = ( function() {
         #gotParams = false;                                 // ???
         #paramTries = 0;                                    // ???
 
-        #startTime = null;                                  // ???
-        #lastLoopTime = null;                               // ???
-        #lastStatsTime = null;                              // ???
-        #lastInputTime = null;
 
+        // Web server config
+        #webRoot = './web';                                 // ???
         #webServer = '';                                    // ???
         #webIo = '';                                        // ???
-        #webRoot = './web';                                 // ???
         #webClients = 0;                                    // ???
 
-        //HID device
-        #hidEnabled = false;
-        #touchPanel = null;                                 // The touch panel device reference
-        #hidPath = '';                                      // TODO I think this needs removing - Ste
-        #touchParams = {};
-
-        // Sounds
-
-
-        /* --- Options --- */
-
-        // These are the defaults, overridden by the settings object passed into `pxlTbl.setup()`.
-
-        #debugging = false;                                 // When true, the API will output TODO: should we grab a default value from an environment/config file?
-        #consoleDisplay = false;                            // When true, a graphical representation of the PxlTbl data is displayed in the console window.
-        #fpsLimit = 30;                                     // Limit the frames per second so we won't over work the hardware rendering useless frame. Good values would be 30 or 60
-        #cbLoop = null;                                     // This is a place holder for the user's main loop. Users will pass a loop function into the API before run time and it can be called though this variable.
-        #emulationOnly = false;                             // ???
-
-
-        // TODO: The following should be gotten from the firmware or overridden for no-pi emulation
-
-        #originalPxlW = 0;                                  // ???
-        #originalPxlH = 0;                                  // ???
-
-        #numLeds = 0;                                       // This could be more than the size of the screen as it includes button LEDs etc.
-        // TODO: Delete? #stripSerpantine = false;                           // ???
-        // TODO: Delete? #stripStart = 'TL';                                 // TODO not implemented yet can be TL, TR, BL, BR
-        // TODO: Delete? #rgbOrder = 'RGB';                                  // TODO not implemented yet
-
-
-        // NOTE: Actual default values of the following data variables should be assigned in the constructor after settings applied as these are derived values.
-        #pxlW = 0;
-        #pxlH = 0;
-        #pxlCount = 0;
-
-        // Calculated touch position to pixel mapping, derived in `API`s constructor
-        #touchPixelWidth = 0;
-        #touchPixelHeight = 0;
-        #touchPixelStartX = 0;
-        #touchPixelStartY = 0;
-
-        //TODO - allow custom button map of buttonName => GPIO pin to be added to options object. This would replace the one below.
+        // Buttons
         #buttons = {
             topLeft: false,
             leftTop: false,
@@ -152,10 +104,59 @@ const pxlTbl = ( function() {
             any: false
         };
 
+        //HID device
+        #hidEnabled = false;
+        #touchPanel = null;                                 // The touch panel device reference
+        #hidPath = '';                                      // TODO I think this needs removing - Ste
+        #touchParams = {};
+
         // Touch data
         #touch = [];                                        //the touch data from the local hardware
         #touchRead = [];                                    //the persistent touch data to allow for de-duplicating touch events
         #touchWeb = [];                                     //the touch data from the web interface
+
+        // Calculated touch position to pixel mapping, derived in `API`s constructor
+        #touchPixelWidth = 0;
+        #touchPixelHeight = 0;
+        #touchPixelStartX = 0;
+        #touchPixelStartY = 0;
+
+        //defined - touch panel params TODO: Should be set by driver/config file
+        #touchMaxX = 32767;                                 // int16 ???
+        #touchMaxY = 32767;                                 // int16 ???
+        #touchTlPixelX = 903;                               // X value from the touch panel of the top left corner of the top left pixel
+        #touchTlPixelY = 1713;                              // Y value from the touch panel of the top left corner of the top left pixel
+        #touchBrPixelX = 31652;                             // X value from the touch panel of the bottom right corner of the bottom pixel
+        #touchBrPixelY = 31710;                             // Y value from the touch panel of the bottom right corner of the bottom pixel
+
+        // Sounds
+
+
+        /* --- Options --- */
+
+        // These are the defaults, overridden by the settings object passed into constructor.
+
+        #debugging = false;                                 // When true, the API will output
+        #consoleDisplay = false;                            // When true, a graphical representation of the PxlTbl data is displayed in the console window.
+        #fpsLimit = 30;                                     // Limit the frames per second so we won't over work the hardware rendering useless frame. Good values would be 30 or 60
+        #cbLoop = null;                                     // This is a place holder for the user's main loop. Users will pass a loop function into the API before run time and it can be called though this variable.
+        #webPort = 3000;
+        #screenSaverDelay = 1000 * 60 * 5;                  // Amount of time in milliseconds until a screensaver is displayed
+
+
+        // The following is gotten from the firmware or overridden for no-pi emulation
+        // NOTE: Actual default values of the following data variables should be assigned in the constructor after settings applied as these are derived values.
+        #pxlW = 0;
+        #pxlH = 0;
+        #originalPxlW = 0;                                  // ???
+        #originalPxlH = 0;                                  // ???
+        #pxlCount = 0;
+        #numLeds = 0;                                       // This could be more than the size of the screen as it includes button LEDs etc.
+        // TODO: Delete? #stripSerpantine = false;                           // ???
+        // TODO: Delete? #stripStart = 'TL';                                 // TODO not implemented yet can be TL, TR, BL, BR
+        // TODO: Delete? #rgbOrder = 'RGB';                                  // TODO not implemented yet
+
+
 
 
         /* --- Methods, Getters and Setters --- */
@@ -169,6 +170,8 @@ const pxlTbl = ( function() {
         constructor(settings) {
             if(settings.hasOwnProperty('consoleDisplay')) this.#consoleDisplay = settings.consoleDisplay;
             if (settings.hasOwnProperty('debugging')) this.#debugging = settings.debugging;
+            if(settings.hasOwnProperty('fpsLimit')) this.#fpsLimit = parseInt(settings.fpsLimit);
+
 
             this.#originalPxlW = config.pixels.width; // TODO: Get from config/hardware
             this.#originalPxlH = config.pixels.height; // TODO: Get from config/hardware
@@ -210,16 +213,12 @@ const pxlTbl = ( function() {
             this.#touchRead = new Array(this.#pxlCount);
             this.#touchWeb = new Array(this.#pxlCount);
 
-            if(settings.hasOwnProperty('fpsLimit')) this.#fpsLimit = parseInt(settings.fpsLimit);
-
-
-
 
             //start web server
             this.startWebServer();
 
             // TODO: Port hosted from should be a setting. Make the port displayed in the address here dynamic too when implemented.
-            if(!this.#consoleDisplay) this.log('Console display disabled, visit http://127.0.0.1:3000 to view stats.');
+            if(!this.#consoleDisplay) this.log('Console display disabled, visit http://127.0.0.1:'+this.#webPort+' to view stats.');
 
             //Go go go!
             this.start();
@@ -418,8 +417,8 @@ const pxlTbl = ( function() {
                 });
             });
 
-            this.#webServer.listen(3000);
-            this.log('Webserver started on port: 3000');
+            this.#webServer.listen(this.#webPort);
+            this.log('Webserver started on port: '+this.#webPort);
 
 
         }
@@ -1418,7 +1417,7 @@ const pxlTbl = ( function() {
          */
         debug(msg) {
             if(this.#debugging) {
-                log('DEBUG: ' + msg);
+                log(msg);
                 if(this.#webClients) {
                     this.#webIo.emit('debug', msg);
                 }
@@ -1444,7 +1443,7 @@ const pxlTbl = ( function() {
          * @param {String} msg - The message to be output tot he console.
          */
         warn(msg) {
-            log.warn(c.yellow('WARNING: ' + msg));
+            log.warn(c.yellow(msg));
             if(this.#webClients) {
                 this.#webIo.emit('warn', msg);
             }
@@ -1456,7 +1455,12 @@ const pxlTbl = ( function() {
          * @param {String} msg - The message to be output tot he console.
          */
         error(msg) {
-            log.error(c.red('ERROR: ' + msg));
+
+            if(typeof msg == 'object' && msg.stack && msg.message) {
+                msg =  msg.stack;
+            }
+
+            log.error(c.red(msg));
             if(this.#webClients) {
                 this.#webIo.emit('error', msg);
             }

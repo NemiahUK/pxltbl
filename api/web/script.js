@@ -1,7 +1,7 @@
 var socket = io(document.location.href);
 
 socket.on('connect', function(){
-    $('#console').append('<p>Connected.</p>');
+    $('#console').append('<pre>Connected.</pre>');
 });
 
 socket.on('leds', function(data){
@@ -15,14 +15,7 @@ socket.on('leds', function(data){
 
 });
 
-socket.on('debug', function(data){
-    if(typeof data == 'object') {
-        data = 'Debug: '+JSON.stringify(data);
-    }
-    $('#console').append('<p class="debug">'+data+'</p>');
-    $('#console').scrollTop($('#console')[0].scrollHeight);
 
-});
 
 socket.on('frameData', function(data){
 
@@ -102,15 +95,38 @@ socket.on('frameData', function(data){
 
 });
 
-socket.on('error', function(data){
-
-
-
-    if(typeof data == 'object' && data.stack && data.message) {
-        data = data.message + "<br>Stack Trace: " + data.stack;
+socket.on('info', function(data){
+    if(typeof data == 'object') {
+        data = JSON.stringify(data);
     }
-    $('#console').append('<p class="error">Error: '+data+'</p>');
+    $('#console').append('<pre class="info">'+data+'</pre>');
+    $('#console').scrollTop($('#console')[0].scrollHeight);
 
+});
+
+socket.on('debug', function(data){
+    if(typeof data == 'object') {
+        data = JSON.stringify(data);
+    }
+    $('#console').append('<pre class="debug">'+data+'</pre>');
+    $('#console').scrollTop($('#console')[0].scrollHeight);
+
+});
+
+socket.on('warn', function(data){
+    if(typeof data == 'object') {
+        data = JSON.stringify(data);
+    }
+    $('#console').append('<pre class="warn">'+data+'</pre>');
+    $('#console').scrollTop($('#console')[0].scrollHeight);
+
+});
+
+socket.on('error', function(data){
+    if(typeof data == 'object') {
+        data = JSON.stringify(data);
+    }
+    $('#console').append('<pre class="error">Error: '+data+'</pre>');
     $('#console').scrollTop($('#console')[0].scrollHeight);
 
 });

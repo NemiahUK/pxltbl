@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "cd api && nodemon index.js",
-    "service": "node api/index.js no-console",
+    "service": "cd api && node index.js no-console",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": {
