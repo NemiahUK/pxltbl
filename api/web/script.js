@@ -16,7 +16,6 @@ socket.on('leds', function(data){
 });
 
 socket.on('debug', function(data){
-
     if(typeof data == 'object') {
         data = 'Debug: '+JSON.stringify(data);
     }

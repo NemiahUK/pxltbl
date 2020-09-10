@@ -63,7 +63,7 @@ const pxlTbl = ( function() {
         #colorA = 1;                                        // Color alpha channel (transparency)
         #goHome = false;                                    // Used to signal intent to return to main menu
         #screenSaverDisplayed = false;                      // Is the screensaver being displayed
-        #idleTimeLimit = 1000 * 60 * 5;                     // Amount of time in milliseconds until a screensaver is displayed
+        #screenSaverDelay = 1000 * 60 * 5;                  // Amount of time in milliseconds until a screensaver is displayed
         #orientation = 0;
         #brightness = 200;                                  // Brightness setting for the screen
         #fontArray = [];                                    // Holds the font that is used when calling `text()` and similar methods.
@@ -111,7 +111,7 @@ const pxlTbl = ( function() {
         #fpsLimit = 30;                                     // Limit the frames per second so we won't over work the hardware rendering useless frame. Good values would be 30 or 60
         #cbLoop = null;                                     // This is a place holder for the user's main loop. Users will pass a loop function into the API before run time and it can be called though this variable.
         #emulationOnly = false;                             // ???
-        #screenSaverDelay = 10000;                          // Time in ms before screensaver starts
+
 
         // TODO: The following should be gotten from the firmware or overridden for no-pi emulation
 
@@ -480,7 +480,7 @@ const pxlTbl = ( function() {
             let curTime = new Date().getTime();
             if (curTime - this.#lastStatsTime > 1000) { //TODO replace 1000 with const
 
-                this.#fps = Math.floor(this.frames * 1000 / (curTime - this.#lastStatsTime));
+                this.#fps = Math.floor(this.#frames * 1000 / (curTime - this.#lastStatsTime));
                 this.#lastStatsTime = curTime;
                 this.#frames = 0;
 
@@ -560,7 +560,7 @@ const pxlTbl = ( function() {
             let serialBuffer = Buffer.alloc((this.#numLeds) * 3);
 
             //if screensaver is active then blank the buffer
-            //if(this.#screenSaverDisplayed === true) buffer = Buffer.alloc((this.#numLeds) * 3); TODO Make sure SSaver only fires when needed, then uncomment this line
+            if(this.#screenSaverDisplayed === true) buffer = Buffer.alloc((this.#numLeds) * 3);
 
 
             //TODO - this assumes stripStart = 'TL'  - it needs to take this into account.

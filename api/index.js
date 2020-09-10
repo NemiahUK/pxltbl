@@ -21,7 +21,7 @@ let prog;
 
 
 const api = PxlTbl.setup({
-    consoleDisplay: true,
+    consoleDisplay: false,
     debugging: true,
     loop: loop,
     fpsLimit: 30
@@ -65,7 +65,7 @@ function loop() {
                 prog.loop(api);
             } catch (err) {
                 screen = 'err';
-                api.error(err);
+                api.error(err.toString());
             }
             break;
     }
