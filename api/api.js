@@ -455,7 +455,7 @@ const pxlTbl = ( function() {
 
 
             //run the external loop function - this is where all the user code is
-            if(typeof this.#cbLoop == "function") this.#cbLoop(this);
+            if(typeof this.#cbLoop == "function") this.#cbLoop();
 
 
             //update display and start again
@@ -496,14 +496,15 @@ const pxlTbl = ( function() {
 
                     //console.log('Touch read time: ' + this.#touchReadTime);
                     //console.log('Touch packets per read: ' + this.#touchPacketsPerRead);
-                    console.log('Touch: ' + this.#touch);
-                    //console.log(Buffer.concat([this.frameStart, this.buffer]));
-                    /*
-                    for (var i = 0; i < this.buffer.length; i++) {
+                    //console.log('Touch: ' + this.#touch);
+                    //console.log(Buffer.concat([this.#frameStart, this.#buffer]));
+
+
+                    for (var i = 0; i < this.#buffer.length; i++) {
                         if(i % (this.pxlW * 3) === 0) process.stdout.write('\n');
-                        process.stdout.write(this.buffer[i].toString(16).padStart(2, '0'));
+                        process.stdout.write(this.#buffer[i].toString(16).padStart(2, '0'));
                     }
-                    */
+
                 }
 
                 //this.dump();
@@ -520,7 +521,7 @@ const pxlTbl = ( function() {
                         length: this.#buffer.length,
                         pxlW: this.#originalPxlW,
                         pxlH: this.#originalPxlH,
-                        rotation: this.#rotation
+                        orientation: this.#orientation
                     });
                 }
 
@@ -783,6 +784,8 @@ const pxlTbl = ( function() {
         shutdown() {
             this.debug('Closing...');
             // TODO: this.#serial.close(function(){process.exit();});
+            //for now just kill the process
+            process.exit(1);
         };
 
         /**
