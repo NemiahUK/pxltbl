@@ -723,14 +723,14 @@ const pxlTbl = ( function() {
          * - getFps()
          * - getFpsLimit()
          * - setFpsLimit(fpsLimit)
-         * - getFrameTime() * was frameTime
-         * - getRunTime() * was milis
-         * - getOrientation()
+         * - getFrameTime() was frameTime()
+         * - getRunTime() was milis()
+         * - getOrientation() was getRotation()
          * - setOrientation(angle)
-         * - getPxlCount() * was pxlCount
-         * - getScreenWidth() * was pxlW
-         * - getScreenHeight() * was pxlH
-         * - getWhiteBalance() *
+         * - getPxlCount() was pxlCount
+         * - getScreenWidth() was pxlW()
+         * - getScreenHeight() was pxlH()
+         * - getWhiteBalance()
          * - setWhiteBalance(r, g, b)
          *
          * - isRasPi()
@@ -738,6 +738,9 @@ const pxlTbl = ( function() {
          * --- Drawing Methods ---
          *
          * - blank(r, g, b)
+         * - setDrawColor(r, g, b, a(optional)) was setcolor() ***
+         * - setDrawColor(hexColorString) was setcolor() ***
+         * - setDrawColor(array) was setcolor() ***
          *
          *
          * TODO:
@@ -824,6 +827,7 @@ const pxlTbl = ( function() {
             this.#fpsLimit = fpsLimit;
         }
 
+
         /**
          * Get the time it tok to render the last frame in milliseconds.
          *
@@ -831,6 +835,11 @@ const pxlTbl = ( function() {
          */
         getFrameTime = () => {
             return this.#frameTime;
+        }
+
+
+        getRunTime = () => {
+            return this.#millis;
         }
 
         /**
@@ -862,6 +871,33 @@ const pxlTbl = ( function() {
             }
 
             this.blank();
+        }
+
+        /**
+         * Get the amount of pixels contained in the screen as a number.
+         *
+         * @returns {number} pxlCount - Number of pixels in the screen.
+         */
+        getPxlCount = () => {
+            return this.#pxlCount;
+        }
+
+        /**
+         * Get the width of the screen in pixels.
+         *
+         * @returns {number}
+         */
+        getScreenWidth = () => {
+            return this.#pxlW;
+        }
+
+        /**
+         * Get the height of the screen in pixels.
+         *
+         * @returns {number}
+         */
+        getScreenHeight = () => {
+            return this.#pxlH;
         }
 
         /**

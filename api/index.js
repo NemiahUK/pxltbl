@@ -14,6 +14,8 @@ const api = PxlTbl.setup({
 function loop() {
     api.blank(255,0,0);
     api.debug('message');
+
+
     api.shutdown();
     //api.setColor(0, 255, 0);
     //api.setPixel(1,1);
