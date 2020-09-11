@@ -364,7 +364,7 @@ async function volume() {
     }
 
     if (setVol !== oldVol) {
-        loudness.setVolume(setVol)
+        await loudness.setVolume(setVol)
     }
 
 
@@ -379,16 +379,16 @@ function brightness() {
 
     if(buttons.leftBottom)
     {
-        api.brightness-=step;
+        api.setBrightness(api.getBrightness() - step);
     }
 
     if(buttons.rightBottom) {
-        api.brightness += step;
+        api.setBrightness(api.getBrightness() + step);
     }
 
-    api.blank(255,255,255);
-    api.setDrawColor(50,0,255);
-    api.fillBox(0,0,api.brightness/10, api.getScreenHeight());
+    api.blank(255, 255, 255);
+    api.setDrawColor(50, 0, 255);
+    api.fillBox(0, 0, api.getBrightness() / 10, api.getScreenHeight());
 }
 
 function ip() {

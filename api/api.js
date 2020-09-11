@@ -820,6 +820,8 @@ const pxlTbl = ( function() {
          * - getPxlCount() was pxlCount
          * - getScreenWidth() was pxlW()
          * - getScreenHeight() was pxlH()
+         * - getBrightness()
+         * - setBrightness(value)
          * - getWhiteBalance()
          * - setWhiteBalance(r, g, b)
          *
@@ -1028,6 +1030,27 @@ const pxlTbl = ( function() {
             this.#whiteBalance.r = r;
             this.#whiteBalance.g = g;
             this.#whiteBalance.b = b;
+        }
+
+        /**
+         * Get the birghtness of the screen.
+         *
+         * @returns {{r: number, b: number, g: number}} colorRgb - RGB representation of the screen white balance
+         */
+        getBrightness = () => {
+            return this.#brightness;
+        }
+
+        /**
+         * Set the brightness of the screen.
+         *
+         * @param {number} r - Red value from 0 to 255
+         * @param {number} g - Green value from 0 to 255
+         * @param {number} b - Blue value from 0 to 255
+         */
+        setBrightness = (value) => {
+            // TODO: Sanity check?
+            this.#brightness = value;
         }
 
         // --- Drawing Methods ------------------------------------------------
