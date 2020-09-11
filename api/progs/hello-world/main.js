@@ -4,7 +4,7 @@
 var message = 'Hi =]';
 
 exports.setup = function(api) {
-    // Code here get's executed once at program startup.
+    // Code here gets executed once at program startup.
 
     // Blank the screen
     api.blank(0, 0, 0);
