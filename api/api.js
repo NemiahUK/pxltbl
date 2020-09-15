@@ -8,6 +8,7 @@
  * Dependencies
  *---------------------------------------------------------------------------*/
 
+const zealit = require('zealit');                            // Enforce strict properties on class
 const pkg = require("../package.json");                       // Including our `package.json` file so we can access the data
 const config = require("./config.json");                     // Grab the config file so we can access the data
 
@@ -1087,6 +1088,8 @@ const pxlTbl = ( function() {
                 g = rgb.g;
                 b = rgb.b;
 
+
+
             } else if(typeof r === 'object' && r.hasOwnProperty('h') && r.hasOwnProperty('s') && r.hasOwnProperty('v')) {
                 // Have we been passed an object of HSV?
                 a = (r.hasOwnProperty('a')) ? r.a : 1;
@@ -1106,6 +1109,7 @@ const pxlTbl = ( function() {
                 //have we been passed a hex string?
                 //TODO - convert string to values
             }
+
 
             this.#colorR = Math.round(r);
             this.#colorG = Math.round(g);
@@ -1135,12 +1139,14 @@ const pxlTbl = ( function() {
          * @param a
          */
         setDrawColorHsl = (h, s, l, a = 1) => {
+
             const hsl = {
                 h: h,
                 s: s,
                 l: l,
                 a: a
             };
+
 
             this.setDrawColor(hsl);
         }
@@ -1434,7 +1440,7 @@ const pxlTbl = ( function() {
          *
          * @param msg - The message to be output tot he console.
          */
-        debug(msg) {
+        debug = (msg) => {
             if(this.#debugging) {
                 log(msg);
                 if(this.#webClients) {
@@ -1448,7 +1454,7 @@ const pxlTbl = ( function() {
          *
          * @param msg - The message to be output tot he console.
          */
-        log(msg) {
+        log = (msg) => {
             log(c.cyanBright(msg));
             if(this.#webClients) {
                 this.#webIo.emit('info', msg);
@@ -1461,7 +1467,7 @@ const pxlTbl = ( function() {
          *
          * @param {String} msg - The message to be output tot he console.
          */
-        warn(msg) {
+        warn = (msg) => {
             log.warn(c.yellow(msg));
             if(this.#webClients) {
                 this.#webIo.emit('warn', msg);
@@ -1473,7 +1479,7 @@ const pxlTbl = ( function() {
          *
          * @param {String} msg - The message to be output tot he console.
          */
-        error(msg) {
+        error = (msg) => {
             let suggestion = '';
 
             if(typeof msg == 'object' && msg.stack && msg.message) {
@@ -1564,7 +1570,7 @@ const pxlTbl = ( function() {
                 b = hue2rgb(p, q, h - 1 / 3);
             }
 
-            return [ Math.round(r * 255), Math.round(g * 255), Math.round(b * 255) ];
+            return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
         }
 
         /**
@@ -1743,7 +1749,7 @@ const pxlTbl = ( function() {
                 // Now we have an instance, we don't want to be able to create any more API's so we delete the constructor.
                 delete _instance.constructor;
             }
-            return _instance;
+            return zealit(_instance);
         }
     };
 })();

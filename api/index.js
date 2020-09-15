@@ -33,6 +33,8 @@ const api = PxlTbl.setup({
 
 function loop() {
 
+
+
     if(api.getGoHome()) {
         screen = 'home';
         api.goneHome();
@@ -220,15 +222,15 @@ function home() {
 
 }
 
-var errStart = false;
+let errStart = false;
 function err() {
     if(errStart === false) {
-        errStart = api.millis;
+        errStart = api.getRunTime();
         api.playWav('looser');
     }
-    if(api.millis - errStart > 3000) {
+    if(api.getRunTime() - errStart > 3000) {
         errStart = false;
-        api.goHome = true;
+        api.exit();
     }
     api.blank(50,0,0);
     api.setDrawColor(255,0,0);
