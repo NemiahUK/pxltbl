@@ -1,20 +1,21 @@
 //these are used to make the pixel pulse
-var t = 0;
-var forward = true;
-var flashSpeed = 16;
+let t = 0;
+let forward = true;
+let flashSpeed = 16;
 
 //pixel location and speed
-var direction = 90;
-var speed = 2.0; //in pixels per second
-var lastMove;
-var x,y;
-var appleX, appleY;
+let direction = 90;
+let speed = 2.0; //in pixels per second
+let lastMove;
+let x;
+let y;
+let appleX, appleY;
 
-var main = [];
+let main = [];
 
 
-var gameStatus = 0;
-var score = 0;
+let gameStatus = 0;
+let score = 0;
 
 
 // Ricky's TODO notes
@@ -24,15 +25,15 @@ var score = 0;
 // More control options
 
 exports.setup = function(api) {
-    api.fpsLimit = 60;
+    api.setFpsLimit(60);
     api.clearInputs();
     api.blank(255,0,0);
-    api.setColor(0,0,0);
-    api.fillBox(1,1,api.pxlW-2,api.pxlH-2);
+    api.setDrawColor(0,0,0);
+    api.fillBox(1,1,api.getScreenWidth()-2,api.getScreenHeight()-2);
 
-    lastMove = api.millis;
-    x = Math.floor(api.pxlW/2);
-    y = Math.floor(api.pxlH/2);
+    lastMove = api.getRunTime();
+    x = Math.floor(api.getScreenWidth()/2);
+    y = Math.floor(api.getScreenHeight()/2);
 
     for(let i=5; i>=0; i--) {
         main.push({x: x-i, y:y});
@@ -43,13 +44,14 @@ exports.setup = function(api) {
 };
 
 exports.loop = function(api) {
-    api.setColor(0,0,0);
-    api.fillBox(1,1,api.pxlW-2,api.pxlH-2);
+    api.setDrawColor(0,0,0);
+    api.fillBox(1,1,api.getScreenWidth()-2,api.getScreenHeight()-2);
 
     //if a button is pressed then change direction
-    if(api.buttons.left) direction-=90;
-    if(api.buttons.right) direction+=90;
-    if(api.buttons.any) api.clearInputs();
+    if(api.getButtons().left) direction -= 90;
+    if(api.getButtons().right) direction += 90;
+    if(api.getButtons().any) api.clearInputs();
+    // api.debug(direction);
 
     //over/under flow
     if(direction >= 360) direction-=360;
@@ -57,8 +59,8 @@ exports.loop = function(api) {
 
 
     //process movement
-    if(api.millis - lastMove > 1000/speed) {
-        lastMove = api.millis;
+    if(api.getRunTime() - lastMove > 1000/speed) {
+        lastMove = api.getRunTime();
         score++;
         switch (direction) {
             case 0:
@@ -72,6 +74,8 @@ exports.loop = function(api) {
                 break;
             case 270:
                 x--;
+                break;
+            default:
                 break;
         }
         main.push({x: x, y: y});
@@ -92,7 +96,7 @@ exports.loop = function(api) {
 
 
         //if the snake has hit the wall
-        if(x > api.pxlW -2 || x < 1 || y > api.pxlH -2 || y < 1 ) {
+        if(x > api.getScreenWidth() -2 || x < 1 || y > api.getScreenHeight() -2 || y < 1 ) {
             //TODO - instead of just quitting, display score and restart game.
             gameOver(api);
         }
@@ -101,14 +105,14 @@ exports.loop = function(api) {
     }
 
     //draw the apple
-    api.setColor(0,255,0);
+    api.setDrawColor(0,255,0);
     api.setPixel(appleX,appleY);
 
 
     //draw the snake
-    api.setColor(0,255,255);
+    api.setDrawColor(0,255,255);
     for(let i=0; i < main.length; i++) {
-        if(i === main.length - 1) api.setColor(255,255,255);
+        if(i === main.length - 1) api.setDrawColor(255,255,255);
         api.setPixel(main[i].x,main[i].y);
     }
 };
@@ -132,8 +136,8 @@ function spawnApple(api) {
 
     //valid locations are 2 pixel smaller than the display (to account for borders)
     do {
-        newX = Math.floor(Math.random() * (api.pxlW - 2)) + 1;
-        newY = Math.floor(Math.random() * (api.pxlH - 2)) + 1;
+        newX = Math.floor(Math.random() * (api.getScreenWidth() - 2)) + 1;
+        newY = Math.floor(Math.random() * (api.getScreenHeight() - 2)) + 1;
         pixelData = api.getPixel(newX,newY);
     } while (pixelData.r !== 0 || pixelData.g !== 0 || pixelData.b !== 0);
     appleX = newX;
