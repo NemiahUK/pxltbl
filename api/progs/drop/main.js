@@ -73,12 +73,12 @@ function gameStart(api) {
 
       const touches = api.getTouch();
       // Play
-      if(touches.length && touches[0].x < api.pxlW) {
+      if(touches.length && touches[0].x < api.getScreenWidth()) {
         introStatus = 1;
       }
 
       // Exit
-      if(touches.length && touches[0].x > api.pxlW) {
+      if(touches.length && touches[0].x > api.getScreenWidth()) {
         api.exit();
       }
 
@@ -109,13 +109,13 @@ function gameStart(api) {
 
       towerTop = 0;
       towerHeight = 0;
-      towerLeft = Math.floor((api.pxlW - width)/2);
+      towerLeft = Math.floor((api.getScreenWidth() - width)/2);
 
-      scroll = api.pxlH;
+      scroll = api.getScreenHeight();
 
       flyInHeight = 2;
       flyInX = 0.0-width;
-      flyInY = api.pxlH-(4+flyInHeight);
+      flyInY = api.getScreenHeight()-(4+flyInHeight);
       flyInSpeed = 0.1;
       flyInStatus = 1;       //0 - waiting   1 - flying in  2 - falling  3 - Landing
 
@@ -170,7 +170,7 @@ function gamePlay(api) {
       flyInX+=flyInSpeed;
 
       //draw flyin
-      api.setDrawColor(flyInColor);
+      api.setDrawColor(flyInColor.r, flyInColor.g, flyInColor.b);
       api.fillBox(flyInX,flyInY,width,flyInHeight);
       if((api.getTouch().length)) {
         fallXSpeed = flyInSpeed;
@@ -187,7 +187,7 @@ function gamePlay(api) {
       flyInY+=gravity;
       flyInX+=fallXSpeed;
       // Draw flyin
-      api.setDrawColor(flyInColor);
+      api.setDrawColor(flyInColor.r, flyInColor.g, flyInColor.b);
       api.fillBox(flyInX,flyInY,width,flyInHeight);
       if(flyInY+flyInHeight >= scroll-towerHeight){
         flyInStatus++;
@@ -235,7 +235,7 @@ function gamePlay(api) {
         gameStatus++;
       }
       //draw flyin
-      api.setDrawColor(flyInColor);
+      api.setDrawColor(flyInColor.r, flyInColor.g, flyInColor.b);
       api.fillBox(flyInX,flyInY,width,flyInHeight);
       api.setDrawColor(255, 255, 255,0.7);
       api.fillBox(flyInX,flyInY,width,flyInHeight);
@@ -265,7 +265,7 @@ function gamePlay(api) {
         flyInX=0-width;
       } else {
         flyInSpeed-=0.005;
-        flyInX=api.pxlW;
+        flyInX=api.getScreenWidth();
       }
 
       flyInColor.h += 10;
@@ -273,7 +273,7 @@ function gamePlay(api) {
         flyInColor = 0;
       }
 
-      const rgb = api.hslToRgb(flyInColor.h,255,128);
+      const rgb = api.hslToRgb(flyInColor.h, 255, 128);
       flyInColor.r = rgb[0];
       flyInColor.g = rgb[1];
       flyInColor.b = rgb[2];
@@ -300,9 +300,9 @@ function gameOver(api) {
   animateGibs(api);
   if(gameOverTicks > 120) {
     api.blank(0, 0, 0);
-    api.setDrawColor(flyInColor);
+    api.setDrawColor(flyInColor.r, flyInColor.g, flyInColor.b);
     const bounds = api.textBounds(level);
-    api.text(level, (api.pxlW - bounds.w) / 2, (api.pxlH - bounds.h)/2);
+    api.text(level, (api.getScreenWidth() - bounds.w) / 2, (api.getScreenHeight() - bounds.h)/2);
     if (api.getTouch().length) {
       gameStatus = 0;
       hasRun = false;
@@ -322,11 +322,11 @@ function animateTower(api) {
 }
 
 function animateGibs(api) {
-  if(gibs.length && gibs[0].y+scroll > api.pxlH){
+  if(gibs.length && gibs[0].y+scroll > api.getScreenHeight()){
     gibs.shift();
   }
   for (let i = 0; i < gibs.length; i++) {
-    api.setDrawColor(gibs[i]);
+    api.setDrawColor(gibs[i].r, gibs[i].g, gibs[i].b);
     api.setPixel(gibs[i].x, gibs[i].y+scroll);
     // Movement
     gibs[i].x += gibs[i].vX;
@@ -339,12 +339,12 @@ function animateGibs(api) {
 }
 
 function screenToGibs(api) {
-  for (let y = 0; y < api.pxlH; y++) {
-    for (let x = 0; x < api.pxlW; x++) {
-      const i = y * api.pxlW + x;
-      const r = api.buffer[i * 3];
-      const g = api.buffer[i * 3 + 1];
-      const b = api.buffer[i * 3 + 2];
+  for (let y = 0; y < api.getScreenHeight(); y++) {
+    for (let x = 0; x < api.getScreenWidth(); x++) {
+      const i = y * api.getScreenWidth() + x;
+      const r = api.getBuffer()[i * 3];
+      const g = api.getBuffer()[i * 3 + 1];
+      const b = api.getBuffer()[i * 3 + 2];
       spawnGib(x,y,Math.round(Math.random()), r, g, b);
     }
   }

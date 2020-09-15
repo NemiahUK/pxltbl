@@ -898,6 +898,12 @@ const pxlTbl = ( function() {
 
 
 
+        getBuffer = () => {
+            return this.#buffer;
+        }
+
+
+
         /**
          * Get the current goHome flag.
          *
