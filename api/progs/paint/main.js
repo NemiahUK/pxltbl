@@ -13,30 +13,30 @@ exports.loop = function(api) {
         api.blank(0,0,0);
     }
 
-    api.setColor(255,128,0);
+    api.setDrawColor(255,128,0);
     api.fillBox(0,0,3,3);
 
 
-    api.setColor(100,255,0);
+    api.setDrawColor(100,255,0);
     api.fillBox(0,3,3,3);
 
-    api.setColor(255,0,255);
+    api.setDrawColor(255,0,255);
     api.fillBox(0,6,3,3);
 
-    api.setColor(0,255,255);
+    api.setDrawColor(0,255,255);
     api.fillBox(0,9,3,3);
 
-    api.setColor(100,100,100);
+    api.setDrawColor(100,100,100);
     api.fillBox(0,12,3,3);
 
-    api.setColor(255,0,0);
+    api.setDrawColor(255,0,0);
     api.setPixel(0,15);
     api.setPixel(2,15);
     api.setPixel(1,16);
     api.setPixel(0,17);
     api.setPixel(2,17);
 
-    api.setColor(0,0,0);
+    api.setDrawColor(0,0,0);
     if(color !== 0) api.setPixel(1,1);
     if(color !== 1) api.setPixel(1,4);
     if(color !== 2) api.setPixel(1,7);
@@ -49,11 +49,11 @@ exports.loop = function(api) {
 
             if (touches[i].x > 3) {
                 //draw
-                if (color === 0) api.setColor(255,128,0);
-                if (color === 1) api.setColor(100,255,0);
-                if (color === 2) api.setColor(255,0,255);
-                if (color === 3) api.setColor(0,255,255);
-                if (color === 4) api.setColor(0, 0, 0);
+                if (color === 0) api.setDrawColor(255,128,0);
+                if (color === 1) api.setDrawColor(100,255,0);
+                if (color === 2) api.setDrawColor(255,0,255);
+                if (color === 3) api.setDrawColor(0,255,255);
+                if (color === 4) api.setDrawColor(0, 0, 0);
 
                 api.setPixel(touches[i].x, touches[i].y);
             } else {
