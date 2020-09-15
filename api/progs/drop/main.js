@@ -28,7 +28,8 @@ let flyInY = 0;
 let flyInSpeed = 0;
 let flyInStatus = 0;
 let flyInHeight = 0;
-let flyInColor = 0;
+let flyInColor = {};
+let flyInColorHsl = {};
 let fallXSpeed = 0;
 
 let gameOverTicks = 0;
@@ -120,12 +121,15 @@ function gameStart(api) {
       flyInStatus = 1;       //0 - waiting   1 - flying in  2 - falling  3 - Landing
 
       flyInColor = {
-        h: 0,
-        s: 128,
-        l: 255,
         r: 255,
         g: 0,
         b: 0
+      };
+
+      flyInColorHsl = {
+        h: 0,
+        s: 255,
+        l: 128
       };
 
       stack=[];
@@ -268,16 +272,17 @@ function gamePlay(api) {
         flyInX=api.getScreenWidth();
       }
 
-      flyInColor.h += 10;
-      if (flyInColor.h > 360) {
-        flyInColor = 0;
+      flyInColorHsl.h += 10;
+      if (flyInColorHsl.h > 360) {
+        flyInColorHsl.h = 0;
       }
 
-      const rgb = api.hslToRgb(flyInColor.h, 255, 128);
-      flyInColor.r = rgb[0];
-      flyInColor.g = rgb[1];
-      flyInColor.b = rgb[2];
-      api.debug(flyInColor);
+      const rgb = api.hslToRgb(flyInColorHsl.h, flyInColorHsl.s, flyInColorHsl.l);
+      api.debug("H: " + flyInColorHsl.h + ', S: ' + flyInColorHsl.s + ', L: ' + flyInColorHsl.l);
+      flyInColor.r = rgb.r;
+      flyInColor.g = rgb.g;
+      flyInColor.b = rgb.b;
+      api.debug("R: " + flyInColor.r + ', G: ' + flyInColor.g + ', B: ' + flyInColor.b);
       flyInHeight=Math.ceil(Math.random() * Math.floor(3));
       flyInY=scroll - (towerHeight + 3 + flyInHeight);
 
