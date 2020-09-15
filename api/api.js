@@ -1495,6 +1495,7 @@ const pxlTbl = ( function() {
                 if(msg.message.includes('setColor')) suggestion = 'Did you mean api.setDrawColor()?';
                 if(msg.message.includes('pxlW')) suggestion = 'Did you mean api.getScreenWidth()?';
                 if(msg.message.includes('pxlH')) suggestion = 'Did you mean api.getScreenHeight()?';
+                if(msg.message.includes('buffer')) suggestion = 'Did you mean api.getBuffer()?';
 
                 if(msg.message.includes('Cannot read property \'topLeft\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';
                 if(msg.message.includes('Cannot read property \'topRight\' of undefined')) suggestion = 'Did you mean api.getButtons() instead of api.buttons?';

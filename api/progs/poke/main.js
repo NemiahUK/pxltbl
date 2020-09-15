@@ -17,15 +17,19 @@ exports.setup = function(api) {
 
 };
 
-var hasRun = false;
-var gameStatus = 0;
-var gravity = 0.5;
-var rotate = 0;
-var introStatus, introTicks;
-var level,width, towerLeft ,scroll;
-var gameOverTicks;
-var players = [];
-var gibs = [];
+let hasRun = false;
+let gameStatus = 0;
+const gravity = 0.5;
+let rotate = 0;
+let introStatus = 0;
+let introTicks = 0;
+let level = 0;
+let width = 0;
+let towerLeft =0;
+let scroll = 0;
+let gameOverTicks = 0;
+let players = [];
+let gibs = [];
 
 let numPlayers = 2;
 
@@ -89,45 +93,45 @@ function gameStart(api) {
       api.blank(0,0,0);
 
       // minus
-      if(api.isTouchInBounds(1,api.pxlH-4,3,1)) {
-        api.setColor(255,0,255);
+      if(api.isTouchInBounds(1,api.getScreenHeight()-4,3,1)) {
+        api.setDrawColor(255,0,255);
         if(!btnPressMinus) numPlayers--;
         btnPressMinus = true;
       } else {
-        api.setColor(255,255,255);
+        api.setDrawColor(255,255,255);
         btnPressMinus = false;
       }
-      api.fillBox(1,api.pxlH-4,3,1);
+      api.fillBox(1,api.getScreenHeight()-4,3,1);
 
       // plus
-      if(api.isTouchInBounds(5,api.pxlH-5,3,3)) {
-        api.setColor(255,0,255);
+      if(api.isTouchInBounds(5,api.getScreenHeight()-5,3,3)) {
+        api.setDrawColor(255,0,255);
         if(!btnPressPlus && numPlayers < 4) {
           numPlayers++;
           setPlayerColor(numPlayers-1);
         }
         btnPressPlus = true;
       } else {
-        api.setColor(255,255,255);
+        api.setDrawColor(255,255,255);
         btnPressPlus = false;
       }
-      api.fillBox(5,api.pxlH-4,3,1);
-      api.fillBox(6,api.pxlH-5,1,3);
+      api.fillBox(5,api.getScreenHeight()-4,3,1);
+      api.fillBox(6,api.getScreenHeight()-5,1,3);
 
       // play
-      api.setColor(0,255,0);
-      api.fillBox(api.pxlW/2-1,api.pxlH-6,1,5);
-      api.fillBox(api.pxlW/2,api.pxlH-5,1,3);
-      api.fillBox(api.pxlW/2+1,api.pxlH-4,1,1);
-      if(api.isTouchInBounds(api.pxlW/2-1,api.pxlH-6,3,5)) {
+      api.setDrawColor(0,255,0);
+      api.fillBox(api.getScreenWidth()/2-1,api.getScreenHeight()-6,1,5);
+      api.fillBox(api.getScreenWidth()/2,api.getScreenHeight()-5,1,3);
+      api.fillBox(api.getScreenWidth()/2+1,api.getScreenHeight()-4,1,1);
+      if(api.isTouchInBounds(api.getScreenWidth()/2-1,api.getScreenHeight()-6,3,5)) {
         introStatus = 1;
         api.clearInputs();
       }
 
       // exit
-      api.setColor(255,0,0);
-      api.fillBox(api.pxlW-5,api.pxlH-5,3,3);
-      if(api.isTouchInBounds(api.pxlW-5,api.pxlH-5,3,3)) {
+      api.setDrawColor(255,0,0);
+      api.fillBox(api.getScreenWidth()-5,api.getScreenHeight()-5,3,3);
+      if(api.isTouchInBounds(api.getScreenWidth()-5,api.getScreenHeight()-5,3,3)) {
         api.exit();
       }
 
@@ -136,9 +140,9 @@ function gameStart(api) {
       if(numPlayers < 2) numPlayers = 2;
 
       for (let i = 0; i < numPlayers; i++) {
-        api.setColor(players[i].color);
-        api.fillBox(api.pxlW/2 - numPlayers*2 + i*4 + 1,2,2,2);
-        if(api.isTouchInBounds(api.pxlW/2 - numPlayers*2 + i*4 + 1,2,2,2)) {
+        api.setDrawColor(players[i].color);
+        api.fillBox(api.getScreenWidth()/2 - numPlayers*2 + i*4 + 1,2,2,2);
+        if(api.isTouchInBounds(api.getScreenWidth()/2 - numPlayers*2 + i*4 + 1,2,2,2)) {
           if(!btnPressPlayer[i]) setPlayerColor(i);
           btnPressPlayer[i] = true;
         } else {
@@ -183,11 +187,11 @@ function gamePlay(api) {
 
   //draw background
 
-  api.setColor(0,0,0, 0.9);
-  api.fillBox(0,1,api.pxlW,api.pxlH);
+  api.setDrawColor(0,0,0, 0.9);
+  api.fillBox(0,1,api.getScreenWidth(),api.getScreenHeight());
 
-  api.setColor(100,100,100);
-  api.fillBox(0,0,api.pxlW,1);
+  api.setDrawColor(100,100,100);
+  api.fillBox(0,0,api.getScreenWidth(),1);
 
 
   const touches = api.getTouch();
@@ -201,10 +205,10 @@ function gamePlay(api) {
   for(let i=0; i < players.length; i++) {
 
     //draw point
-    api.setColor(players[i].color);
+    api.setDrawColor(players[i].color);
     api.setPixel(players[i].point.x, players[i].point.y);
     //draw twinkle
-    api.setColor(255,255,255,0.2  );
+    api.setDrawColor(255,255,255,0.2  );
     if(scoreTwinkle %pointTwinkleSpeed < pointTwinkleSpeed/4) api.setPixel(players[i].point.x, players[i].point.y);
 
     //check if point touched
@@ -217,20 +221,20 @@ function gamePlay(api) {
     }
 
     //draw scores
-    api.setColor(players[i].color);
+    api.setDrawColor(players[i].color);
 
     switch (i) {
       case 0:
         api.fillBox(0,0,players[i].score,1);
         //draw twinkle
-        api.setColor(255,255,255,0.3);
+        api.setDrawColor(255,255,255,0.3);
         if(scoreTwinkle <= players[i].score) api.setPixel(scoreTwinkle,0);
         break;
       case 1:
-        api.fillBox(api.pxlW-players[i].score,0,players[i].score,1);
+        api.fillBox(api.getScreenWidth()-players[i].score,0,players[i].score,1);
         //draw twinkle
-        api.setColor(255,255,255,0.3);
-        if(scoreTwinkle <= players[i].score) api.setPixel(api.pxlW - scoreTwinkle,0);
+        api.setDrawColor(255,255,255,0.3);
+        if(scoreTwinkle <= players[i].score) api.setPixel(api.getScreenWidth() - scoreTwinkle,0);
         break;
     }
 
@@ -275,9 +279,9 @@ function gameOver(api) {
   animateGibs(api);
 
   api.blank(players[winner].color.r,players[winner].color.g,players[winner].color.b);
-  api.setColor(0, 0, 0);
+  api.setDrawColor(0, 0, 0);
   const bounds = api.textBounds('WIN');
-  api.text('WIN', (api.pxlW-bounds.w)/2, (api.pxlH-bounds.h)/2);
+  api.text('WIN', (api.getScreenWidth()-bounds.w)/2, (api.getScreenHeight()-bounds.h)/2);
   if (api.getTouch().length) {
       gameStatus = 0;
       hasRun = false;
@@ -288,11 +292,11 @@ function gameOver(api) {
 
 
 function animateGibs(api) {
-  if(gibs.length && gibs[0].y+scroll > api.pxlH){
+  if(gibs.length && gibs[0].y+scroll > api.getScreenHeight()){
     gibs.shift();
   }
-  for (var i=0; i<gibs.length; i++) {
-      api.setColor(gibs[i]);
+  for (let i = 0; i < gibs.length; i++) {
+      api.setDrawColor(gibs[i]);
       api.setPixel(gibs[i].x, gibs[i].y);
       //movement
       gibs[i].x+=gibs[i].vX;
@@ -305,12 +309,12 @@ function animateGibs(api) {
 }
 
 function screenToGibs(api) {
-  for (var y = 0; y < api.pxlH; y++) {
-      for (var x = 0; x < api.pxlW; x++) {
-          var i = y * api.pxlW + x;
-          var r = api.buffer[i*3];
-          var g = api.buffer[i*3 + 1];
-          var b = api.buffer[i*3 + 2];
+  for (let y = 0; y < api.getScreenHeight(); y++) {
+      for (let x = 0; x < api.getScreenWidth(); x++) {
+          let i = y * api.getScreenWidth() + x;
+          let r = api.getBuffer()[i * 3];
+          let g = api.getBuffer()[i * 3 + 1];
+          let b = api.getBuffer()[i * 3 + 2];
           spawnGib(x,y,Math.round(Math.random()),r,g,b);
       }
   }
@@ -319,8 +323,8 @@ function screenToGibs(api) {
 function spawnPoint(api,player) {
 
   players[player].point = {
-    x: Math.floor(Math.random()*api.pxlW/2+api.pxlW/2*player),
-    y: Math.floor(Math.random()*(api.pxlH-2)+2),
+    x: Math.floor(Math.random()*api.getScreenWidth()/2+api.getScreenWidth()/2*player),
+    y: Math.floor(Math.random()*(api.getScreenHeight()-2)+2),
 
   }
 
@@ -347,8 +351,8 @@ function setPlayerColor(player) {
 }
 
 function spawnGib(x,y,left,r,g,b) {
-  var vX = -0.8 + (Math.random()*0.5);
-  var vY =  -2 + (Math.random()*1);
+  let vX = -0.8 + (Math.random()*0.5);
+  let vY =  -2 + (Math.random());
   if(!left) {
     vX*= -1;
   }
