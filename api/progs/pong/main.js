@@ -1,6 +1,10 @@
 //config vars
 const touchWidth = 2;
 const paddleWidth = 5;
+const aiPosErrorMargin = 2;
+const aiSpeed = 0.6;
+
+let players = 1;
 
 //these are used to make the pixel pulse
 let t = 0;
@@ -39,12 +43,12 @@ exports.loop = function(api) {
     if(api.getButtons().any) api.exit();
 
     //move the pixel by the current speed
-    x+=vX;
-    y+=vY;
+    x += vX;
+    y += vY;
 
     //if pixel at edges then reverse direction, play sound and set border yellow for 5 frames
     if(y >= api.getScreenHeight() - 2 || y < 1) {
-        vY = 0-vY;
+        vY = 0 - vY;
         bump = 5;
         api.playWav('sfx_sounds_Blip7');
     }
@@ -82,10 +86,27 @@ exports.loop = function(api) {
         for (let i = 0; i < touches.length; i++) {
             if(touches[i].x < touchWidth) {
                 leftPaddlePos = touches[i].y;
-            } else if (touches[i].x >= api.getScreenWidth() - touchWidth) {
+            } else if (touches[i].x >= api.getScreenWidth() - touchWidth && players === 2) {
                 rightPaddlePos = touches[i].y;
             }
+        }
+    }
 
+    // AI -  Super advanced!!! Be careful when making changes.
+    if(players = 1) {
+        let idealPos = Math.round(y);
+
+        if(idealPos > rightPaddlePos + aiPosErrorMargin) {
+            let distance = Math.abs(idealPos - rightPaddlePos + aiPosErrorMargin);
+
+            // Move padel to the ball
+            rightPaddlePos += Math.min(distance, aiSpeed)
+        } else if(idealPos < rightPaddlePos + aiPosErrorMargin) {
+
+            let distance = Math.abs(idealPos - rightPaddlePos + aiPosErrorMargin);
+
+            // Move padel to the ball
+            rightPaddlePos -= Math.min(distance, aiSpeed)
         }
     }
 
