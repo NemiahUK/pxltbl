@@ -1483,6 +1483,9 @@ const pxlTbl = ( function() {
             let suggestion = '';
 
             if(typeof msg == 'object' && msg.stack && msg.message) {
+
+                //TODO - replace this with a JSON file containing regex searches and string suggestions
+
                 if(msg.message.includes('setColor')) suggestion = 'Did you mean api.setDrawColor()?';
                 if(msg.message.includes('pxlW')) suggestion = 'Did you mean api.getScreenWidth()?';
                 if(msg.message.includes('pxlH')) suggestion = 'Did you mean api.getScreenHeight()?';
