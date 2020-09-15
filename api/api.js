@@ -429,7 +429,7 @@ const pxlTbl = ( function() {
          * Main loop
          */
 
-        loop() {
+        loop = () => {
 
             //read touch data (if HID connected)
             //this.readTouchPanel();
@@ -475,7 +475,7 @@ const pxlTbl = ( function() {
          * Show stats on console/web
          */
 
-        showStats() {
+        showStats = () => {
             //update the web/console every 1000ms
             let curTime = new Date().getTime();
             if (curTime - this.#lastStatsTime > 1000) { //TODO replace 1000 with const
@@ -543,7 +543,7 @@ const pxlTbl = ( function() {
          * Push display buffer to serial/web
          */
 
-        show() {
+        show = () => {
             //pushes the buffer to the Teensy via UART and web.
 
             //touch debug overlay
@@ -635,7 +635,7 @@ const pxlTbl = ( function() {
          * true if it is) and update the last input variables.
          */
 
-        checkToggleScreensaver() {
+        checkToggleScreensaver = () => {
             // This should only be called when there has been input, so update the variable.
             this.#lastInputTime = new Date().getTime();
 
