@@ -1278,7 +1278,10 @@ const pxlTbl = ( function() {
             let biggestY = 0;
 
             for (let i = 0; i < text.length; i++) {
-                const character = this.#fontArray[text.charCodeAt(i)];
+                let character = this.#fontArray[text.charCodeAt(i)];
+                if(typeof character == "undefined") character = this.#fontArray[0xFF];
+                if(typeof character == "undefined") character = [];
+
                 const len = character.length;
 
                 for (let col = 0;  col < len; col++) {
