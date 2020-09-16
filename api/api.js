@@ -1268,7 +1268,7 @@ const pxlTbl = ( function() {
             this.#fontArray = newFont;
         }
 
-        text = (text, x, y) => {
+        text = (text, x, y, style = '') => {
             // Sanitize data
             text = '' + text;
             x = Math.round(x);
@@ -1298,7 +1298,20 @@ const pxlTbl = ( function() {
 
                             if (column & 0x01) {
                                 if(bit + lower > biggestY) biggestY = bit + lower;
-                                this.setPixel(x + cursor, (bit - 1 + y) + lower);
+                                switch(style) {
+                                    case '3d':
+                                        // 3D text
+                                        this.setPixel(x + cursor - 1, (bit - 1 + y) + lower+1);
+                                        break;
+                                    case 'outline':
+                                        // outline
+                                        this.fillBox(x + cursor - 1, (bit - 1 + y) + lower - 1,3,3);
+                                        break;
+                                    default:
+                                        // normal text
+                                        this.setPixel(x + cursor, (bit - 1 + y) + lower);
+                                }
+
                             }
                         }
 
