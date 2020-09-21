@@ -10,7 +10,11 @@
     "checkValue": 48,
     "coordPos": 3,
     "maxX": 4096,
-    "maxY": 4096
+    "maxY": 4096,
+    "topLeftPixelX": 0,
+    "topLeftPixelY": 0,
+    "bottomRightPixelX": 4096,
+    "bottomRightPixelY": 4096
   },
   {
     "name": "Multi touch overlay device",
@@ -23,6 +27,10 @@
     "checkValue": 7,
     "coordPos": 2,
     "maxX": 32767,
-    "maxY": 32767
+    "maxY": 32767,
+    "topLeftPixelX": 903,
+    "topLeftPixelY": 1713,
+    "bottomRightPixelX": 31652,
+    "bottomRightPixelY": 31710
   }
 ]

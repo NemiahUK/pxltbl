@@ -110,25 +110,17 @@ const pxlTbl = ( function() {
         #touchPanel = null;                                 // The touch panel device reference
         #hidPath = '';                                      // TODO I think this needs removing - Ste
         #touchParams = {};
+        #touchReadTime = 0;
+        #touchPacketsPerRead = 0;
+        #touchLastRead = 0;
+        #touchReadingData = false;
+        #touchRawDataLength = 0;
 
         // Touch data
         #touch = [];                                        //the touch data from the local hardware
         #touchRead = [];                                    //the persistent touch data to allow for de-duplicating touch events
         #touchWeb = [];                                     //the touch data from the web interface
 
-        // Calculated touch position to pixel mapping, derived in `API`s constructor
-        #touchPixelWidth = 0;
-        #touchPixelHeight = 0;
-        #touchPixelStartX = 0;
-        #touchPixelStartY = 0;
-
-        //defined - touch panel params TODO: Should be set by driver/config file
-        #touchMaxX = 32767;                                 // int16 ???
-        #touchMaxY = 32767;                                 // int16 ???
-        #touchTlPixelX = 903;                               // X value from the touch panel of the top left corner of the top left pixel
-        #touchTlPixelY = 1713;                              // Y value from the touch panel of the top left corner of the top left pixel
-        #touchBrPixelX = 31652;                             // X value from the touch panel of the bottom right corner of the bottom pixel
-        #touchBrPixelY = 31710;                             // Y value from the touch panel of the bottom right corner of the bottom pixel
 
         // Sounds
 
@@ -190,11 +182,7 @@ const pxlTbl = ( function() {
             // This will be table border and RGB buttons. Also makes total divisible by 8 for Teensy Octo:
             this.#buffer = Buffer.alloc((this.#numLeds) * 3);
 
-            //calculated touch position to pixel mapping
-            this.#touchPixelWidth = (this.#touchBrPixelX - this.#touchTlPixelX) / (this.#pxlW - 1);
-            this.#touchPixelHeight = (this.#touchBrPixelY - this.#touchTlPixelY) / (this.#pxlH - 1);
-            this.#touchPixelStartX = this.#touchTlPixelX - (this.#touchPixelWidth / 2);
-            this.#touchPixelStartY = this.#touchTlPixelY - (this.#touchPixelHeight / 2);
+
 
             // Set up start time:
             this.#startTime = new Date().getTime();
@@ -274,18 +262,24 @@ const pxlTbl = ( function() {
                             const devices = HID.devices();
 
                             for (let i = 0; i < devices.length; i++) {
-                                if (devices[i].path === this.#hidPath) { //TODO I'm not sure why we are checking the path here. We should jsut be looking for mathing HD device on any path
-                                    for (let j = 0; j < hidConfig.length; j++) {
-                                        if (hidConfig[j].vendorId === devices[i].vendorId && hidConfig[j].productId === devices[i].productId) {
-                                            this.#touchParams = hidConfig[j];
-                                        }
+                                for (let j = 0; j < hidConfig.length; j++) {
+                                    if (hidConfig[j].vendorId === devices[i].vendorId && hidConfig[j].productId === devices[i].productId) {
+                                        //found a valid HID device, so set up the params
+                                        this.#touchParams = hidConfig[j];
+                                        this.#hidPath = devices[i].path;
+
+                                        //calculated touch position to pixel mapping
+                                        this.#touchParams.pixelWidth = (this.#touchParams.bottomRightPixelX - this.#touchParams.topLeftPixelX) / (this.#pxlW - 1);
+                                        this.#touchParams.pixelHeight = (this.#touchParams.bottomRightPixelY - this.#touchParams.topLeftPixelY) / (this.#pxlH - 1);
+                                        this.#touchParams.pixelStartX = this.#touchParams.topLeftPixelX - (this.#touchParams.pixelWidth / 2);
+                                        this.#touchParams.pixelStartY = this.#touchParams.topLeftPixelY - (this.#touchParams.pixelHeight / 2);
                                     }
                                 }
                             }
 
                             if (this.#touchParams.name !== undefined) {
                                 this.log("Found HID device: " + this.#touchParams.name);
-                                this.#touchPanel = new HID.HID(pxltblApi.hidPath);
+                                this.#touchPanel = new HID.HID(this.#hidPath);
                                 this.#touchPanel.setNonBlocking(true);
                             } else {
                                 //TODO display this a bit better
@@ -432,7 +426,7 @@ const pxlTbl = ( function() {
         loop = () => {
 
             //read touch data (if HID connected)
-            //this.readTouchPanel();
+            this.readTouchPanel();
 
 
             // Check idle time/screensaver
@@ -500,18 +494,18 @@ const pxlTbl = ( function() {
                     console.log('Frame size: ' + (this.#buffer.length + this.#frameStart.length) + ' bytes');
                     console.log('Bandwidth: ' + Math.round((this.#buffer.length+this.#frameStart.length) * this.#fps * 8 / 1024) +' kbps (Available: '+this.#baud / 1000 +' kbps)');
 
-                    //console.log('Touch read time: ' + this.#touchReadTime);
-                    //console.log('Touch packets per read: ' + this.#touchPacketsPerRead);
-                    //console.log('Touch: ' + this.#touch);
-                    //console.log(Buffer.concat([this.#frameStart, this.#buffer]));
+                    console.log('Touch read time: ' + this.#touchReadTime);
+                    console.log('Touch packets per read: ' + this.#touchPacketsPerRead);
+                    console.log('Touch: ' + this.#touch);
 
 
-                    for (let i = 0; i < this.#buffer.length; i+=3) {
-                        if(i % (this.#pxlW * 3) === 0) process.stdout.write('\n');
-                        process.stdout.write('\x1b[38;2;'+this.#buffer[i]+';'+this.#buffer[i+1]+';'+this.#buffer[i+2]+'m▄ ');
+                    if(0) {
+                        for (let i = 0; i < this.#buffer.length; i += 3) {
+                            if (i % (this.#pxlW * 3) === 0) process.stdout.write('\n');
+                            process.stdout.write('\x1b[38;2;' + this.#buffer[i] + ';' + this.#buffer[i + 1] + ';' + this.#buffer[i + 2] + 'm▄ ');
+                        }
+                        process.stdout.write('\x1b[0m');
                     }
-
-                    process.stdout.write('\x1b[0m');
 
                 }
 
@@ -650,7 +644,74 @@ const pxlTbl = ( function() {
         /**
          * Reads touch panel data andpopulates touch variables
          */
-        readTouchPanel() {
+        readTouchPanel = () => {
+            //dont run if no HID
+            if(!this.#hidEnabled || (Object.keys(this.#hidEnabled).length === 0 && this.#hidEnabled.constructor === Object)) return false;
+
+            let dataArray;
+            const lastTouchArray = this.#touch;
+
+            const now = new Date().getTime();
+            this.#touchReadTime = now - this.#touchLastRead;
+            this.#touchPacketsPerRead = 0;
+
+            //read all available data and merge it into one touch array
+            do {
+
+                try {
+                    dataArray = this.#touchPanel.readSync();
+
+                    if(dataArray !== undefined && dataArray.length > 0) {
+                        const data = Buffer.from(dataArray);
+                        this.#touchLastRead = now;
+                        this.#touchReadingData = true;
+                        this.#touchRawDataLength = data.length;
+                        this.#touchPacketsPerRead++;
+                        this.#touch = Array(this.#pxlCount);
+
+                        for (let point = 0; point < 10; point++) {
+                            if (data[point*this.#touchParams.touchPacketSize+this.#touchParams.checkPos] === this.#touchParams.checkValue) {
+                                const thisPoint = data.slice(point * this.#touchParams.touchPacketSize + this.#touchParams.coordPos, point * this.#touchParams.touchPacketSize + this.#touchParams.coordPos + 4);
+                                let touchX = thisPoint[0] | (thisPoint[1] << 8);
+                                let touchY = thisPoint[2] | (thisPoint[3] << 8);
+
+                                //convert position to same scale as table
+                                touchX = this.#touchParams.maxX * (touchX/this.#touchParams.maxX);
+                                touchY = this.#touchParams.maxY * (touchY/this.#touchParams.maxY);
+
+                                //workout which pixel is being touched...
+                                const pixelX = Math.floor((touchX - this.#touchParams.pixelStartX) / this.#touchParams.pixelWidth);
+                                const pixelY = Math.floor((touchY - this.#touchParams.pixelStartY) / this.#touchParams.pixelHeight);
+
+                                if (pixelX >= 0 && pixelX < this.#pxlW && pixelY >= 0 && pixelY < this.#pxlH) this.#touch[pixelX + pixelY * this.#pxlW] = true;
+
+
+
+                            }
+                        }
+                    }
+
+
+
+                } catch (e) {
+                    dataArray = [];
+                }
+            } while(dataArray.length > 0);
+
+
+            //check to see if touchData has changed
+            for (let i = 0; i < this.#touch.length; ++i ) {
+                if (this.#touch[i] !== lastTouchArray[i]) {
+                    // Touch data changed:
+                    if(!this.checkToggleScreensaver()) this.#touch = lastTouchArray;
+
+                    break;
+                }
+            }
+
+
+
+
 
         }
 
@@ -1377,8 +1438,8 @@ const pxlTbl = ( function() {
 
             for (let i = 0; i < this.#pxlCount; i++) {
                 if((this.#touch[i] || this.#touchWeb[i]) && (!this.#touchRead[i] || persist)) {
-                    var x = i % this.#pxlW;
-                    var y = Math.floor(i / this.#pxlW);
+                    let x = i % this.#pxlW;
+                    let y = Math.floor(i / this.#pxlW);
                     touches.push({ x: x, y: y });
                 }
             }

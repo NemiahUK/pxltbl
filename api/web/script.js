@@ -1,4 +1,4 @@
-var socket = io(document.location.href);
+var socket = io();
 
 socket.on('connect', function(){
     $('#console').append('<pre>Connected.</pre>');
