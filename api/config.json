@@ -3,7 +3,7 @@
     "enabled" : true
   },
   "serial" : {
-    "enabled" : false,
+    "enabled" : true,
     "devices" : [
       "/dev/ttyS0"
     ],

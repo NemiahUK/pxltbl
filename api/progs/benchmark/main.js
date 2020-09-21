@@ -1,5 +1,5 @@
 
-const iterations = 1000000;
+const iterations = 100000;
 let frameCounter = 0;
 
 let benchmarkDone = false;

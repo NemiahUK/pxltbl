@@ -285,6 +285,7 @@ const pxlTbl = ( function() {
                                 //TODO display this a bit better
                                 this.warn("HID device at " + this.#hidPath + " did not match any devices in hid-config.json.");
                                 this.debug(devices);
+                                this.#hidEnabled = false;
                             }
 
                         }
@@ -483,20 +484,30 @@ const pxlTbl = ( function() {
                 if(this.#consoleDisplay) {
                     console.clear();
                     console.log('Is RasPi: ' + this.#isRasPi);
+
                     console.log('Web Clients: ' + this.#webClients);
                     console.log('Millis: ' + this.#millis);
-                    console.log('Game FPS: ' + this.#fps);
-                    console.log('FPS limit: ' + this.#fpsLimit);
-                    console.log('Frame time: ' + this.#frameTime);
-                    console.log('Min frame time: ' + minFrameTime);
-                    console.log('Screen size: ' + this.#pxlW+'x'+this.#pxlH+' ('+this.#pxlW*this.#pxlH+')');
-                    console.log('Total num of pixels: ' + this.#buffer.length/3);
+                    console.log('Game FPS: ' + this.#fps + ', limit: ' + this.#fpsLimit);
+                    console.log('Frame time: ' + this.#frameTime + ', minimum: ' + minFrameTime);
+                    console.log('Screen size: ' + this.#pxlW+'x'+this.#pxlH+', total: '+this.#pxlW*this.#pxlH+', sub-pixels: ' + this.#buffer.length/3);
                     console.log('Frame size: ' + (this.#buffer.length + this.#frameStart.length) + ' bytes');
-                    console.log('Bandwidth: ' + Math.round((this.#buffer.length+this.#frameStart.length) * this.#fps * 8 / 1024) +' kbps (Available: '+this.#baud / 1000 +' kbps)');
 
-                    console.log('Touch read time: ' + this.#touchReadTime);
-                    console.log('Touch packets per read: ' + this.#touchPacketsPerRead);
-                    console.log('Touch: ' + this.#touch);
+                    if(this.#serialEnabled) {
+                        console.log('Serial: ' + this.#serialPath + ', Baud: '+ this.#baud +',  Bandwidth: ' + Math.round((this.#buffer.length+this.#frameStart.length) * this.#fps * 8 / 1024) +' kbps (Available: '+this.#baud / 1000 +' kbps)');
+                    } else {
+                        console.log('HID Disabled');
+                    }
+                    if(this.#hidEnabled) {
+                        console.log('HID read time: ' + this.#touchReadTime + 'ms, packets per read: ' + this.#touchPacketsPerRead);
+                        console.log('Touch Data: ' + this.#touch);
+                    } else {
+                        console.log('HID Disabled');
+                    }
+
+
+
+
+
 
 
                     if(0) {
@@ -559,34 +570,15 @@ const pxlTbl = ( function() {
 
             //TODO - this assumes stripStart = 'TL'  - it needs to take this into account.
             //TODO add RGB => GRB conversion etc
-            if (this.stripSerpantine === true) {
-                for (let y = 0; y < this.originalPxlH; y++) {
-                    if (y % 2) { //odd row
-                        for (let x = 0; x < this.originalPxlW; x++) {
-                            let i = y * this.originalPxlW + x;
-                            let iReverse = y * this.originalPxlW + (this.originalPxlW - x) - 1;
-                            serialBuffer[i * 3] = (buffer[iReverse * 3] * (this.brightness / 255)*this.whiteBalance.r);
-                            serialBuffer[i * 3 + 1] = (buffer[iReverse * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g);
-                            serialBuffer[i * 3 + 2] = (buffer[iReverse * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b);
-                        }
-                    } else { //even row
-                        for (let x = 0; x < this.originalPxlW; x++) {
-                            let i = y * this.originalPxlW + x;
-                            serialBuffer[i * 3] = (buffer[i * 3] * (this.brightness / 255)*this.whiteBalance.r);
-                            serialBuffer[i * 3 + 1] = (buffer[i * 3 + 1] * (this.brightness / 255)*this.whiteBalance.g);
-                            serialBuffer[i * 3 + 2] = (buffer[i * 3 + 2] * (this.brightness / 255)*this.whiteBalance.b);
-                        }
 
-                    }
-                }
-            } else {
-                for (let i = 0; i < this.pxlCount; i++) {
-                    serialBuffer[i * 3] = (buffer[i * 3] * (this.brightness / 255) * this.whiteBalance.r);
-                    serialBuffer[i * 3 + 1] = (buffer[i * 3 + 1] * (this.brightness / 255) * this.whiteBalance.g);
-                    serialBuffer[i * 3 + 2] = (buffer[i * 3 + 2] * (this.brightness / 255) * this.whiteBalance.b);
-                }
 
+            for (let i = 0; i < this.#pxlCount; i++) {
+                serialBuffer[i * 3] = (buffer[i * 3] * (this.#brightness / 255) * this.#whiteBalance.r);
+                serialBuffer[i * 3 + 1] = (buffer[i * 3 + 1] * (this.#brightness / 255) * this.#whiteBalance.g);
+                serialBuffer[i * 3 + 2] = (buffer[i * 3 + 2] * (this.#brightness / 255) * this.#whiteBalance.b);
             }
+
+
 
             //remove 1s from serial buffer (a value of 1 is our end of frame character)
             for (let i = 0; i < serialBuffer.length; i++) {
@@ -718,15 +710,51 @@ const pxlTbl = ( function() {
         /**
          * Sends serial data to the Teensy to get it to respond with it's hardware params
          */
-        getParams() {
+        getParams = () => {
+            if(this.#isRasPi) {
+                this.#serial.write(Buffer.from([0x1,0x3]), () => {
 
+                    //nothing to do here other than wait for reply
+                    this.#paramTries++;
+                    if(this.#paramTries === 5) {
+                        this.warn('Couldn\'t communicate with Arduino over serial, continuing without serial.');
+                        this.#serialEnabled = false;
+                        this.#gotParams = true;
+                        this.#paramTries = 0;
+                        this.show();
+                    }
+                    process.stdout.write('.');
+                    setTimeout(() => {
+                        if(!this.#gotParams) this.getParams();
+                    },1000);
+
+                });
+            }
         }
 
         /**
          * Handles any serial data sent back form the teensy (i.e. hardware params)
          */
-        handleSerial() {
+        handleSerial = (data) => {
+            //TODO if this is a reply to getPrarams...
+            const parts = data.toString().split('\n');
+            this.log('\n'+data.toString());
+            this.#numLeds = parseInt(parts[1]);
+            this.#originalPxlW = parseInt(parts[2]);
+            this.#originalPxlH = parseInt(parts[3]);
+            this.#baud = parseInt(parts[4]);
+            //this.#rgbOrder = parts[5];
+            this.#gotParams = true;
+            //TODO add serial options for direction e.g. TL and serpantine T/F
 
+            //TODO add calculated params below to function setBuffers()
+            this.#buffer = Buffer.alloc((this.#numLeds) * 3);
+            this.#pxlW = this.#originalPxlW;
+            this.#pxlH = this.#originalPxlH;
+            this.#pxlCount = this.#pxlW*this.#pxlH;
+
+            this.log('*** STARTUP COMPLETE ***');
+            this.show();
         }
 
 
