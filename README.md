@@ -1,6 +1,6 @@
 # Pixel Table 2.0 - Beta
 
-![alt text](https://pbs.twimg.com/media/Dqb8gqKWsAAfOK3.jpg:large "Pixel Table")
+![alt text](https://media1.giphy.com/media/EO7xiaoCVROgAtU8hH/giphy.gif "Pixel Table")
 
 
 The API comes with a browser-based Emulator so you don’t need to build the table just yet.
