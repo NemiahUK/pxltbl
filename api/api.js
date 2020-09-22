@@ -75,6 +75,7 @@ const pxlTbl = ( function() {
         #serialEnabled = false;                             // ???
         #baud = 0;                                          // ???
         #serialDevices = [];                                // ???
+        #serialDeviceId = -1;                               // ???
         #serialPath = '';                                   // ???
         #buffer = null;                                     // Add empty buffer for future use.
         #frameStart = Buffer.from([0x1, 0x2]);              // ???
@@ -130,7 +131,9 @@ const pxlTbl = ( function() {
         // These are the defaults, overridden by the settings object passed into constructor.
 
         #debugging = false;                                 // When true, the API will output
-        #consoleDisplay = false;                            // When true, a graphical representation of the PxlTbl data is displayed in the console window.
+        #consoleStats = false;                            // When true, a graphical representation of the PxlTbl data is displayed in the console window.
+        #consoleScreen = false;                            // When true, a graphical representation of the PxlTbl data is displayed in the console window.
+        #consoleTouch = false;                            // When true, a graphical representation of the PxlTbl data is displayed in the console window.
         #fpsLimit = 30;                                     // Limit the frames per second so we won't over work the hardware rendering useless frame. Good values would be 30 or 60
         #cbLoop = null;                                     // This is a place holder for the user's main loop. Users will pass a loop function into the API before run time and it can be called though this variable.
         #webPort = 3000;
@@ -161,9 +164,12 @@ const pxlTbl = ( function() {
          * @param {Object} settings - Custom settings for the API sotored in a key value paired object.
          */
         constructor(settings) {
-            if(settings.hasOwnProperty('consoleDisplay')) this.#consoleDisplay = settings.consoleDisplay;
-            if (settings.hasOwnProperty('debugging')) this.#debugging = settings.debugging;
+            if(settings.hasOwnProperty('consoleStats')) this.#consoleStats = settings.consoleStats;
+            if(settings.hasOwnProperty('consoleScreen')) this.#consoleScreen = settings.consoleScreen;
+            if(settings.hasOwnProperty('consoleTouch')) this.#consoleTouch = settings.consoleTouch;
+            if(settings.hasOwnProperty('debugging')) this.#debugging = settings.debugging;
             if(settings.hasOwnProperty('fpsLimit')) this.#fpsLimit = parseInt(settings.fpsLimit);
+            if(settings.hasOwnProperty('brightness')) this.#brightness = parseInt(settings.brightness);
 
 
             this.#originalPxlW = config.pixels.width; // TODO: Get from config/hardware
@@ -207,7 +213,7 @@ const pxlTbl = ( function() {
             this.startWebServer();
 
             // TODO: Port hosted from should be a setting. Make the port displayed in the address here dynamic too when implemented.
-            if(!this.#consoleDisplay) this.log('Console display disabled, visit http://127.0.0.1:'+this.#webPort+' to view stats.');
+            if(!this.#consoleStats) this.log('Console display disabled, visit http://127.0.0.1:'+this.#webPort+' to view stats.');
 
             //Go go go!
             this.start();
@@ -293,23 +299,7 @@ const pxlTbl = ( function() {
                         //start serial
                         //TODO this should loop through the available serial devices in config.json and query the device.
                         if (this.#serialEnabled) {
-                            const Serial = require('raspi-serial').Serial;
-                            this.#serialPath = this.#serialDevices[0];
-                            this.#serial = new Serial({
-                                portId: this.#serialPath,
-                                baudRate: this.#baud
-                            });
-
-                            this.#serial.open(() => {
-                                this.log('Serial port ' + this.#serialPath + ' open at ' + this.#baud + ' baud.');
-                                //Setup incoming serial data handler
-                                this.#serial.on('data', (data) => {
-                                    this.handleSerial(data);
-                                });
-                                process.stdout.write('Querying pxltbl hardware...');
-                                this.getParams();
-
-                            });
+                            this.openSerial();
                         } else {
                             this.log('Serial is disabled.');
                             this.log('*** STARTUP COMPLETE ***');
@@ -481,46 +471,50 @@ const pxlTbl = ( function() {
 
                 const minFrameTime = Math.round(1000 / this.#fpsLimit);
 
-                if(this.#consoleDisplay) {
-                    console.clear();
+                if(this.#consoleStats || this.#consoleScreen || this.#consoleTouch) console.clear();
+                if(this.#consoleStats) {
                     console.log('Is RasPi: ' + this.#isRasPi);
+                    console.log('Brightness: ' + this.#brightness);
 
                     console.log('Web Clients: ' + this.#webClients);
                     console.log('Millis: ' + this.#millis);
                     console.log('Game FPS: ' + this.#fps + ', limit: ' + this.#fpsLimit);
                     console.log('Frame time: ' + this.#frameTime + ', minimum: ' + minFrameTime);
-                    console.log('Screen size: ' + this.#pxlW+'x'+this.#pxlH+', total: '+this.#pxlW*this.#pxlH+', sub-pixels: ' + this.#buffer.length/3);
+                    console.log('Screen size: ' + this.#pxlW + 'x' + this.#pxlH + ', total: ' + this.#pxlW * this.#pxlH + ', sub-pixels: ' + this.#buffer.length / 3);
                     console.log('Frame size: ' + (this.#buffer.length + this.#frameStart.length) + ' bytes');
 
-                    if(this.#serialEnabled) {
-                        console.log('Serial: ' + this.#serialPath + ', Baud: '+ this.#baud +',  Bandwidth: ' + Math.round((this.#buffer.length+this.#frameStart.length) * this.#fps * 8 / 1024) +' kbps (Available: '+this.#baud / 1000 +' kbps)');
+                    if (this.#serialEnabled) {
+                        console.log('Serial: ' + this.#serialPath + ', Baud: ' + this.#baud + ',  Bandwidth: ' + Math.round((this.#buffer.length + this.#frameStart.length) * this.#fps * 8 / 1024) + ' kbps (Available: ' + this.#baud / 1000 + ' kbps)');
                     } else {
-                        console.log('HID Disabled');
+                        console.log('Serial Disabled');
                     }
-                    if(this.#hidEnabled) {
+                    if (this.#hidEnabled) {
                         console.log('HID read time: ' + this.#touchReadTime + 'ms, packets per read: ' + this.#touchPacketsPerRead);
-                        console.log('Touch Data: ' + this.#touch);
                     } else {
                         console.log('HID Disabled');
                     }
-
-
-
-
-
-
-
-                    if(0) {
-                        for (let i = 0; i < this.#buffer.length; i += 3) {
-                            if (i % (this.#pxlW * 3) === 0) process.stdout.write('\n');
-                            process.stdout.write('\x1b[38;2;' + this.#buffer[i] + ';' + this.#buffer[i + 1] + ';' + this.#buffer[i + 2] + 'm▄ ');
-                        }
-                        process.stdout.write('\x1b[0m');
-                    }
-
                 }
 
-                //this.dump();
+                if(this.#consoleScreen) {
+                    for (let i = 0; i < this.#buffer.length; i += 3) {
+                        if (i % (this.#pxlW * 3) === 0) process.stdout.write('\n');
+                        process.stdout.write('\x1b[38;2;' + this.#buffer[i] + ';' + this.#buffer[i + 1] + ';' + this.#buffer[i + 2] + 'm▄ ');
+                    }
+                    process.stdout.write('\x1b[0m');
+                }
+
+                if(this.#consoleTouch) {
+                    for (let i = 0; i < this.#buffer.length; i += 3) {
+                        if (i % (this.#pxlW * 3) === 0) process.stdout.write('\n');
+                        if(this.#touch[i/3]) {
+                            process.stdout.write( '▄ ');
+                        } else {
+                            process.stdout.write( '  ');
+                        }
+                    }
+                }
+
+
 
                 //send to web
                 if(this.#webClients) {
@@ -708,6 +702,49 @@ const pxlTbl = ( function() {
         }
 
         /**
+         * Opend the next serial device in the list
+         */
+        openSerial = () => {
+
+            this.#serialDeviceId++;  //try next serial device.
+
+            if(this.#serialDeviceId < this.#serialDevices.length) {
+
+                const Serial = require('raspi-serial').Serial;
+                this.#serialPath = this.#serialDevices[this.#serialDeviceId];
+                this.#serial = new Serial({
+                    portId: this.#serialPath,
+                    baudRate: this.#baud
+                });
+
+                try {
+                    //TODO - need to handle erros properly if the serial port is not valid etc
+                    this.#serial.open(() => {
+                        this.log('Serial port ' + this.#serialPath + ' open at ' + this.#baud + ' baud.');
+                        //Setup incoming serial data handler
+                        this.#serial.on('data', (data) => {
+                            this.handleSerial(data);
+                        });
+                        this.log('Querying Arduino...');
+                        this.getParams();
+
+                    });
+                } catch (e) {
+                    this.warn('Couldn\'t open '+ this.#serialPath);
+                    this.openSerial();
+                }
+            } else {
+                //no more serial devices to try...
+                this.warn('Couldn\'t communicate with Arduino on any serial port, continuing without serial.');
+                this.#serialEnabled = false;
+                this.#gotParams = true;
+                this.#paramTries = 0;
+                this.show();
+            }
+
+        }
+
+        /**
          * Sends serial data to the Teensy to get it to respond with it's hardware params
          */
         getParams = () => {
@@ -717,13 +754,10 @@ const pxlTbl = ( function() {
                     //nothing to do here other than wait for reply
                     this.#paramTries++;
                     if(this.#paramTries === 5) {
-                        this.warn('Couldn\'t communicate with Arduino over serial, continuing without serial.');
-                        this.#serialEnabled = false;
-                        this.#gotParams = true;
-                        this.#paramTries = 0;
-                        this.show();
+                        this.log('Couldn\'t find arduino on '+ this.#serialPath);
+                        this.openSerial();
                     }
-                    process.stdout.write('.');
+                    if(this.#paramTries > 1) this.log('Retrying...');
                     setTimeout(() => {
                         if(!this.#gotParams) this.getParams();
                     },1000);
@@ -738,13 +772,14 @@ const pxlTbl = ( function() {
         handleSerial = (data) => {
             //TODO if this is a reply to getPrarams...
             const parts = data.toString().split('\n');
-            this.log('\n'+data.toString());
             this.#numLeds = parseInt(parts[1]);
             this.#originalPxlW = parseInt(parts[2]);
             this.#originalPxlH = parseInt(parts[3]);
             this.#baud = parseInt(parts[4]);
             //this.#rgbOrder = parts[5];
             this.#gotParams = true;
+
+            this.log('Num LEDs:'+ this.#numLeds + ' pxlW:'+ this.#originalPxlW + ' pxlH:'+ this.#originalPxlH + ' Baud:'+ this.#baud);
             //TODO add serial options for direction e.g. TL and serpantine T/F
 
             //TODO add calculated params below to function setBuffers()

@@ -21,10 +21,13 @@ let prog;
 
 
 const api = PxlTbl.setup({
-    consoleDisplay: false,
+    consoleStats: false,
+    consoleScreen: false,
+    consoleTouch: false,
     debugging: true,
     loop: loop,
-    fpsLimit: 30
+    fpsLimit: 30,
+    brightness:255
 });
 
 
