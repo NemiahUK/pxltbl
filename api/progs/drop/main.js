@@ -61,6 +61,7 @@ function gameStart(api) {
     introTicks = 0;
     level = 1;
     width = 9;
+    api.clearInputs();
   }
 
 
@@ -70,18 +71,34 @@ function gameStart(api) {
     case 0:
       api.blank(0,0,0);
       api.setDrawColor(0,255,255);
-      api.text('Rdy?',0,1);
+      api.text('Play?',0,1);
 
-      const touches = api.getTouch();
-      // Play
-      if(touches.length && touches[0].x < api.getScreenWidth()) {
+      // play
+      api.setDrawColor(0,255,0);
+      api.fillBox(api.getScreenWidth()/2-1,api.getScreenHeight()-6,1,5);
+      api.fillBox(api.getScreenWidth()/2,api.getScreenHeight()-5,1,3);
+      api.fillBox(api.getScreenWidth()/2+1,api.getScreenHeight()-4,1,1);
+      if(api.isTouchInBounds(api.getScreenWidth()/2-1,api.getScreenHeight()-6,3,5)) {
         introStatus = 1;
+        api.clearInputs();
       }
 
-      // Exit
-      if(touches.length && touches[0].x > api.getScreenWidth()) {
+      // exit
+      api.setDrawColor(255,0,0);
+      api.setPixel(api.getScreenWidth()-6,api.getScreenHeight()-6);
+      api.setPixel(api.getScreenWidth()-5,api.getScreenHeight()-5);
+      api.setPixel(api.getScreenWidth()-4,api.getScreenHeight()-4);
+      api.setPixel(api.getScreenWidth()-3,api.getScreenHeight()-3);
+      api.setPixel(api.getScreenWidth()-2,api.getScreenHeight()-2);
+      api.setPixel(api.getScreenWidth()-2,api.getScreenHeight()-6);
+      api.setPixel(api.getScreenWidth()-3,api.getScreenHeight()-5);
+      api.setPixel(api.getScreenWidth()-5,api.getScreenHeight()-3);
+      api.setPixel(api.getScreenWidth()-6,api.getScreenHeight()-2);
+      if(api.isTouchInBounds(api.getScreenWidth()-6,api.getScreenHeight()-6,5,5)) {
         api.exit();
       }
+
+
 
       break;
 
