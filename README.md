@@ -1,4 +1,4 @@
-# Pixel Table - Alpha
+# Pixel Table 2.0 - Beta
 
 ![alt text](https://pbs.twimg.com/media/Dqb8gqKWsAAfOK3.jpg:large "Pixel Table")
 
