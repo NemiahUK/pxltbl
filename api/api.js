@@ -67,7 +67,7 @@ const pxlTbl = ( function() {
         #startTime = null;                                  // ???
         #lastLoopTime = null;                               // ???
         #lastStatsTime = null;                              // ???
-        #lastInputTime = null;
+        #lastInputTime = new Date().getTime();
 
 
         // Serial HW config
@@ -170,6 +170,7 @@ const pxlTbl = ( function() {
             if(settings.hasOwnProperty('debugging')) this.#debugging = settings.debugging;
             if(settings.hasOwnProperty('fpsLimit')) this.#fpsLimit = parseInt(settings.fpsLimit);
             if(settings.hasOwnProperty('brightness')) this.#brightness = parseInt(settings.brightness);
+            if(settings.hasOwnProperty('webPort')) this.#webPort = parseInt(settings.webPort);
 
 
             this.#originalPxlW = config.pixels.width; // TODO: Get from config/hardware
@@ -717,19 +718,21 @@ const pxlTbl = ( function() {
                     baudRate: this.#baud
                 });
 
-                try {
-                    //TODO - need to handle erros properly if the serial port is not valid etc
-                    this.#serial.open(() => {
-                        this.log('Serial port ' + this.#serialPath + ' open at ' + this.#baud + ' baud.');
-                        //Setup incoming serial data handler
-                        this.#serial.on('data', (data) => {
-                            this.handleSerial(data);
-                        });
-                        this.log('Querying Arduino...');
-                        this.getParams();
 
+                //TODO - need to handle erros properly if the serial port is not valid etc
+                this.#serial.open(() => {
+
+                    this.log('Serial port ' + this.#serialPath + ' open at ' + this.#baud + ' baud.');
+                    //Setup incoming serial data handler
+                    this.#serial.on('data', (data) => {
+                        this.handleSerial(data);
                     });
-                } catch (e) {
+                    this.log('Querying Arduino...');
+                    this.getParams();
+
+                });
+
+                if(0) {
                     this.warn('Couldn\'t open '+ this.#serialPath);
                     this.openSerial();
                 }
@@ -756,11 +759,12 @@ const pxlTbl = ( function() {
                     if(this.#paramTries === 5) {
                         this.log('Couldn\'t find arduino on '+ this.#serialPath);
                         this.openSerial();
+                    } else {
+                        if (this.#paramTries > 1) this.log('Retrying...');
+                        setTimeout(() => {
+                            if (!this.#gotParams) this.getParams();
+                        }, 1000);
                     }
-                    if(this.#paramTries > 1) this.log('Retrying...');
-                    setTimeout(() => {
-                        if(!this.#gotParams) this.getParams();
-                    },1000);
 
                 });
             }

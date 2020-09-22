@@ -16,7 +16,6 @@ exports.loop = function(api) {
 
   let touches = api.getTouch(true);
   if(touches.length > 0) {
-    api.debug(touches);
     for (let i = 0; i < touches.length; i++) {
       api.setPixel(touches[i].x, touches[i].y);
     }

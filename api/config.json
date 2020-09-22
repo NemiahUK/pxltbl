@@ -5,8 +5,7 @@
   "serial" : {
     "enabled" : true,
     "devices" : [
-      "/dev/ttyS0",
-      "/dev/ttyS1"
+      "/dev/ttyS0"
     ],
     "baud" : 1000000
   },

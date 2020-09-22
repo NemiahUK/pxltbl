@@ -28,7 +28,9 @@ Delete the `console=serail0,115200` part.
 
 ## Setup audio shield
 
-TODO
+Follow the instructions at: https://learn.adafruit.com/adafruit-speaker-bonnet-for-raspberry-pi/raspberry-pi-usage
+
+You need to complete the extra tasks on the I2S Tweaks page to get audio to work properly.
 
 
 ## Install
