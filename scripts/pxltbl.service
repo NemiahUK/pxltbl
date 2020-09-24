@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/local/bin/npm run service
-WorkingDirectory=/home/pi/pxltbl/api
+WorkingDirectory=/home/pi/pxltbl
 StandardOutput=inherit
 StandardError=inherit
 Restart=on-failure

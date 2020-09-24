@@ -45,6 +45,7 @@ function loop() {
         api.clearInputs();
         api.setFpsLimit(30);
         api.setOrientation(0);
+        api.setFont('default');
     }
 
     switch(screen) {
@@ -230,6 +231,7 @@ let errStart = false;
 function err() {
     if(errStart === false) {
         errStart = api.getRunTime();
+        api.setFont('default');
         api.playWav('looser');
     }
     if(api.getRunTime() - errStart > 3000) {

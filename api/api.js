@@ -246,15 +246,15 @@ const pxlTbl = ( function() {
 
                         //start button input
                         //TODO use buttonmap object once implimented
-                        gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Top
-                        gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Right
-                        gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Bottom
-                        gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Left
-                        gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH); //Left Top
-                        gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH); //Top Left
-                        gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH); //Right Bottom
-                        gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH); //Bottom Right
-                        gpio.setup(31, gpio.DIR_IN, gpio.EDGE_BOTH); //Home
+                        gpio.setup(13, gpio.DIR_IN, gpio.EDGE_BOTH, (err) => { if(err) this.error(err) }); //Right Top
+                        gpio.setup(15, gpio.DIR_IN, gpio.EDGE_BOTH, (err) => { if(err) this.error(err) }); //Top Right
+                        gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH, (err) => { if(err) this.error(err) }); //Left Bottom
+                        gpio.setup(18, gpio.DIR_IN, gpio.EDGE_BOTH, (err) => { if(err) this.error(err) }); //Bottom Left
+                        gpio.setup(22, gpio.DIR_IN, gpio.EDGE_BOTH, (err) => { if(err) this.error(err) }); //Left Top
+                        gpio.setup(37, gpio.DIR_IN, gpio.EDGE_BOTH, (err) => { if(err) this.error(err) }); //Top Left
+                        gpio.setup(36, gpio.DIR_IN, gpio.EDGE_BOTH, (err) => { if(err) this.error(err) }); //Right Bottom
+                        gpio.setup(32, gpio.DIR_IN, gpio.EDGE_BOTH, (err) => { if(err) this.error(err) }); //Bottom Right
+                        gpio.setup(31, gpio.DIR_IN, gpio.EDGE_BOTH, (err) => { if(err) this.error(err) }); //Home
 
                         gpio.on('change',  (channel, value) => {
                             this.setButton(channel, value);
