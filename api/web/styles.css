@@ -19,48 +19,14 @@ body.fullscreen {
 
 }
 
-#console {
 
-    height: 22vmin;
 
-    font-family: "Lucida Console";
-    background: #555;
-    color:#eee;
-    overflow-y: scroll;
-    padding: 10px 0;
-    float: left;
-    width:70%;
-    margin-right: 20px;
-}
 
-.fullscreen #console {
-    display: none;
-}
-
-#console pre {
-    padding:0 10px;
-    margin: 0;
-}
-
-#console .error {
-    color: #ff8888;
-}
-
-#stats {
-
-}
-
-.fullscreen #stats {
-    display: none;
-}
-
-.center {
-    text-align: center;
-}
 #pxlTbl {
     opacity: 0;
     background: 50% 50% url(bg.jpg);
     background-size: cover;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
 
     border: 1px solid #352516;
     border-radius: 4vmin;
@@ -214,4 +180,141 @@ body.fullscreen {
     transition: opacity 200ms;
 }
 
+.bottom-frame {
+    position: absolute;
+    bottom: 0;
+    width:100%;
+    padding-bottom: 15px;
+}
 
+/* Tabs */
+
+/* Style the tab */
+.tab {
+    overflow: hidden;
+    margin-right: 1rem;
+    margin-left: 1rem;
+}
+
+.fullscreen .tab {
+    display: none;
+}
+
+/* Style the buttons that are used to open the tab content */
+.tab .btn {
+    /*background-color: inherit;*/
+    float: left;
+    border: none;
+    outline: none;
+    border-radius: 0;
+}
+
+/* Create an active/current tab--link class */
+.tab .btn.active {
+    background-color: #545455 !important;
+}
+
+/* Remove boxshadow from focused tab--link class */
+.tab .btn:focus {
+    box-shadow: none;
+}
+
+/* Style the tab content */
+.tab__content {
+    display: none;
+    overflow-y: scroll;
+
+    height: 30vmin;
+    margin-right: 1rem;
+    margin-left: 1rem;
+    padding: 10px 12px;
+
+    color:#eee;
+
+    background: #555;
+    font-family: "Lucida Console";
+
+}
+
+.fullscreen .tab__content {
+    display: none;
+}
+
+#console {
+
+
+}
+
+.fullscreen #console {
+    display: none;
+}
+
+#console pre {
+    padding:0;
+    margin: 0;
+    color: inherit;
+}
+
+#console .error {
+    color: #ff8888;
+}
+
+#stats {
+
+}
+
+.fullscreen #stats {
+    display: none;
+}
+
+#console {
+    display: block;
+
+}
+
+#status-bar {
+    margin-right: 1rem;
+    margin-left: 1rem;
+    margin-top: 0.5rem;
+    padding: 0;
+}
+
+
+
+
+
+/* Stats list */
+/* TODO: Was the #display ul style rules supposed to work here... */
+#stats {
+    padding: 0;
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+#stats li {
+    list-style:none;
+}
+
+.fullscreen #stats {
+    display: none;
+}
+
+@media only screen and (max-width: 960px) {
+    .tab__content {
+        margin-right: 1rem;
+        margin-bottom: .8rem;
+        width: calc(100% - 2rem);
+    }
+
+}
+
+@media only screen and (max-width: 720px) {
+    .tab, .tab__content, #stats {
+        margin-right: 5px;
+        margin-left: 5px;
+    }
+
+    .tab__content {
+        width: calc(100% - 10px);
+    }
+}

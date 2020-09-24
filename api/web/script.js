@@ -1,7 +1,7 @@
 var socket = io();
 
 socket.on('connect', function(){
-    $('#console').append('<pre>Connected.</pre>');
+    $('#conn').text('Connected').attr('class','text-success');
 });
 
 socket.on('leds', function(data){
@@ -21,7 +21,8 @@ socket.on('frameData', function(data){
 
     $('#stats').html('');
     $.each(data, function (key, val) {
-        $('#stats').append('<ul>'+key+': '+val+'</ul>');
+        $('#stats').append('<li>'+key+': '+val+'</li>');
+        if(key === "fps") $('#fps').text(val);
     });
 
 
@@ -99,7 +100,7 @@ socket.on('info', function(data){
     if(typeof data == 'object') {
         data = JSON.stringify(data);
     }
-    $('#console').append('<pre class="info">'+data+'</pre>');
+    $('#console').append('<pre class="text-info">'+data+'</pre>');
     $('#console').scrollTop($('#console')[0].scrollHeight);
 
 });
@@ -117,7 +118,7 @@ socket.on('warn', function(data){
     if(typeof data == 'object') {
         data = JSON.stringify(data);
     }
-    $('#console').append('<pre class="warn">'+data+'</pre>');
+    $('#console').append('<pre class="text-warn">'+data+'</pre>');
     $('#console').scrollTop($('#console')[0].scrollHeight);
 
 });
@@ -126,14 +127,14 @@ socket.on('error', function(data){
     if(typeof data == 'object') {
         data = JSON.stringify(data);
     }
-    $('#console').append('<pre class="error">'+data+'</pre>');
+    $('#console').append('<pre class="text-danger">'+data+'</pre>');
     $('#console').scrollTop($('#console')[0].scrollHeight);
 
 });
 
 
 socket.on('disconnect', function(){
-    $('#log').text('Disconnected');
+    $('conn').text('Disconnected').attr('class','text-danger');
 
 });
 
@@ -185,3 +186,24 @@ $(function() {
 
 
 });
+
+function openTab(evt, cityName) {
+    // Declare all variables
+    var i, tabcontent, tablinks;
+
+    // Get all elements with class="tabcontent" and hide them
+    tabcontent = document.getElementsByClassName("tab__content");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+
+    // Get all elements with class="tablinks" and remove the class "active"
+    tablinks = document.getElementsByClassName("tab__link");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+
+    // Show the current tab, and add an "active" class to the button that opened the tab
+    document.getElementById(cityName).style.display = "block";
+    evt.currentTarget.className += " active";
+}

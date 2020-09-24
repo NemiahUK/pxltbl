@@ -2,13 +2,15 @@
 <html lang="en">
     <head>
     <meta charset="utf-8">
-        <script
-                src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
                 integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
                 crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="/script.js"></script>
 
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
         <link href="styles.css" rel="stylesheet">
 
         <title>Pixel Table</title>
@@ -19,7 +21,7 @@
     </head>
 
     <body class="">
-        <div class="center">
+        <div class="text-center">
             <div id="pxlTbl">
                 <button class="push--flat" data-cmd="37" style="top:0; left:8vmin;"></button>
                 <button class="push--flat" data-cmd="15" style="top:0; right: 8vmin;"></button>
@@ -40,12 +42,37 @@
         </div>
         <div id="rotate-padding"></div>
 
-        <div id="console">
-            <pre>Connecting...</pre>
-        </div>
-        <ul id="stats">
+        <div class="bottom-frame">
 
-        </ul>
-        <br style="clear:both;"/>
+            <div class="tab">
+                <button class="tab__link btn btn-dark active" onclick="openTab(event, 'console')">Console</button>
+                <button class="tab__link btn btn-dark" onclick="openTab(event, 'stats-tab')">Stats</button>
+                <button class="tab__link btn btn-dark" onclick="openTab(event, 'prog-manager')">Prog Manager</button>
+            </div>
+
+            <div id="console" class="tab__content">
+
+            </div>
+
+            <div id="stats-tab" class="tab__content">
+                <ul id="stats">
+
+                </ul>
+            </div>
+
+            <div id="prog-manager" class="tab__content">
+                <p>Coming soon...</p>
+            </div>
+
+            <div id="status-bar">
+                <div class="row">
+                    <div class="col-auto">Status: <span id="conn" class="text-info">Connecting...</span></div>
+                    <div class="col-auto">FPS: <span id="fps" class="text-info"></span></div>
+                </div>
+            </div>
+
+
+
+        </div>
     </body>
 </html>
