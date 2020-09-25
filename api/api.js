@@ -15,6 +15,7 @@ const config = require("./config.json");                     // Grab the config 
 const fs = require('fs');                                   // FileSystem included with Node.js
 const path = require('path');                               // Gets the path of a file or directory.
 const http = require('http');                               // HTTP tools
+const hidController = require('node-hid');
 
 const log = require('fancy-log');                           // Better debug messaging a support for colors
 const c = require('ansi-colors');                           // Easily switch between different ANSI colors, great for console logging.
@@ -107,6 +108,7 @@ const pxlTbl = ( function() {
         };
 
         //HID device
+
         #hidEnabled = false;
         #touchPanel = null;                                 // The touch panel device reference
         #hidPath = '';                                      // TODO I think this needs removing - Ste
@@ -225,7 +227,7 @@ const pxlTbl = ( function() {
 
         /* --- Internal methods  --- */
 
-        start() {
+        start = () => {
             // Check if we are running on a Raspberry Pi
             try {
                 const raspi = require('raspi');
@@ -263,10 +265,10 @@ const pxlTbl = ( function() {
                         //setup HID touch
 
                         if (this.#hidEnabled) {
-                            const HID = require('node-hid');
+
                             const hidConfig = require('./hid-config');
 
-                            const devices = HID.devices();
+                            const devices = hidController.devices();
 
                             for (let i = 0; i < devices.length; i++) {
                                 for (let j = 0; j < hidConfig.length; j++) {
@@ -286,8 +288,7 @@ const pxlTbl = ( function() {
 
                             if (this.#touchParams.name !== undefined) {
                                 this.log("Found HID device: " + this.#touchParams.name);
-                                this.#touchPanel = new HID.HID(this.#hidPath);
-                                this.#touchPanel.setNonBlocking(true);
+                                this.startHid();
                             } else {
                                 //TODO display this a bit better
                                 this.warn("HID device at " + this.#hidPath + " did not match any devices in hid-config.json.");
@@ -327,7 +328,12 @@ const pxlTbl = ( function() {
 
         }
 
-        startWebServer() {
+        startHid = () => {
+            this.#touchPanel = new hidController.HID(this.#hidPath);
+            this.#touchPanel.setNonBlocking(true);
+        }
+
+        startWebServer = () => {
             this.log('Setting up web server...');
 
             this.#webServer = http.createServer((request, response) => {
@@ -529,8 +535,11 @@ const pxlTbl = ( function() {
                         length: this.#buffer.length,
                         pxlW: this.#originalPxlW,
                         pxlH: this.#originalPxlH,
-                        orientation: this.#orientation
+                        orientation: this.#orientation,
+                        hidReadTime: this.#touchReadTime,
+                        touchPacketsPerRead: this.#touchPacketsPerRead
                     });
+                    
                 }
 
 
@@ -638,9 +647,18 @@ const pxlTbl = ( function() {
             let dataArray;
             const lastTouchArray = this.#touch;
 
+            //check for HID timeout
+            if(this.#touchReadTime > 5000 && this.#touchPacketsPerRead === 0) {
+                this.warn('HID stopped responding, restarting...');
+                this.startHid();
+            }
+
+
             const now = new Date().getTime();
             this.#touchReadTime = now - this.#touchLastRead;
             this.#touchPacketsPerRead = 0;
+
+
 
             //read all available data and merge it into one touch array
             do {
