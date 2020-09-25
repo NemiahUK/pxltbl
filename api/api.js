@@ -175,8 +175,8 @@ const pxlTbl = ( function() {
             if(settings.hasOwnProperty('webPort')) this.#webPort = parseInt(settings.webPort);
 
 
-            this.#originalPxlW = config.pixels.width; // TODO: Get from config/hardware
-            this.#originalPxlH = config.pixels.height; // TODO: Get from config/hardware
+            this.#originalPxlW = config.pixels.width;
+            this.#originalPxlH = config.pixels.height;
 
             // Set the font
             this.setFont(); // TODO: need to be able to
@@ -642,7 +642,7 @@ const pxlTbl = ( function() {
          */
         readTouchPanel = () => {
             //dont run if no HID
-            if(!this.#hidEnabled || (Object.keys(this.#hidEnabled).length === 0 && this.#hidEnabled.constructor === Object)) return false;
+            if(!this.#hidEnabled || (Object.keys(this.#touchParams).length === 0 && this.#touchParams.constructor === Object)) return false;
 
             let dataArray;
             const lastTouchArray = this.#touch;
