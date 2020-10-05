@@ -108,7 +108,8 @@ const pxlTbl = ( function() {
         };
 
         //HID device
-
+        #lastHidInit = 0;
+        #hidInitRetryDelay = 3000;
         #hidEnabled = false;
         #touchPanel = null;                                 // The touch panel device reference
         #hidPath = '';                                      // TODO I think this needs removing - Ste
@@ -329,8 +330,15 @@ const pxlTbl = ( function() {
         }
 
         startHid = () => {
+
+            this.debug('Initialising HID device, currently:');
+            this.debug(this.#touchPanel);
             this.#touchPanel = new hidController.HID(this.#hidPath);
             this.#touchPanel.setNonBlocking(true);
+            this.debug('now:');
+            this.debug(this.#touchPanel);
+
+
         }
 
         startWebServer = () => {
@@ -536,6 +544,7 @@ const pxlTbl = ( function() {
                         pxlW: this.#originalPxlW,
                         pxlH: this.#originalPxlH,
                         orientation: this.#orientation,
+                        lastInputTime: Math.round((new Date().getTime() - this.#lastInputTime)/1000),
                         hidReadTime: this.#touchReadTime,
                         touchPacketsPerRead: this.#touchPacketsPerRead
                     });
@@ -649,8 +658,11 @@ const pxlTbl = ( function() {
 
             //check for HID timeout
             if(this.#touchReadTime > 5000 && this.#touchPacketsPerRead === 0) {
-                this.warn('HID stopped responding, restarting...');
-                this.startHid();
+                if(new Date() - this.#lastHidInit > this.#hidInitRetryDelay) {
+                    this.#lastHidInit = new Date();
+                    this.warn('HID stopped responding, restarting...');
+                    this.startHid();
+                }
             }
 
 
