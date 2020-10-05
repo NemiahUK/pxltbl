@@ -118,7 +118,7 @@ socket.on('warn', function(data){
     if(typeof data == 'object') {
         data = JSON.stringify(data);
     }
-    $('#console').append('<pre class="text-warn">'+data+'</pre>');
+    $('#console').append('<pre class="text-warning">'+data+'</pre>');
     $('#console').scrollTop($('#console')[0].scrollHeight);
 
 });
