@@ -40,6 +40,7 @@ function loop() {
 
 
     if(api.getGoHome()) {
+        menuScroll = curProg * -10;
         screen = 'home';
         api.goneHome();
         api.clearInputs();
@@ -153,6 +154,7 @@ function home() {
         if (buttons.left || buttons.right || touchEnter) {
             if (curProg === progs.length - 1) {
                 api.clearInputs();
+                menuScroll = curSetting * -10;
                 textScroll = 0;
                 gotProgs = false;
                 screen = 'settings';
@@ -255,6 +257,7 @@ let gotSettings = false;
 function settings() {
     if (!gotSettings) {
 
+        menuScroll = 0;
         textScroll = 0;
         preTextScroll = api.getScreenWidth();
         curSetting = 0;
@@ -328,7 +331,7 @@ function settings() {
             api.setDrawColor(100, 100, 100);
 
             if (i === curSetting) {
-                api.setDrawColor(0, 255, 255);
+                api.setDrawColor(100, 255, 0);
                 const textSize = api.text(settingsMenu[i], -100, 0);
                 let textPos = 0;
                 if (textSize.w > api.getScreenWidth()) textPos = Math.round(textScroll);
@@ -401,6 +404,8 @@ function brightness() {
 
 function ip() {
     const _interfaces = require('os').networkInterfaces();
+
+    api.setFont('small-numbers');
 
     let foundIp = false;
     let ip = "0.0.0.0";
