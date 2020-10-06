@@ -13,6 +13,7 @@ const pkg = require("../package.json");                       // Including our `
 const config = require("./config.json");                     // Grab the config file so we can access the data
 
 const fs = require('fs');                                   // FileSystem included with Node.js
+const PNG = require('pngjs').PNG;                               // For reading PNG files
 const path = require('path');                               // Gets the path of a file or directory.
 const http = require('http');                               // HTTP tools
 const hidController = require('node-hid');
@@ -1411,6 +1412,33 @@ const pxlTbl = ( function() {
                     this.setPixel(x + j, y + i);
                 }
             }
+        }
+
+        pngDraw = (file, x = 0, y = 0, w = 64, h= 64) => {
+
+            const data = fs.readFileSync(file);
+            let myImage = PNG.sync.read(data);
+
+            const width  = Math.min(w, myImage.width);
+            const height = Math.min(h, myImage.height);
+
+
+
+            for (let yPos = 0; yPos < height; yPos++) {
+                for (let xPos = 0; xPos < width; xPos++) {
+
+                    const r = myImage.data[(xPos + yPos*myImage.width)*4];
+                    const g = myImage.data[(xPos + yPos*myImage.width)*4+1];
+                    const b = myImage.data[(xPos + yPos*myImage.width)*4+2];
+                    const a = myImage.data[(xPos + yPos*myImage.width)*4+3];
+
+                    //this.debug('r:'+r+'  g:'+g+'  b:'+b+'  a:'+a);
+
+                    this.setDrawColor(r, g, b, a/255);
+                    this.setPixel(xPos + x, yPos + y)
+                }
+            }
+
         }
 
         /**
