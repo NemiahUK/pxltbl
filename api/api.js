@@ -1519,7 +1519,7 @@ const pxlTbl = ( function() {
          * @returns {{w: number, h: number}} -
          */
         textBounds = (text) => {
-            //TODO - instead of calling text, do something more efficient!
+            // TODO - instead of calling text, do something more efficient!
             return this.text(text, 100, 100);
         }
 
