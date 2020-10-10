@@ -398,6 +398,7 @@ const pxlTbl = ( function() {
             this.#webIo = require('socket.io')(this.#webServer);
             this.#webIo.on('connection', (client) => {
                 this.#webClients++;
+                client.emit('version',pkg.version);
                 client.on('buttonDown', (data) => {
                     this.buttonDown(data);
                 });
