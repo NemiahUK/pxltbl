@@ -1607,6 +1607,7 @@ const pxlTbl = ( function() {
 
         playWav = (fileName,loop = false) => {
             const player = require('node-wav-player');
+            this.debug(player);
 
             try {
                 player.play({
