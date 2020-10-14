@@ -343,7 +343,7 @@ function drawScore(api) {
 
 function drawPaddles(api) {
     // Draw paddles
-    api.setDrawColor(0,128,0);
+    api.setDrawColor(128, 0, 128);
     api.fillBox(0, leftPaddlePos - Math.floor(paddleWidth / 2), 1, paddleWidth);
     api.fillBox(api.getScreenWidth()-1, rightPaddlePos -
         Math.floor(paddleWidth / 2), 1, paddleWidth);
