@@ -4,6 +4,10 @@ socket.on('connect', function(){
     $('#conn').text('Connected').attr('class','text-success');
 });
 
+socket.on('version', function(data){
+    $('#version').text(data);
+});
+
 socket.on('leds', function(data){
 
     var int8View = new Uint8Array(data);
@@ -23,6 +27,7 @@ socket.on('frameData', function(data){
     $.each(data, function (key, val) {
         $('#stats').append('<li>'+key+': '+val+'</li>');
         if(key === "fps") $('#fps').text(val);
+        if(key === "webClients") $('#clients').text(val);
     });
 
 

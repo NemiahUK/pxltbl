@@ -398,6 +398,7 @@ const pxlTbl = ( function() {
             this.#webIo = require('socket.io')(this.#webServer);
             this.#webIo.on('connection', (client) => {
                 this.#webClients++;
+                client.emit('version',pkg.version);
                 client.on('buttonDown', (data) => {
                     this.buttonDown(data);
                 });
@@ -1608,16 +1609,21 @@ const pxlTbl = ( function() {
         playWav = (fileName,loop = false) => {
             const player = require('node-wav-player');
 
-            player.play({
-                path: './wav/'+fileName+'.wav',
-                loop: loop
-            }).then(() => {
+            try {
+                player.play({
+                    path: './wav/' + fileName + '.wav',
+                    loop: loop
+                }).then(() => {
 
-            }).catch((error) => {
-                this.error('Could not load wav: '+fileName);
-            });
+                }).catch((error) => {
+                    this.error('Could not load wav: ' + fileName);
+                });
 
-            return player;
+                return player;
+            } catch(err) {
+                this.error('Could not access audio device while playing: ' + fileName);
+                return false;
+            }
 
 
             // const file = fs.createReadStream('wav/'+fileName+'.wav');

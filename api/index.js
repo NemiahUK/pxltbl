@@ -28,7 +28,7 @@ const api = PxlTbl.setup({
     loop: loop,
     fpsLimit: 30,
     brightness:255,
-    webPort:3000
+    webPort:80
 });
 
 
