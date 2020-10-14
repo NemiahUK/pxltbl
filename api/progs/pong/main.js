@@ -3,8 +3,8 @@ const touchWidth = 2;
 const paddleWidth = 5;
 const aiPosErrorMargin = 1.5;
 const aiSpeed = 4;
-const startingBallSpeed = 10;
-const ballSpeedIncrement = 0.2;
+const startingBallSpeed = 15;
+const ballSpeedIncrement = 0.5;
 const fps = 30;
 const pointToWin = 3;
 
@@ -111,8 +111,8 @@ exports.loop = function(api) {
             api.fillBox(0, 1, api.getScreenWidth(), api.getScreenHeight() - 2);
 
             drawScore(api);
-            drawPaddles(api);
             drawBall(api);
+            drawPaddles(api);
             break;
 
         case gameStates.PLAYING:
@@ -157,8 +157,8 @@ exports.loop = function(api) {
             api.fillBox(0, 1, api.getScreenWidth(), api.getScreenHeight() - 2);
 
             drawScore(api);
-            drawPaddles(api);
             drawBall(api);
+            drawPaddles(api);
             break;
 
         case gameStates.PLAYER_SELECT:
@@ -335,8 +335,10 @@ function drawScore(api) {
     let leftMsgSize = api.textBounds(leftPlayerScore.toString());
 
     api.setDrawColor(100, 100, 100)
+    api.setFont('small-numbers');
     api.text(leftPlayerScore.toString(), Math.floor(api.getScreenWidth() / 2 - (2 + leftMsgSize.w)), 2);
     api.text(rightPlayerScore.toString(), Math.floor(api.getScreenWidth() / 2 + 2), 2);
+    api.setFont('default');
 }
 
 function drawPaddles(api) {
@@ -372,10 +374,10 @@ function checkCollisions(api) {
         let rightPaddleBottom = rightPaddlePos - Math.floor(paddleWidth / 2);
         let rightPaddleTop = rightPaddleBottom + paddleWidth;
 
-        if((Math.round(x) < 1 &&
+        if((Math.round(x) < 2 &&
                 (y >= leftPaddleBottom &&
                  y <= leftPaddleTop)) ||
-                (Math.round(x) >= api.getScreenWidth() - 1 &&
+                (Math.round(x) >= api.getScreenWidth() - 2 &&
                 (y >= rightPaddleBottom &&
                  y <= rightPaddleTop))) {
             // Change ball direction
