@@ -16,7 +16,7 @@ const fs = require('fs');                                   // FileSystem includ
 const PNG = require('pngjs').PNG;                               // For reading PNG files
 const path = require('path');                               // Gets the path of a file or directory.
 const http = require('http');                               // HTTP tools
-const hidController = require('node-hid');
+
 
 const log = require('fancy-log');                           // Better debug messaging a support for colors
 const c = require('ansi-colors');                           // Easily switch between different ANSI colors, great for console logging.
@@ -234,6 +234,7 @@ const pxlTbl = ( function() {
             try {
                 const raspi = require('raspi');
                 const board = require('raspi-board');
+                const hidController = require('node-hid');
 
 
                 raspi.init(() => {
@@ -1147,6 +1148,15 @@ const pxlTbl = ( function() {
             }
 
             this.blank();
+        }
+
+        /**
+         * Get the millis.
+         *
+         * @returns {number} millis - ms since start.
+         */
+        getMillis = () => {
+            return this.#millis;
         }
 
         /**
