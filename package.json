@@ -23,7 +23,7 @@
     "nodemon": "^1.19.4",
     "pngjs": "^5.0.0",
     "readline": "^1.3.0",
-    "socket.io": "^2.1.1",
+    "socket.io": "^2.5.0",
     "zealit": "^2.4.1"
   },
   "optionalDependencies": {
